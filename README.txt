@@ -5,6 +5,8 @@ VideoCore
 SETUP
 
 git clone git@github.com:jamesghurley/VideoCore.git
+git submodule init
+git submodule update
 
 LICENSING
 
