@@ -1,0 +1,135 @@
+/*
+ 
+ Video Core
+ Copyright (C) 2014 James G. Hurley
+ 
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2.1 of the License, or (at your option) any later version.
+ 
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+ 
+ You should have received a copy of the GNU Lesser General Public
+ License along with this library; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ USA
+ 
+ */
+
+#include <videocore/mixers/Apple/AudioMixer.h>
+
+namespace videocore { namespace Apple {
+ 
+    struct UserData {
+        uint8_t* data;
+        uint8_t* p;
+        int size;
+        int packetSize;
+        UInt32 numberPackets;
+        AudioStreamPacketDescription * pd ;
+        
+    } ;
+    
+    AudioMixer::AudioMixer(int outChannelCount, int outFrequencyInHz, int outBitsPerChannel, double outBufferDuration)
+    : GenericAudioMixer(outChannelCount, outFrequencyInHz, outBitsPerChannel, outBufferDuration)
+    {
+    }
+    AudioMixer::~AudioMixer()
+    {
+        
+    }
+    std::shared_ptr<Buffer>
+    AudioMixer::resample(const uint8_t* const buffer, size_t size, AudioBufferMetadata& metadata)
+    {
+        const auto inFrequncyInHz = metadata.getData<kAudioMetadataFrequencyInHz>();
+        const auto inBitsPerChannel = metadata.getData<kAudioMetadataBitsPerChannel>();
+        const auto inChannelCount = metadata.getData<kAudioMetadataChannelCount>();
+        //auto inLoops = metadata.getData<kAudioMetadataLoops>();
+        
+        if(m_outFrequencyInHz == inFrequncyInHz && m_outBitsPerChannel == inBitsPerChannel && m_outChannelCount == inChannelCount)
+        {
+            // No resampling necessary
+            return std::make_shared<Buffer>();
+        }
+        
+        AudioStreamBasicDescription in = {0};
+        AudioStreamBasicDescription out = {0};
+        
+        in.mFormatID = kAudioFormatLinearPCM;
+        in.mFormatFlags = kAudioFormatFlagsCanonical;
+        in.mChannelsPerFrame = inChannelCount;
+        in.mSampleRate = inFrequncyInHz;
+        in.mBitsPerChannel = inBitsPerChannel;
+        in.mBytesPerFrame = (in.mBitsPerChannel * in.mChannelsPerFrame) / 8;
+        in.mFramesPerPacket = 1;
+        in.mBytesPerPacket = in.mBytesPerFrame * in.mFramesPerPacket;
+        
+        out.mFormatID = kAudioFormatLinearPCM;
+        out.mFormatFlags = kAudioFormatFlagsCanonical;
+        out.mChannelsPerFrame = m_outChannelCount;
+        out.mSampleRate = m_outFrequencyInHz;
+        out.mBitsPerChannel = m_outBitsPerChannel;
+        out.mBytesPerFrame = (out.mBitsPerChannel * out.mChannelsPerFrame) / 8;
+        out.mFramesPerPacket = 1;
+        out.mBytesPerPacket = out.mBytesPerFrame * out.mFramesPerPacket;
+        
+        const double inBufferTime = double(size) / (double(in.mBytesPerPacket) * double(in.mSampleRate));
+        const double outBufferSampleCount = inBufferTime * double(m_outFrequencyInHz);
+        const size_t outBufferSize = out.mBytesPerPacket * outBufferSampleCount;
+        const auto outBuffer = std::make_shared<Buffer>(outBufferSize);
+        
+        AudioConverterRef audioConverter;
+        AudioConverterNew(&in, &out, &audioConverter);
+
+        std::unique_ptr<UserData> ud(new UserData());
+        ud->size = size;
+        ud->data = const_cast<uint8_t*>(buffer);
+        ud->p = ud->data;
+        ud->packetSize = in.mBytesPerPacket;
+        ud->numberPackets = ud->size / ud->packetSize;
+        
+        AudioBufferList outBufferList;
+        outBufferList.mNumberBuffers = 1;
+        outBufferList.mBuffers[0].mDataByteSize = outBufferSize;
+        outBufferList.mBuffers[0].mNumberChannels = m_outChannelCount;
+        outBufferList.mBuffers[0].mData = (*outBuffer)();
+        
+        UInt32 sampleCount = outBufferSampleCount;
+        AudioConverterFillComplexBuffer(audioConverter, /* AudioConverterRef inAudioConverter */
+                                                           AudioMixer::ioProc, /* AudioConverterComplexInputDataProc inInputDataProc */
+                                                           ud.get(), /* void *inInputDataProcUserData */
+                                                           &sampleCount, /* UInt32 *ioOutputDataPacketSize */
+                                                           &outBufferList, /* AudioBufferList *outOutputData */
+                                                           NULL /* AudioStreamPacketDescription *outPacketDescription */
+                                                           );
+        
+        AudioConverterDispose(audioConverter);
+        outBuffer->setSize(outBufferList.mBuffers[0].mDataByteSize);
+        return outBuffer;
+    }
+    //http://stackoverflow.com/questions/6610958/os-x-ios-sample-rate-conversion-for-a-buffer-using-audioconverterfillcomplex
+    OSStatus
+    AudioMixer::ioProc(AudioConverterRef audioConverter, UInt32 *ioNumDataPackets, AudioBufferList* ioData, AudioStreamPacketDescription** ioPacketDesc, void* inUserData )
+    {
+        UserData* ud = static_cast<UserData*>(inUserData);
+        
+        UInt32 maxPackets = std::min(ud->numberPackets, *ioNumDataPackets);
+        ud->numberPackets -= maxPackets;
+        *ioNumDataPackets = maxPackets;
+        OSStatus err = noErr;
+        if(maxPackets) {
+            ioData->mBuffers[0].mData = ud->p;
+            ioData->mBuffers[0].mDataByteSize = ud->size - (ud->p-ud->data);
+            ioData->mBuffers[0].mNumberChannels = 2;
+            ud->p += maxPackets * ud->packetSize;
+        } else {
+            err = -50;
+        }
+        return err;
+    }
+}
+}

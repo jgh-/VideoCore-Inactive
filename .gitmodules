@@ -1,0 +1,3 @@
+[submodule "lib/include/UriParser"]
+	path = lib/include/UriParser
+	url = https://github.com/CovenantEyes/uri-parser.git
