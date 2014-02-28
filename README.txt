@@ -8,6 +8,10 @@ git clone git@github.com:jamesghurley/VideoCore.git
 git submodule init
 git submodule update
 
+Find an example of setting up a transform graph at 
+
+https://github.com/jamesghurley/mobcrush/blob/master/MobcrushSession.cpp
+
 LICENSING
 
 VideoCore library is licensed under LGPL 2.1.  I would like to make it clear 
