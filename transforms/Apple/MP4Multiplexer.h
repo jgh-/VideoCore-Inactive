@@ -18,8 +18,10 @@ namespace videocore { namespace apple {
     enum {
         kMP4SessionFilename=0,
         kMP4SessionFPS,
+        kMP4SessionWidth,
+        kMP4SessionHeight
     };
-    typedef MetaData<'mp4 ', std::string, int> MP4SessionParameters_t;
+    typedef MetaData<'mp4 ', std::string, int, int, int> MP4SessionParameters_t;
     
     class MP4Multiplexer : public IOutputSession
     {
@@ -42,7 +44,7 @@ namespace videocore { namespace apple {
         void*       m_videoInput;
         void*       m_audioInput;
     
-        void*       m_avcC;
+        void*       m_videoFormat;
         
         std::vector<uint8_t> m_sps;
         std::vector<uint8_t> m_pps;
@@ -51,6 +53,9 @@ namespace videocore { namespace apple {
             
         std::string m_filename;
         int m_fps;
+        int m_width;
+        int m_height;
+        int m_framecount;
     };
     
 }
