@@ -223,13 +223,8 @@ namespace videocore { namespace iOS {
         bool refreshTexture = false;
         CVPixelBufferRef refreshRef = NULL;
         auto pbit = m_sourceBuffers.find(h);
-        if(pbit != m_sourceBuffers.end()) {
-            
-            if (pbit->second != inPixelBuffer) {
-                refreshRef = CVPixelBufferRetain(inPixelBuffer);
-                refreshTexture = true;
-            }
-        } else {
+        
+        if(pbit == m_sourceBuffers.end() || pbit->second != inPixelBuffer) {
             refreshRef = CVPixelBufferRetain(inPixelBuffer);
             refreshTexture = true;
         }
