@@ -24,7 +24,6 @@
 #include <dlfcn.h>
 #include <videocore/mixers/IAudioMixer.hpp>
 
-extern void *(*g_dls)(void*, const char*);
 
 static void (*s_interruptionListenerCallback)(void*,UInt32) = NULL;
 
@@ -50,7 +49,7 @@ extern "C" {
         typedef OSStatus (*asiOrig_t)(CFRunLoopRef,CFStringRef,AudioSessionInterruptionListener,void*) ;
         
         static asiOrig_t s_asiOrig = NULL;
-        if(!s_asiOrig) s_asiOrig = (asiOrig_t)g_dls(RTLD_NEXT, "AudioSessionInitialize");
+        if(!s_asiOrig) s_asiOrig = (asiOrig_t)dlsym(RTLD_NEXT, "AudioSessionInitialize");
         
         if(inInterruptionListener != interruptionListenerCallback) {
             s_interruptionListenerCallback = inInterruptionListener;
