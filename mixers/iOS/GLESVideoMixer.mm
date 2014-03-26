@@ -42,7 +42,9 @@
 #define PERF_GL(x, dispatch) do {\
                                 m_glJobQueue.dispatch([=](){\
                                     EAGLContext* cur = [EAGLContext currentContext];\
-                                    [EAGLContext setCurrentContext:(EAGLContext*)m_glesCtx];\
+                                    if(m_glesCtx) {\
+                                        [EAGLContext setCurrentContext:(EAGLContext*)m_glesCtx];\
+                                    }\
                                     x ;\
                                     [EAGLContext setCurrentContext:cur];\
                                 });\
@@ -55,76 +57,19 @@
 namespace videocore { namespace iOS {
  
     GLESVideoMixer::GLESVideoMixer( int frame_w, int frame_h, double frameDuration )
-    : m_frameW(frame_w), m_frameH(frame_h), m_bufferDuration(frameDuration), m_exiting(false)
+    : m_frameW(frame_w), m_frameH(frame_h), m_bufferDuration(frameDuration), m_exiting(false), m_glesCtx(nullptr)
     {
-        if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
-            m_glesCtx = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
-        }
-        if(!m_glesCtx) {
-            m_glesCtx = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
-        }
-        GLESSource::excludeFromCapture(m_glesCtx);
-        
-        NSDictionary* options = @{  (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
-            (NSString*) kCVPixelBufferWidthKey : @(frame_w),
-            (NSString*) kCVPixelBufferHeightKey : @(frame_h),
-            (NSString*) kCVPixelBufferOpenGLESCompatibilityKey : @YES,
-            (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}};
-        CVPixelBufferCreate(kCFAllocatorDefault, frame_w, frame_h, kCVPixelFormatType_32BGRA, (CFDictionaryRef)options, &m_pixelBuffer[0]);
-        CVPixelBufferCreate(kCFAllocatorDefault, frame_w, frame_h, kCVPixelFormatType_32BGRA, (CFDictionaryRef)options, &m_pixelBuffer[1]);
-        
-
         m_glJobQueue.set_name("com.videocore.composite");
+
+        
         PERF_GL_sync({
             
-            CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, (EAGLContext*)this->m_glesCtx, NULL, &this->m_textureCache);
-            glGenFramebuffers(2, this->m_fbo);
-            for(int i = 0 ; i < 2 ; ++i) {
-                CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, this->m_textureCache, this->m_pixelBuffer[i], NULL, GL_TEXTURE_2D, GL_RGBA, frame_w, frame_h, GL_BGRA, GL_UNSIGNED_BYTE, 0, &this->m_texture[i]);
+            this->setupGLES();
             
-                this->m_prog = build_program(s_vs_mat, s_fs);
-            
-                glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(this->m_texture[i]));
-                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[i]);
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, CVOpenGLESTextureGetName(this->m_texture[i]), 0);
-
-            }
-            
-            GL_FRAMEBUFFER_STATUS(__LINE__);
-            
-            glGenBuffers(1, &this->m_vbo);
-            glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(s_vbo), s_vbo, GL_STATIC_DRAW);
-            
-            glUseProgram(this->m_prog);
-            glGenVertexArraysOES(1, &this->m_vao);
-            glBindVertexArrayOES(this->m_vao);
-            
-            this->m_uMat = glGetUniformLocation(this->m_prog, "uMat");
-            
-            int attrpos = glGetAttribLocation(this->m_prog, "aPos");
-            int attrtex = glGetAttribLocation(this->m_prog, "aCoord");
-            int unitex = glGetUniformLocation(this->m_prog, "uTex0");
-            glUniform1i(unitex, 0);
-            glEnableVertexAttribArray(attrpos);
-            glEnableVertexAttribArray(attrtex);
-            glVertexAttribPointer(attrpos, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, BUFFER_OFFSET(0));
-            glVertexAttribPointer(attrtex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, BUFFER_OFFSET(8));
-            glDisable(GL_BLEND);
-            glDisable(GL_DEPTH_TEST);
-            glDisable(GL_SCISSOR_TEST);
-            glViewport(0, 0, frame_w, frame_h);
-            glClearColor(0.05,0.05,0.07,1.0);
-
-    });
-    m_mixThread = std::thread([this](){ this->mixThread(); });
+        });
+        
+        m_mixThread = std::thread([this](){ this->mixThread(); });
     
-        
-        
     }
     
     GLESVideoMixer::~GLESVideoMixer()
@@ -147,6 +92,76 @@ namespace videocore { namespace iOS {
         CVPixelBufferRelease(m_pixelBuffer[0]);
         CVPixelBufferRelease(m_pixelBuffer[1]);
         [(id)m_glesCtx release];
+    }
+    void
+    GLESVideoMixer::setupGLES()
+    {
+        if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
+            m_glesCtx = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
+        }
+        if(!m_glesCtx) {
+            m_glesCtx = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+        }
+        if(!m_glesCtx) {
+            std::cerr << "Error! Unable to create an OpenGL ES 2.0 or 3.0 Context!" << std::endl;
+            return;
+        }
+        [EAGLContext setCurrentContext:nil];
+        [EAGLContext setCurrentContext:(EAGLContext*)m_glesCtx];
+        GLESSource::excludeFromCapture(m_glesCtx);
+        
+        NSDictionary* pixelBufferOptions = @{  (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
+                                               (NSString*) kCVPixelBufferWidthKey : @(m_frameW),
+                                               (NSString*) kCVPixelBufferHeightKey : @(m_frameH),
+                                               (NSString*) kCVPixelBufferOpenGLESCompatibilityKey : @YES,
+                                               (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}};
+        
+        CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[0]);
+        CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[1]);
+        
+        CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, (EAGLContext*)this->m_glesCtx, NULL, &this->m_textureCache);
+        glGenFramebuffers(2, this->m_fbo);
+        for(int i = 0 ; i < 2 ; ++i) {
+            CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, this->m_textureCache, this->m_pixelBuffer[i], NULL, GL_TEXTURE_2D, GL_RGBA, m_frameW, m_frameH, GL_BGRA, GL_UNSIGNED_BYTE, 0, &m_texture[i]);
+            
+            this->m_prog = build_program(s_vs_mat, s_fs);
+            
+            glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_texture[i]));
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[i]);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_texture[i]), 0);
+            
+        }
+        
+        GL_FRAMEBUFFER_STATUS(__LINE__);
+        
+        glGenBuffers(1, &this->m_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(s_vbo), s_vbo, GL_STATIC_DRAW);
+        
+        glUseProgram(this->m_prog);
+        glGenVertexArraysOES(1, &this->m_vao);
+        glBindVertexArrayOES(this->m_vao);
+        
+        this->m_uMat = glGetUniformLocation(this->m_prog, "uMat");
+        
+        int attrpos = glGetAttribLocation(this->m_prog, "aPos");
+        int attrtex = glGetAttribLocation(this->m_prog, "aCoord");
+        int unitex = glGetUniformLocation(this->m_prog, "uTex0");
+        glUniform1i(unitex, 0);
+        glEnableVertexAttribArray(attrpos);
+        glEnableVertexAttribArray(attrtex);
+        glVertexAttribPointer(attrpos, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, BUFFER_OFFSET(0));
+        glVertexAttribPointer(attrtex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, BUFFER_OFFSET(8));
+        glDisable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_SCISSOR_TEST);
+        glViewport(0, 0, m_frameW,m_frameH);
+        glClearColor(0.05,0.05,0.07,1.0);
+
     }
     void
     GLESVideoMixer::registerSource(std::shared_ptr<ISource> source, size_t bufferSize)

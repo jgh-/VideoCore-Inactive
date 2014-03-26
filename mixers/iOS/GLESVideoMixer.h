@@ -60,7 +60,7 @@ namespace videocore { namespace iOS {
         const std::size_t hash(std::weak_ptr<ISource> source) const;
         void releaseBuffer(std::weak_ptr<ISource> source);
         void mixThread();
-        
+        void setupGLES();
     private:
         
         JobQueue m_glJobQueue;
