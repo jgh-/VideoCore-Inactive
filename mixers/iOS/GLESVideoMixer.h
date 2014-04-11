@@ -46,7 +46,7 @@ namespace videocore { namespace iOS {
     {
       
     public:
-        GLESVideoMixer( int frame_w, int frame_h, double frameDuration);
+        GLESVideoMixer( int frame_w, int frame_h, double frameDuration, std::function<void(void*)> excludeContext);
         ~GLESVideoMixer();
         
         void registerSource(std::shared_ptr<ISource> source, size_t bufferSize = 0)  ;
@@ -60,7 +60,7 @@ namespace videocore { namespace iOS {
         const std::size_t hash(std::weak_ptr<ISource> source) const;
         void releaseBuffer(std::weak_ptr<ISource> source);
         void mixThread();
-        void setupGLES();
+        void setupGLES(std::function<void(void*)> excludeContext);
     private:
         
         JobQueue m_glJobQueue;

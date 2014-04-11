@@ -35,7 +35,7 @@ namespace videocore { namespace iOS {
     {
     public:
         
-        MicSource();
+        MicSource(std::function<void(AudioUnit&)> excludeAudioUnit);
         ~MicSource();
         
         

@@ -20,7 +20,6 @@
  
  */
 #include "MicSource.h"
-#include <videocore/sources/iOS/AudioUnitSource.h>
 #include <dlfcn.h>
 #include <videocore/mixers/IAudioMixer.hpp>
 
@@ -85,7 +84,7 @@ static OSStatus handleInputBuffer(void *inRefCon, AudioUnitRenderActionFlags *io
 
 namespace videocore { namespace iOS {
  
-    MicSource::MicSource() {
+    MicSource::MicSource(std::function<void(AudioUnit&)> excludeAudioUnit) {
         
         if(!s_audioSessionInitialized) {
             AudioSessionInitialize(NULL, NULL, interruptionListenerCallback, NULL);
@@ -109,8 +108,9 @@ namespace videocore { namespace iOS {
         
         AudioComponentInstanceNew(m_component, &m_audioUnit);
 
-        excludeAudioUnit(m_audioUnit);
-        
+        if(excludeAudioUnit) {
+            excludeAudioUnit(m_audioUnit);
+        }
         UInt32 flagOne = 1;
         
         AudioUnitSetProperty(m_audioUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input, 1, &flagOne, sizeof(flagOne));

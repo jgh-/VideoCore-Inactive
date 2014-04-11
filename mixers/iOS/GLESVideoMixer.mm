@@ -30,7 +30,7 @@
 #import <OpenGLES/ES2/glext.h>
 #import <OpenGLES/ES3/gl.h>
 #import <UIKit/UIKit.h>
-#include <videocore/sources/iOS/GLESSource.h>
+
 #include <CoreVideo/CoreVideo.h>
 
 
@@ -56,7 +56,7 @@
 
 namespace videocore { namespace iOS {
  
-    GLESVideoMixer::GLESVideoMixer( int frame_w, int frame_h, double frameDuration )
+    GLESVideoMixer::GLESVideoMixer( int frame_w, int frame_h, double frameDuration, std::function<void(void*)> excludeContext )
     : m_frameW(frame_w), m_frameH(frame_h), m_bufferDuration(frameDuration), m_exiting(false), m_glesCtx(nullptr)
     {
         m_glJobQueue.set_name("com.videocore.composite");
@@ -64,7 +64,7 @@ namespace videocore { namespace iOS {
         
         PERF_GL_sync({
             
-            this->setupGLES();
+            this->setupGLES(excludeContext);
             
         });
         
@@ -94,7 +94,7 @@ namespace videocore { namespace iOS {
         [(id)m_glesCtx release];
     }
     void
-    GLESVideoMixer::setupGLES()
+    GLESVideoMixer::setupGLES(std::function<void(void*)> excludeContext)
     {
         if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
             m_glesCtx = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
@@ -108,7 +108,9 @@ namespace videocore { namespace iOS {
         }
         [EAGLContext setCurrentContext:nil];
         [EAGLContext setCurrentContext:(EAGLContext*)m_glesCtx];
-        GLESSource::excludeFromCapture(m_glesCtx);
+        if(excludeContext) {
+            excludeContext(m_glesCtx);
+        }
         
         NSDictionary* pixelBufferOptions = @{  (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
                                                (NSString*) kCVPixelBufferWidthKey : @(m_frameW),
