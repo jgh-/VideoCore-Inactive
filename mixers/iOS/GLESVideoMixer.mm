@@ -57,7 +57,7 @@
 namespace videocore { namespace iOS {
  
     GLESVideoMixer::GLESVideoMixer( int frame_w, int frame_h, double frameDuration, std::function<void(void*)> excludeContext )
-    : m_frameW(frame_w), m_frameH(frame_h), m_bufferDuration(frameDuration), m_exiting(false), m_glesCtx(nullptr)
+    : m_bufferDuration(frameDuration),m_glesCtx(nullptr), m_frameW(frame_w), m_frameH(frame_h),  m_exiting(false)
     {
         m_glJobQueue.set_name("com.videocore.composite");
 
@@ -273,8 +273,8 @@ namespace videocore { namespace iOS {
                                                                                 NULL,
                                                                                 GL_TEXTURE_2D,
                                                                                 is32bit ? GL_RGBA : GL_RGB,
-                                                                                CVPixelBufferGetWidth(pixelBuffer),
-                                                                                CVPixelBufferGetHeight(pixelBuffer),
+                                                                                (GLsizei)CVPixelBufferGetWidth(pixelBuffer),
+                                                                                (GLsizei)CVPixelBufferGetHeight(pixelBuffer),
                                                                                 is32bit ? GL_BGRA : GL_RGB,
                                                                                 is32bit ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_5_6_5,
                                                                                 0,

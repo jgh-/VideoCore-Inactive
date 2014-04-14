@@ -77,7 +77,6 @@ namespace videocore { namespace iOS {
         long                   m_lastFilePos;
         
         uint32_t               m_frameCount;
-        uint32_t               m_frameTotal;
         
         int                    m_frameW;
         int                    m_frameH;

@@ -24,7 +24,7 @@
 namespace videocore { namespace h264 {
  
     GolombDecode::GolombDecode(const WORD* inBitstream)
-    : m_bitstream(inBitstream), m_leftBit(kBufWidth), m_pCurrentPosition(const_cast<WORD*>(inBitstream)), m_bitsRead(0), m_lastBitsRead(0)
+    :   m_pCurrentPosition(const_cast<WORD*>(inBitstream)), m_leftBit(kBufWidth),  m_bitsRead(0), m_lastBitsRead(0)
     {
         
     }
@@ -48,7 +48,7 @@ namespace videocore { namespace h264 {
             bytes <<= bitCount;
            
         } else {
-            int remain = bitCount - m_leftBit;
+            unsigned long remain = bitCount - m_leftBit;
             val = (bytes >> (bufWidth - m_leftBit)) << remain;
             bytes = *(++m_pCurrentPosition);
             val |= (bytes >> (bufWidth - remain));
@@ -86,7 +86,7 @@ namespace videocore { namespace h264 {
         {
             int number_of_bits;
             bytes = *(++m_pCurrentPosition);
-            number_of_bits = __builtin_clz(bytes) + m_leftBit;
+            number_of_bits = __builtin_clz(bytes) +static_cast<unsigned>( m_leftBit );
             m_leftBit = bufWidth;
             ret = getBits(number_of_bits*2+1);
             ret--;

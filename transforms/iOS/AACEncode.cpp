@@ -24,6 +24,7 @@
 
 extern std::string g_tmpFolder;
 
+/*
 static inline void make_ADTS(char buffer[7], size_t frameLength) {
     
     int totalSize = (7+frameLength) & 0x3FFF;
@@ -42,7 +43,7 @@ static inline void make_ADTS(char buffer[7], size_t frameLength) {
 static inline void make_ASC(char buffer[2], size_t frameLength) {
     buffer[0] = (0x1 << 3) | (0x4 & 0xF) >> 1;
     buffer[1] = 0x10 ;
-}
+}*/
 
 namespace videocore { namespace iOS {
  
@@ -54,7 +55,8 @@ namespace videocore { namespace iOS {
         
     } ;
     
-    AACEncode::AACEncode( int frequencyInHz, int channelCount ) : m_sentHeader(false) {
+    AACEncode::AACEncode( int frequencyInHz, int channelCount )
+    {
 
         AudioStreamBasicDescription in = {0}, out = {0};
         
@@ -123,7 +125,7 @@ namespace videocore { namespace iOS {
         
         
         //for ( size_t i = 0 ; i < aac_packet_count ; ++i ) {
-            UInt32 num_packets = aac_packet_count;
+            UInt32 num_packets = static_cast<UInt32>(aac_packet_count);
 
             AudioBufferList l;
             l.mNumberBuffers=1;
@@ -131,9 +133,9 @@ namespace videocore { namespace iOS {
             l.mBuffers[0].mData = p;
             
             std::unique_ptr<UserData> ud(new UserData());
-            ud->size = 1024 * m_bytesPerSample * aac_packet_count;
+            ud->size = static_cast<int>(1024 * m_bytesPerSample * aac_packet_count);
             ud->data = const_cast<uint8_t*>(data);
-            ud->packetSize = m_bytesPerSample;
+            ud->packetSize = static_cast<int>(m_bytesPerSample);
             
             AudioStreamPacketDescription output_packet_desc[num_packets];
             

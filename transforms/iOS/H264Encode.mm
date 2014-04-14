@@ -30,7 +30,7 @@
 namespace videocore { namespace iOS {
     
     H264Encode::H264Encode( int frame_w, int frame_h, int fps, int bitrate )
-    : m_frameW(frame_w), m_frameH(frame_h), m_fps(fps), m_bitrate(bitrate), m_currentWriter(0), m_frameCount(0), m_frameTotal(0), m_lastFilePos(0)
+    : m_lastFilePos(0), m_frameCount(0), m_frameW(frame_w), m_frameH(frame_h), m_fps(fps),  m_bitrate(bitrate), m_currentWriter(0)
     {
         m_tmpFile[0] = [[NSTemporaryDirectory() stringByAppendingString:@"tmp1.mov"] UTF8String];
         m_tmpFile[1] = [[NSTemporaryDirectory() stringByAppendingString:@"tmp2.mov"] UTF8String];
@@ -312,8 +312,8 @@ namespace videocore { namespace iOS {
             
             if(s.st_size > m_lastFilePos && (fp = fopen(file, "rb"))) {
                 
-                long pos = s.st_size;
-                long len = (long)std::max((pos - m_lastFilePos),0L);
+                off_t pos = s.st_size;
+                off_t len = (off_t)std::max((pos - m_lastFilePos),off_t(0));
                 
                 fseek(fp, m_lastFilePos, SEEK_SET);
                 
@@ -322,7 +322,7 @@ namespace videocore { namespace iOS {
                     
                     std::unique_ptr<uint8_t[]> data(new uint8_t[len]);
                     
-                    fread(data.get(), len, 1, fp);
+                    fread(data.get(), static_cast<size_t>(len), 1, fp);
                     uint8_t* p = data.get();
                     while(read < len) {
                         

@@ -86,7 +86,7 @@ namespace videocore { namespace Apple {
         AudioConverterNew(&in, &out, &audioConverter);
 
         std::unique_ptr<UserData> ud(new UserData());
-        ud->size = size;
+        ud->size = static_cast<int>(size);
         ud->data = const_cast<uint8_t*>(buffer);
         ud->p = ud->data;
         ud->packetSize = in.mBytesPerPacket;
@@ -94,7 +94,7 @@ namespace videocore { namespace Apple {
         
         AudioBufferList outBufferList;
         outBufferList.mNumberBuffers = 1;
-        outBufferList.mBuffers[0].mDataByteSize = outBufferSize;
+        outBufferList.mBuffers[0].mDataByteSize = static_cast<UInt32>(outBufferSize);
         outBufferList.mBuffers[0].mNumberChannels = m_outChannelCount;
         outBufferList.mBuffers[0].mData = (*outBuffer)();
         
@@ -123,7 +123,7 @@ namespace videocore { namespace Apple {
         OSStatus err = noErr;
         if(maxPackets) {
             ioData->mBuffers[0].mData = ud->p;
-            ioData->mBuffers[0].mDataByteSize = ud->size - (ud->p-ud->data);
+            ioData->mBuffers[0].mDataByteSize = static_cast<UInt32>(ud->size - (ud->p-ud->data));
             ioData->mBuffers[0].mNumberChannels = 2;
             ud->p += maxPackets * ud->packetSize;
         } else {

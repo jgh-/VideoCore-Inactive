@@ -60,7 +60,7 @@ extern std::string g_tmpFolder;
 
 namespace videocore {
     GenericAudioMixer::GenericAudioMixer(int outChannelCount, int outFrequencyInHz, int outBitsPerChannel, double outBufferDuration)
-    : m_outChannelCount(2), m_outFrequencyInHz(outFrequencyInHz), m_outBitsPerChannel(16), m_bufferDuration(outBufferDuration), m_exiting(false)
+    : m_bufferDuration(outBufferDuration), m_outChannelCount(2), m_outFrequencyInHz(outFrequencyInHz), m_outBitsPerChannel(16),  m_exiting(false)
     {
         m_bytesPerSample = outChannelCount * outBitsPerChannel / 8;
         

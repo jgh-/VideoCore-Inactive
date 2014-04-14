@@ -86,7 +86,7 @@ namespace videocore { namespace rtmp {
             //printf("AAC(%d) (target %llu) (diff %llu avg %llu : %llu)\n", ts,(uint64_t)(micros / 1000), m_micros, total / count, total);
             
             prev_time = now;
-            outMeta.setData(ts, outBuffer.size(), FLV_TAG_TYPE_AUDIO, kAudioChannelStreamId);
+            outMeta.setData(ts, static_cast<int>(outBuffer.size()), FLV_TAG_TYPE_AUDIO, kAudioChannelStreamId);
             
             output->pushBuffer(&outBuffer[0], outBuffer.size(), outMeta);
         }

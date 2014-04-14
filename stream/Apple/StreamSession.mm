@@ -38,7 +38,7 @@
 
 - (void) stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode
 {
-    self.session->nsStreamCallback(aStream, eventCode);
+    self.session->nsStreamCallback(aStream,static_cast<unsigned>( eventCode ));
 }
 
 @end

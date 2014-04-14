@@ -46,7 +46,7 @@ namespace videocore { namespace h264 {
         const size_t lastBitsRead() const { return m_lastBitsRead; };
     private:
         
-        const WORD*   m_bitstream;
+        
         WORD*         m_pCurrentPosition;
         
         size_t        m_leftBit;

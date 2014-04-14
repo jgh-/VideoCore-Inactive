@@ -56,7 +56,6 @@ namespace videocore { namespace iOS {
         
         Buffer                  m_outputBuffer;
         
-        bool                    m_sentHeader;
     };
     
 }

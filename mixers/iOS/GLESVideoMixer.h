@@ -73,7 +73,7 @@ namespace videocore { namespace iOS {
         std::thread m_mixThread;
         std::mutex  m_mutex;
         std::condition_variable m_mixThreadCond;
-        std::atomic<bool> m_exiting;
+        
         
         CVPixelBufferRef m_pixelBuffer[2];
         CVOpenGLESTextureCacheRef m_textureCache;
@@ -92,6 +92,7 @@ namespace videocore { namespace iOS {
         std::map< std::size_t, CVPixelBufferRef >   m_sourceBuffers;
         std::map< std::size_t, CVOpenGLESTextureRef > m_sourceTextures;
         std::map< std::size_t, SourceProperties >    m_sourceProperties;
+        std::atomic<bool> m_exiting;
     };
     
 }

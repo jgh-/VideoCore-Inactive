@@ -35,9 +35,9 @@
 namespace videocore {
     
     struct Job {
-        Job(std::function<void()> job) : m_job(job), m_dispatchDate(std::chrono::steady_clock::now()), m_isSynchronous(false) {} ;
+        Job(std::function<void()> job) : m_isSynchronous(false) , m_job(job), m_dispatchDate(std::chrono::steady_clock::now()) {} ;
         
-        Job(std::function<void()> job, std::chrono::steady_clock::time_point dispatch_date) : m_job(job), m_dispatchDate(dispatch_date), m_isSynchronous(false) {};
+        Job(std::function<void()> job, std::chrono::steady_clock::time_point dispatch_date) : m_isSynchronous(false), m_job(job), m_dispatchDate(dispatch_date)  {};
     
         void operator ()() const { m_job(); };
         
@@ -46,9 +46,10 @@ namespace videocore {
         bool m_isSynchronous;
         
     private:
+        std::function<void()> m_job;
         std::chrono::steady_clock::time_point m_dispatchDate;
         
-        std::function<void()> m_job;
+
     };
     class JobQueue
     {

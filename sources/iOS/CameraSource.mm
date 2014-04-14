@@ -59,7 +59,7 @@
 namespace videocore { namespace iOS {
     
     CameraSource::CameraSource(float x, float y, float w, float h, float aspect)
-    : m_captureDevice(NULL), m_size({x,y,w,h,aspect}), m_isFirst(true)
+    : m_size({x,y,w,h,aspect}), m_captureDevice(NULL),  m_isFirst(true)
     {
         setupCamera();
     }

@@ -33,7 +33,7 @@
 namespace videocore
 {
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback_t callback)
-    : m_uri(http::ParseHttpUrl(uri)), m_streamOutRemainder(65536), m_currentChunkSize(128), m_streamId(0), m_callback(callback), m_streamInBuffer(new RingBuffer(4096)), m_numberOfInvokes(0), m_previousTimestamp(0), m_state(kClientStateNone)
+    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback),  m_previousTimestamp(0), m_currentChunkSize(128), m_streamId(0),  m_numberOfInvokes(0), m_state(kClientStateNone)
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
@@ -64,7 +64,7 @@ namespace videocore
         
         m_jobQueue.set_name("com.videocore.rtmp");
         
-        m_streamSession->connect(m_uri.host, port, [&](IStreamSession& session, StreamStatus_t status) {
+        m_streamSession->connect(m_uri.host, static_cast<int>(port), [&](IStreamSession& session, StreamStatus_t status) {
             streamStatusChanged(status);
         });
         
@@ -111,7 +111,7 @@ namespace videocore
             m_previousTimestamp = ts;
             const int streamId = inMetadata.getData<kRTMPMetadataMsgStreamId>();
             put_byte(chunk, ( streamId & 0x1F));
-            put_be24(chunk, ts);
+            put_be24(chunk, static_cast<uint32_t>(ts));
             put_be24(chunk, inMetadata.getData<kRTMPMetadataMsgLength>());
             put_byte(chunk, inMetadata.getData<kRTMPMetadataMsgTypeId>());
             put_buff(chunk, (uint8_t*)&m_streamId, sizeof(int32_t)); // msg stream id is little-endian
@@ -130,7 +130,7 @@ namespace videocore
                 outb.insert(outb.end(), p-1, p+tosend);
                 p+=tosend;
                 len-=tosend;
-                if(outb.size() > 3072) {
+                if(outb.size() > 1400) {
 
                     this->write(&outb[0], outb.size());
                     outb.clear();
@@ -349,7 +349,7 @@ namespace videocore
     void
     RTMPSession::sendConnectPacket()
     {
-        RTMPChunk_0 metadata = {0};
+        RTMPChunk_0 metadata = {{0}};
         metadata.msg_stream_id = kControlChannelStreamId;
         metadata.msg_type_id = FLV_TAG_TYPE_INVOKE;
         std::vector<uint8_t> buff;
@@ -373,13 +373,13 @@ namespace videocore
         put_be16(buff, 0);
         put_byte(buff, kAMFObjectEnd);
         
-        metadata.msg_length.data = buff.size();
+        metadata.msg_length.data = static_cast<int>( buff.size() );
         sendPacket(&buff[0], buff.size(), metadata);
     }
     void
     RTMPSession::sendReleaseStream()
     {
-        RTMPChunk_0 metadata = {0};
+        RTMPChunk_0 metadata = {{0}};
         metadata.msg_stream_id = kControlChannelStreamId;
         metadata.msg_type_id = FLV_TAG_TYPE_INVOKE;
         std::vector<uint8_t> buff;
@@ -387,14 +387,14 @@ namespace videocore
         put_double(buff, ++m_numberOfInvokes);
         put_byte(buff, kAMFNull);
         put_string(buff, m_playPath);
-        metadata.msg_length.data = buff.size();
+        metadata.msg_length.data = static_cast<int> (buff.size());
         
         sendPacket(&buff[0], buff.size(), metadata);
     }
     void
     RTMPSession::sendFCPublish()
     {
-        RTMPChunk_0 metadata = {0};
+        RTMPChunk_0 metadata = {{0}};
         metadata.msg_stream_id = kControlChannelStreamId;
         metadata.msg_type_id = FLV_TAG_TYPE_INVOKE;
         std::vector<uint8_t> buff;
@@ -402,28 +402,28 @@ namespace videocore
         put_double(buff, ++m_numberOfInvokes);
         put_byte(buff, kAMFNull);
         put_string(buff, m_playPath);
-        metadata.msg_length.data = buff.size();
+        metadata.msg_length.data = static_cast<int>( buff.size() );
         
         sendPacket(&buff[0], buff.size(), metadata);
     }
     void
     RTMPSession::sendCreateStream()
     {
-        RTMPChunk_0 metadata = {0};
+        RTMPChunk_0 metadata = {{0}};
         metadata.msg_stream_id = kControlChannelStreamId;
         metadata.msg_type_id = FLV_TAG_TYPE_INVOKE;
         std::vector<uint8_t> buff;
         put_string(buff, "createStream");
         put_double(buff, ++m_numberOfInvokes);
         put_byte(buff, kAMFNull);
-        metadata.msg_length.data = buff.size();
+        metadata.msg_length.data = static_cast<int>( buff.size() );
         
         sendPacket(&buff[0], buff.size(), metadata);
     }
     void
     RTMPSession::sendPublish()
     {
-        RTMPChunk_0 metadata = {0};
+        RTMPChunk_0 metadata = {{0}};
         metadata.msg_stream_id = kAudioChannelStreamId;
         metadata.msg_type_id = FLV_TAG_TYPE_INVOKE;
         std::vector<uint8_t> buff;
@@ -434,7 +434,7 @@ namespace videocore
         put_byte(buff, kAMFNull);
         put_string(buff, m_playPath);
         put_string(buff, "live");
-        metadata.msg_length.data = buff.size();
+        metadata.msg_length.data = static_cast<int>( buff.size() );
         
         sendPacket(&buff[0], buff.size(), metadata);
     }
@@ -444,7 +444,7 @@ namespace videocore
         std::vector<uint8_t> outBuffer;
         
         std::vector<uint8_t> enc;
-        RTMPChunk_0 metadata = {0};
+        RTMPChunk_0 metadata = {{0}};
 
         put_string(enc, "@setDataFrame");
         put_string(enc, "onMetaData");
@@ -469,7 +469,7 @@ namespace videocore
         put_named_double(enc, "filesize", 0.);
         put_be16(enc, 0);
         put_byte(enc, kAMFObjectEnd);
-        int len = enc.size();
+        size_t len = enc.size();
         
 
         put_buff(outBuffer, (uint8_t*)&enc[0], static_cast<size_t>(len));
@@ -477,7 +477,7 @@ namespace videocore
         
         metadata.msg_type_id = FLV_TAG_TYPE_META;
         metadata.msg_stream_id = kAudioChannelStreamId;
-        metadata.msg_length.data = outBuffer.size();
+        metadata.msg_length.data = static_cast<int>( outBuffer.size() );
         metadata.timestamp.data = 0;
         
         sendPacket(&outBuffer[0], outBuffer.size(), metadata);
@@ -486,7 +486,7 @@ namespace videocore
     void
     RTMPSession::sendDeleteStream()
     {
-        RTMPChunk_0 metadata = {0};
+        RTMPChunk_0 metadata = {{0}};
         metadata.msg_stream_id = kControlChannelStreamId;
         metadata.msg_type_id = FLV_TAG_TYPE_INVOKE;
         std::vector<uint8_t> buff;
@@ -495,7 +495,7 @@ namespace videocore
         put_byte(buff, kAMFNull);
         put_double(buff, m_streamId);
         
-        metadata.msg_length.data = buff.size();
+        metadata.msg_length.data = static_cast<int>( buff.size() );
         
         sendPacket(&buff[0], buff.size(), metadata);
 
