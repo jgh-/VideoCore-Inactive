@@ -122,10 +122,10 @@ namespace videocore { namespace iOS {
             m_outputBuffer.resize(required_bytes);
         }
         uint8_t* p = m_outputBuffer();
+        uint8_t* p_out = (uint8_t*)data;
         
-        
-        //for ( size_t i = 0 ; i < aac_packet_count ; ++i ) {
-            UInt32 num_packets = static_cast<UInt32>(aac_packet_count);
+        for ( size_t i = 0 ; i < aac_packet_count ; ++i ) {
+            UInt32 num_packets = 1;
 
             AudioBufferList l;
             l.mNumberBuffers=1;
@@ -133,22 +133,19 @@ namespace videocore { namespace iOS {
             l.mBuffers[0].mData = p;
             
             std::unique_ptr<UserData> ud(new UserData());
-            ud->size = static_cast<int>(1024 * m_bytesPerSample * aac_packet_count);
-            ud->data = const_cast<uint8_t*>(data);
+            ud->size = static_cast<int>(1024 * m_bytesPerSample);
+            ud->data = const_cast<uint8_t*>(p_out);
             ud->packetSize = static_cast<int>(m_bytesPerSample);
             
             AudioStreamPacketDescription output_packet_desc[num_packets];
             
             AudioConverterFillComplexBuffer(m_audioConverter, AACEncode::ioProc, ud.get(), &num_packets, &l, output_packet_desc);
             
-            //p += output_packet_desc[0].mDataByteSize;
-
-        //}
-        //const size_t totalBytes = p - m_outputBuffer();
-        size_t totalBytes = 0;
-        for (size_t i = 0 ; i < aac_packet_count ; ++i ) {
-            totalBytes += output_packet_desc[i].mDataByteSize;
+            p += output_packet_desc[0].mDataByteSize;
+            p_out += 1024 * m_bytesPerSample;
         }
+        const size_t totalBytes = p - m_outputBuffer();
+
         auto output = m_output.lock();
         if(output) {
             

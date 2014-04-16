@@ -106,7 +106,7 @@ namespace videocore
             buf->read(&p, buf->size());
             uint64_t ts = inMetadata.getData<kRTMPMetadataTimestamp>();
             
-            if(ts < m_previousTimestamp) { ts = m_previousTimestamp; };
+            //if(ts < m_previousTimestamp) { ts = m_previousTimestamp; };
             
             m_previousTimestamp = ts;
             const int streamId = inMetadata.getData<kRTMPMetadataMsgStreamId>();
@@ -130,7 +130,7 @@ namespace videocore
                 outb.insert(outb.end(), p-1, p+tosend);
                 p+=tosend;
                 len-=tosend;
-                if(outb.size() > 1400) {
+                if(outb.size() > 3072) {
 
                     this->write(&outb[0], outb.size());
                     outb.clear();

@@ -39,15 +39,20 @@ namespace videocore { namespace rtmp {
         const uint64_t bufferDuration(metadata.timestampDelta * 1000000.);
         const double nowmicros (std::chrono::duration_cast<std::chrono::microseconds>(now - m_epoch).count());
         
-        const auto micros = std::nearbyint(nowmicros / double(bufferDuration)) * bufferDuration;
+        
+        const auto micros = std::floor(nowmicros / double(bufferDuration)) * bufferDuration;
         
         std::vector<uint8_t> & outBuffer = m_outbuffer;
+        
         outBuffer.clear();
         
         int flags = 0;
         const int flags_size = 2;
         
-        const int ts = micros / 1000;
+        static int prev_ts = 0;
+        
+        int ts = micros / 1000; // m_audioTs * 1000.;//
+
         
         auto output = m_output.lock();
         RTMPMetadata_t outMeta(metadata.timestampDelta);
@@ -73,19 +78,7 @@ namespace videocore { namespace rtmp {
                 m_audioTs += metadata.timestampDelta;
                 
             }
-            static auto prev_time = std::chrono::steady_clock::now();
-            
-            
-            auto m_micros = std::chrono::duration_cast<std::chrono::microseconds>(now - prev_time).count();
-            static uint64_t total = 0;
-            static uint64_t count = 0;
-            
-            total+=m_micros;
-            count++;
 
-            //printf("AAC(%d) (target %llu) (diff %llu avg %llu : %llu)\n", ts,(uint64_t)(micros / 1000), m_micros, total / count, total);
-            
-            prev_time = now;
             outMeta.setData(ts, static_cast<int>(outBuffer.size()), FLV_TAG_TYPE_AUDIO, kAudioChannelStreamId);
             
             output->pushBuffer(&outBuffer[0], outBuffer.size(), outMeta);

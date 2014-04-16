@@ -266,7 +266,7 @@ namespace videocore {
                 }
 
             }
-            
+
             if(sampleBufferSize) {
                 MetaData<'soun'> md ( m_bufferDuration );
             

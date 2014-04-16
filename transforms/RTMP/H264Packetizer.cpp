@@ -42,8 +42,6 @@ namespace videocore { namespace rtmp {
         
         const auto micros = std::nearbyint(nowmicros / double(bufferDuration)) * bufferDuration;
         
-        
-        
         TransformMetadata_t tmd = static_cast<TransformMetadata_t&>(inMetadata);
         
         double frameTime = tmd.timestampDelta * 1000.;
@@ -56,8 +54,8 @@ namespace videocore { namespace rtmp {
         uint8_t nal_type = inBuffer[4] & 0x1F;
         int flags = 0;
         const int flags_size = 5;
-        const int ts = micros / 1000;
-        
+        const int ts = micros / 1000;//m_videoTs;//
+
         bool is_config = (nal_type == 7 || nal_type == 8);
         
         
