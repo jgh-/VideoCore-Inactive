@@ -79,7 +79,16 @@ namespace videocore { namespace iOS {
         UInt32 outputBitrate = 128000; // 128 kbps
         UInt32 propSize = sizeof(outputBitrate);
         UInt32 outputPacketSize = 0;
-        AudioConverterNew(&in, &out, &m_audioConverter);
+        
+        AudioClassDescription requestedCodecs[1] = {
+            {
+                kAudioEncoderComponentType,
+                kAudioFormatMPEG4AAC,
+                kAppleSoftwareAudioCodecManufacturer
+            }
+        };
+        
+        AudioConverterNewSpecific(&in, &out, 1, requestedCodecs, &m_audioConverter);
         
         AudioConverterSetProperty(m_audioConverter, kAudioConverterEncodeBitRate, propSize, &outputBitrate);
         
