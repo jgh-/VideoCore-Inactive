@@ -25,7 +25,7 @@
 
 namespace videocore { namespace rtmp {
     
-    H264Packetizer::H264Packetizer() : m_videoTs(0)
+    H264Packetizer::H264Packetizer() : m_videoTs(0), m_sentConfig(false)
     {
         
     }
