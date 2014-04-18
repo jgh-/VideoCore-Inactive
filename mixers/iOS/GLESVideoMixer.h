@@ -46,7 +46,7 @@ namespace videocore { namespace iOS {
     {
       
     public:
-        GLESVideoMixer( int frame_w, int frame_h, double frameDuration, std::function<void(void*)> excludeContext);
+        GLESVideoMixer( int frame_w, int frame_h, double frameDuration, std::function<void(void*)> excludeContext = nullptr);
         ~GLESVideoMixer();
         
         void registerSource(std::shared_ptr<ISource> source, size_t bufferSize = 0)  ;
