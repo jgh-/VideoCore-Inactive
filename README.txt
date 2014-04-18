@@ -10,7 +10,7 @@ git submodule update
 
 Find an example of setting up a transform graph at 
 
-https://github.com/jamesghurley/mobcrush/blob/master/MobcrushSession.cpp
+https://github.com/jamesghurley/VideoCore/blob/master/sample
 
 LICENSING
 
