@@ -19,8 +19,8 @@
  USA
  
  */
-#ifndef __mobcrush__PixelBufferSource__
-#define __mobcrush__PixelBufferSource__
+#ifndef __videocore__PixelBufferSource__
+#define __videocore__PixelBufferSource__
 
 #include <iostream>
 #include <videocore/sources/ISource.hpp>
@@ -59,4 +59,4 @@ namespace videocore { namespace Apple {
 }
 }
 
-#endif /* defined(__mobcrush__PixelBufferSource__) */
+#endif /* defined(__videocore__PixelBufferSource__) */
