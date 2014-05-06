@@ -49,7 +49,7 @@ namespace videocore { namespace rtmp {
         int flags = 0;
         const int flags_size = 2;
         
-        static int prev_ts = 0;
+        //static int prev_ts = 0;
         
         int ts = micros / 1000; // m_audioTs * 1000.;//
 

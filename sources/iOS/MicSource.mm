@@ -24,10 +24,6 @@
 #include <videocore/mixers/IAudioMixer.hpp>
 #import <AVFoundation/AVFoundation.h>
 
-static void (*s_interruptionListenerCallback)(void*,UInt32) = NULL;
-
-static bool s_audioSessionInitialized = false;
-
 static std::weak_ptr<videocore::iOS::MicSource> s_micSource;
 
 static OSStatus handleInputBuffer(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData)
