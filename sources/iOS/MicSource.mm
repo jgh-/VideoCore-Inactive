@@ -22,7 +22,7 @@
 #include "MicSource.h"
 #include <dlfcn.h>
 #include <videocore/mixers/IAudioMixer.hpp>
-
+#import <AVFoundation/AVFoundation.h>
 
 static void (*s_interruptionListenerCallback)(void*,UInt32) = NULL;
 
@@ -30,37 +30,6 @@ static bool s_audioSessionInitialized = false;
 
 static std::weak_ptr<videocore::iOS::MicSource> s_micSource;
 
-extern "C" {
-    
-    static void interruptionListenerCallback(void* inUserData, UInt32 interruptionState) {
-        
-        auto source = s_micSource.lock();
-        if(source) {
-            
-        }
-        if(s_interruptionListenerCallback) {
-            s_interruptionListenerCallback(inUserData, interruptionState);
-        }
-    }
-    
-    OSStatus AudioSessionInitialize(CFRunLoopRef inRunLoop, CFStringRef inRunLoopMode, AudioSessionInterruptionListener inInterruptionListener, void* inClientData)
-    {
-        typedef OSStatus (*asiOrig_t)(CFRunLoopRef,CFStringRef,AudioSessionInterruptionListener,void*) ;
-        
-        static asiOrig_t s_asiOrig = NULL;
-        if(!s_asiOrig) s_asiOrig = (asiOrig_t)dlsym(RTLD_NEXT, "AudioSessionInitialize");
-        
-        if(inInterruptionListener != interruptionListenerCallback) {
-            s_interruptionListenerCallback = inInterruptionListener;
-        }
-        
-        s_audioSessionInitialized = true;
-        
-        return s_asiOrig(inRunLoop,inRunLoopMode,interruptionListenerCallback,inClientData);
-    }
-  
-
-}
 static OSStatus handleInputBuffer(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData)
 {
     videocore::iOS::MicSource* mc =static_cast<videocore::iOS::MicSource*>(inRefCon);
@@ -86,16 +55,11 @@ namespace videocore { namespace iOS {
  
     MicSource::MicSource(std::function<void(AudioUnit&)> excludeAudioUnit) {
         
-        if(!s_audioSessionInitialized) {
-            AudioSessionInitialize(NULL, NULL, interruptionListenerCallback, NULL);
-        }
+        AVAudioSession *session = [AVAudioSession sharedInstance];
         
-        UInt32 val = kAudioSessionCategory_PlayAndRecord;
-        
-        AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, sizeof(val), &val);
-        
-        val = true;
-        AudioSessionSetProperty(kAudioSessionProperty_OverrideCategoryMixWithOthers, sizeof(val), &val);
+        [session setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
+        [session setMode:AVAudioSessionModeVideoRecording error:nil];
+        [session setActive:YES error:nil];
         
         AudioComponentDescription acd;
         acd.componentType = kAudioUnitType_Output;
