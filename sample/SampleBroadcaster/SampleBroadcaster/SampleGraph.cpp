@@ -1,6 +1,11 @@
 
 #include "SampleGraph.h"
 
+#include <videocore/rtmp/RTMPSession.h>
+#include <videocore/transforms/RTMP/AACPacketizer.h>
+#include <videocore/transforms/RTMP/H264Packetizer.h>
+#include <videocore/transforms/Split.h>
+
 #ifdef __APPLE__
 #   include <videocore/mixers/Apple/AudioMixer.h>
 #   ifdef TARGET_OS_IPHONE
@@ -15,6 +20,7 @@
 #   endif
 #else
 #   include <videocore/mixers/GenericAudioMixer.h>
+#endif
 
 namespace videocore { namespace sample {
 
@@ -88,12 +94,7 @@ namespace videocore { namespace sample {
 
             
         }
-        {
-            // Add encoders
-            addTransform(m_audioTransformChain, std::make_shared<videocore::iOS::AACEncode>(44100, 2));
-            addTransform(m_videoTransformChain, std::make_shared<videocore::iOS::H264Encode>(frame_w, frame_h, fps, bitrate));
-            
-        }
+        
         {
             // [Optional] add splits
             // Splits would be used to add different graph branches at various
@@ -101,14 +102,20 @@ namespace videocore { namespace sample {
             // streaming to RTMP.
             
             auto videoSplit = std::make_shared<videocore::Split>();
-            auto audioSplit = std::make_shared<videocore::Split>();
-            m_videoSplit = videoSplit;
-            m_audioSplit = audioSplit;
             
-            addTransform(m_audioTransformChain, audioSplit);
+            m_videoSplit = videoSplit;
+            
             addTransform(m_videoTransformChain, videoSplit);
             
         }
+        
+        {
+            // Add encoders
+            addTransform(m_audioTransformChain, std::make_shared<videocore::iOS::AACEncode>(44100, 2));
+            addTransform(m_videoTransformChain, std::make_shared<videocore::iOS::H264Encode>(frame_w, frame_h, fps, bitrate));
+            
+        }
+
 #else
 #endif // TARGET_OS_IPHONE
 #endif // __APPLE__
@@ -133,7 +140,8 @@ namespace videocore { namespace sample {
         {
             
             // Add camera source
-            m_cameraSource = std::make_shared<videocore::iOS::CameraSource>(0,0,frame_w,frame_h, float(frame_w) / float(frame_h));
+            m_cameraSource = std::make_shared<videocore::iOS::CameraSource>(frame_w/2,frame_h/2, frame_w,frame_h, frame_w, frame_h, float(frame_w) / float(frame_h));
+            std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(false);
             m_cameraSource->setOutput(m_videoTransformChain.front());
         }
         {
@@ -154,6 +162,15 @@ namespace videocore { namespace sample {
         
     }
 
+    void
+    SampleGraph::setPBCallback(PixelBufferCallback callback)
+    {
+        if(m_pbOutput) {
+            m_videoSplit->removeOutput(m_pbOutput);
+        }
+        m_pbOutput = std::make_shared<PixelBufferOutput>(callback);
+        m_videoSplit->setOutput(m_pbOutput);
+    }
 
 }
 };

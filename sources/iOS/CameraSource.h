@@ -33,10 +33,12 @@ namespace videocore { namespace iOS {
     {
         
     public:
-        CameraSource(float x, float y, float w, float h, float aspect);
+        CameraSource(float x, float y, float w, float h, float videow, float videoh, float aspect);
         ~CameraSource();
         
         void setOutput(std::shared_ptr<IOutput> output);
+        
+        void setupCamera(bool useFront = true);
         
     public:
         // Used by Objective-C callbacks
@@ -44,12 +46,12 @@ namespace videocore { namespace iOS {
         void reorientCamera();
         
     private:
-        void setupCamera();
+        
         
         
     private:
         
-        struct { float x, y, w, h, a; } m_size;
+        struct { float x, y, w, h, vw, vh, a; } m_size, m_target_size;
         
         std::weak_ptr<IOutput> m_output;
         

@@ -25,6 +25,11 @@
 #include <videocore/transforms/ITransform.hpp>
 #include <videocore/sources/ISource.hpp>
 #include <videocore/mixers/IMixer.hpp>
+#include <videocore/transforms/Split.h>
+
+#include "PixelBufferOutput.h"
+
+#include <vector>
 
 #ifndef __sample__SampleGraph_h
 #define __sample__SampleGraph_h
@@ -51,9 +56,12 @@ namespace videocore { namespace sample {
     class SampleGraph
     {
     public:
-        SampleGraph(sessionStateCallback callback) : m_callback(callback) {};
+        SampleGraph(SessionStateCallback callback) : m_callback(callback) {};
         ~SampleGraph() {};
 
+        
+        void setPBCallback(PixelBufferCallback callback) ;
+        
         // Starting a new session will end the current session.
         void startRtmpSession(std::string uri, int frame_w, int frame_h, int bitrate, int fps);
         
@@ -63,8 +71,10 @@ namespace videocore { namespace sample {
         void addTransform(std::vector< std::shared_ptr<videocore::ITransform> > & chain, std::shared_ptr<videocore::ITransform> transform);
         
     private:
+        std::shared_ptr<PixelBufferOutput> m_pbOutput;
         std::shared_ptr<videocore::ISource> m_micSource;
         std::shared_ptr<videocore::ISource> m_cameraSource;
+        std::shared_ptr<videocore::Split> m_videoSplit;
         
         std::vector< std::shared_ptr<videocore::ITransform> > m_audioTransformChain;
         std::vector< std::shared_ptr<videocore::ITransform> > m_videoTransformChain;

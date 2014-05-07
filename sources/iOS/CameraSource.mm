@@ -58,10 +58,9 @@
 @end
 namespace videocore { namespace iOS {
     
-    CameraSource::CameraSource(float x, float y, float w, float h, float aspect)
-    : m_size({x,y,w,h,aspect}), m_captureDevice(NULL),  m_isFirst(true)
+    CameraSource::CameraSource(float x, float y, float w, float h, float vw, float vh, float aspect)
+    : m_size({x,y,w,h,vw,vh,aspect}), m_target_size(m_size), m_captureDevice(NULL),  m_isFirst(true), m_callbackSession(NULL)
     {
-        setupCamera();
     }
     
     CameraSource::~CameraSource()
@@ -73,10 +72,13 @@ namespace videocore { namespace iOS {
     }
     
     void
-    CameraSource::setupCamera()
+    CameraSource::setupCamera(bool useFront)
     {
+        
+        int position = useFront ? AVCaptureDevicePositionFront : AVCaptureDevicePositionBack;
+        
         for(AVCaptureDevice* d in [AVCaptureDevice devices]) {
-            if([d hasMediaType:AVMediaTypeVideo] && [d position] == AVCaptureDevicePositionFront)
+            if([d hasMediaType:AVMediaTypeVideo] && [d position] == position)
             {
                 m_captureDevice = d;
                 NSError* error;
@@ -87,7 +89,7 @@ namespace videocore { namespace iOS {
             }
         }
         
-        int mult = ceil(double(m_size.h) / 270.0) * 270 ;
+        int mult = ceil(double(m_target_size.h) / 270.0) * 270 ;
         AVCaptureSession* session = [[AVCaptureSession alloc] init];
         AVCaptureDeviceInput* input;
         AVCaptureVideoDataOutput* output;
@@ -114,7 +116,9 @@ namespace videocore { namespace iOS {
         
         output.videoSettings = @{(NSString*)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA) };
         
-        m_callbackSession = [[sbCallback alloc] init];
+        if(!m_callbackSession) {
+            m_callbackSession = [[sbCallback alloc] init];
+        }
         
         [output setSampleBufferDelegate:((sbCallback*)m_callbackSession) queue:dispatch_get_global_queue(0, 0)];
         
@@ -131,7 +135,6 @@ namespace videocore { namespace iOS {
         
         [[NSNotificationCenter defaultCenter] addObserver:((id)m_callbackSession) selector:@selector(deviceOrientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
         
-        [session startRunning];
         [output release];
 
     }
@@ -161,6 +164,9 @@ namespace videocore { namespace iOS {
                 
             }
         }
+        [session stopRunning];
+        [session startRunning];
+        m_isFirst = true;
     }
     void
     CameraSource::setOutput(std::shared_ptr<IOutput> output)
@@ -173,10 +179,10 @@ namespace videocore { namespace iOS {
         
         SourceProperties props;
         props.blends = false;
-        props.x = m_size.x;
-        props.y = m_size.y;
-        props.width = m_size.w;
-        props.height = m_size.h;
+        props.x = m_size.x / m_size.vw;
+        props.y = m_size.y / m_size.vh;
+        props.width = m_size.w / m_size.vw;
+        props.height = m_size.h / m_size.vh;
         
         mixer->setSourceProperties(shared_from_this(), props);
     }
@@ -187,12 +193,12 @@ namespace videocore { namespace iOS {
         if(output) {
             if(m_isFirst) {
                 const float aspect = float(CVPixelBufferGetWidth(pixelBufferRef)) / float(CVPixelBufferGetHeight(pixelBufferRef));
-                const float inp_aspect = m_size.a;
+                const float inp_aspect = m_target_size.a;
                 const float diff = inp_aspect / aspect;
                 if( aspect < inp_aspect ) {
-                    m_size.w /= diff;
+                    m_size.w = m_target_size.w / diff;
                 } else {
-                    m_size.h /= diff;
+                    m_size.h = m_target_size.h / diff;
                 }
                 m_isFirst = false;
                 setOutput(output);
