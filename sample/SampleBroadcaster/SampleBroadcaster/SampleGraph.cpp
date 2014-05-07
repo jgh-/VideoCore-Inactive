@@ -108,6 +108,9 @@ namespace videocore { namespace sample {
             addTransform(m_videoTransformChain, videoSplit);
             
         }
+        if(m_pbOutput) {
+            m_videoSplit->setOutput(m_pbOutput);
+        }
         
         {
             // Add encoders
@@ -165,11 +168,14 @@ namespace videocore { namespace sample {
     void
     SampleGraph::setPBCallback(PixelBufferCallback callback)
     {
-        if(m_pbOutput) {
+        if(m_videoSplit && m_pbOutput) {
             m_videoSplit->removeOutput(m_pbOutput);
         }
         m_pbOutput = std::make_shared<PixelBufferOutput>(callback);
-        m_videoSplit->setOutput(m_pbOutput);
+        if(m_videoSplit) {
+            m_videoSplit->setOutput(m_pbOutput);
+        }
+        
     }
 
 }

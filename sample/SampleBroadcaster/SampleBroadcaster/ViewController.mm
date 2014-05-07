@@ -43,6 +43,10 @@
         }));
     
         
+        _sampleGraph->setPBCallback([=](const uint8_t* const data, size_t size) {
+            [self gotPixelBuffer: data withSize: size];
+        });
+        
         float scr_w = 480;
         float scr_h = 320;
         
@@ -64,10 +68,7 @@
         NSLog(@"Connected");
         [self.btnConnect.titleLabel setText:@"Connected"];
         [self.btnConnect.titleLabel sizeToFit];
-        
-        _sampleGraph->setPBCallback([=](const uint8_t* const data, size_t size) {
-            [self gotPixelBuffer: data withSize: size];
-        });
+
         
     } else if(state == videocore::sample::kSessionStateError || state == videocore::sample::kSessionStateEnded) {
         NSLog(@"Disconnected");

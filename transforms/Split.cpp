@@ -64,8 +64,8 @@ namespace videocore {
     void
     Split::pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata)
     {
-        for ( auto it = m_outputs.begin() ; it != m_outputs.end() ; ++it ) {
-            auto outp = it->lock();
+        for ( auto & it : m_outputs ) {
+            auto outp = it.lock();
             if(outp) {
                 outp->pushBuffer(data, size, metadata);
             }
