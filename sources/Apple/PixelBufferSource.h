@@ -25,7 +25,15 @@
 #include <iostream>
 #include <videocore/sources/ISource.hpp>
 #include <videocore/transforms/IOutput.hpp>
-#include <MacTypes.h>
+
+#ifdef __APPLE__
+#   include <MacTypes.h>
+#else
+#   include <stdint.h>
+
+    typedef uint32_t OSType;
+
+#endif
 
 namespace videocore { namespace Apple {
 
