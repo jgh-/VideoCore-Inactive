@@ -35,8 +35,8 @@
 - (IBAction)btnConnectTouch:(id)sender {
     
     if([self.btnConnect.titleLabel.text isEqualToString:@"Connect"]) {
-        [self.btnConnect.titleLabel setText:@"Connecting..."];
-        NSString* rtmpUrl = @"rtmp://192.168.1.111/live/myStream";
+        [self.btnConnect setTitle:@"Connecting..." forState:UIControlStateNormal];
+        NSString* rtmpUrl = @"rtmp://192.168.2.1/live/myStream";
         
         _sampleGraph.reset(new videocore::sample::SampleGraph([self](videocore::sample::SessionState state){
             [self connectionStatusChange:state];
@@ -55,7 +55,7 @@
     else if ( [self.btnConnect.titleLabel.text isEqualToString:@"Connected"]) {
         // disconnect
         _sampleGraph.reset();
-        [self.btnConnect.titleLabel setText:@"Connect"];
+        [self.btnConnect setTitle:@"Connect" forState:UIControlStateNormal];
 
     }
     
@@ -66,13 +66,13 @@
     NSLog(@"Connection status: %d", state);
     if(state == videocore::sample::kSessionStateStarted) {
         NSLog(@"Connected");
-        [self.btnConnect.titleLabel setText:@"Connected"];
+        [self.btnConnect setTitle:@"Connected" forState:UIControlStateNormal];
         [self.btnConnect.titleLabel sizeToFit];
 
         
     } else if(state == videocore::sample::kSessionStateError || state == videocore::sample::kSessionStateEnded) {
         NSLog(@"Disconnected");
-        [self.btnConnect.titleLabel setText:@"Connect"];
+        [self.btnConnect setTitle:@"Connect" forState:UIControlStateNormal];
         _sampleGraph.reset();
     }
 }

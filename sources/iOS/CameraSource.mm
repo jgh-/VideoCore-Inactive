@@ -83,7 +83,7 @@ namespace videocore { namespace iOS {
                 m_captureDevice = d;
                 NSError* error;
                 [d lockForConfiguration:&error];
-                [d setActiveVideoMaxFrameDuration:CMTimeMake(1, 15)];
+                [d setActiveVideoMinFrameDuration:CMTimeMake(1, 15)];
                 [d setActiveVideoMaxFrameDuration:CMTimeMake(1, 15)];
                 [d unlockForConfiguration];
             }
