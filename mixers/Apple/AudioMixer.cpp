@@ -22,6 +22,9 @@
 
 #include <videocore/mixers/Apple/AudioMixer.h>
 
+static const UInt32 s_samplingRateConverterComplexity = kAudioConverterSampleRateConverterComplexity_Normal;
+static const UInt32 s_samplingRateConverterQuality = kAudioConverterQuality_High;
+
 namespace videocore { namespace Apple {
  
     struct UserData {
@@ -84,7 +87,18 @@ namespace videocore { namespace Apple {
         
         AudioConverterRef audioConverter;
         AudioConverterNew(&in, &out, &audioConverter);
+        
+        AudioConverterSetProperty(audioConverter,
+                                  kAudioConverterSampleRateConverterComplexity,
+                                  sizeof(s_samplingRateConverterComplexity),
+                                  &s_samplingRateConverterComplexity);
+        
+        AudioConverterSetProperty(audioConverter,
+                                  kAudioConverterSampleRateConverterQuality,
+                                  sizeof(s_samplingRateConverterQuality),
+                                  &s_samplingRateConverterQuality);
 
+        
         std::unique_ptr<UserData> ud(new UserData());
         ud->size = static_cast<int>(size);
         ud->data = const_cast<uint8_t*>(buffer);
