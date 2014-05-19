@@ -42,22 +42,25 @@ namespace videocore
         boost::tokenizer<boost::char_separator<char> > tokens(m_uri.path, sep );
         
         auto itr = tokens.begin();
-        m_app = *itr;
-        std::advance(itr,1);
+        std::stringstream pp;
         {
-            std::stringstream pp;
-        
+            std::stringstream app;
             for (; itr != tokens.end() ; ++itr) {
-                pp << *itr <<  "/" ;
+                auto peek = itr;
+                ++peek;
+                if (peek == tokens.end()) {
+                    pp << *itr;
+                    break;
+                }
+                app << *itr <<  "/";
             }
-            m_playPath = pp.str();
-            m_playPath.pop_back();
+            m_app = app.str();
+            m_app.pop_back();
         }
         {
             if(m_uri.search.length() > 0) {
-            	std::stringstream pp;
                 pp << m_playPath << "?" << m_uri.search;
-           	 m_playPath = pp.str();
+                m_playPath = pp.str();
             }
         }
         long port = (m_uri.port > 0) ? m_uri.port : 1935;
@@ -97,7 +100,7 @@ namespace videocore
         const RTMPMetadata_t inMetadata = static_cast<const RTMPMetadata_t&>(metadata);
         
         m_jobQueue.enqueue([&,buf,inMetadata]() {
-
+            
             std::vector<uint8_t> chunk;
             std::vector<uint8_t> & outb = this->m_outBuffer;
             size_t len = buf->size();
@@ -118,7 +121,7 @@ namespace videocore
             put_buff(chunk, p, tosend);
             
             outb.insert(outb.end(), chunk.begin(), chunk.end());
-
+            
             
             len -= tosend;
             p += tosend;
@@ -131,7 +134,7 @@ namespace videocore
                 p+=tosend;
                 len-=tosend;
                 if(outb.size() > 3072) {
-
+                    
                     this->write(&outb[0], outb.size());
                     outb.clear();
                 }
@@ -143,7 +146,7 @@ namespace videocore
             }
             
         });
-
+        
     }
     void
     RTMPSession::sendPacket(uint8_t* data, size_t size, RTMPChunk_0 metadata)
@@ -192,7 +195,7 @@ namespace videocore
     void
     RTMPSession::dataReceived()
     {
-
+        
         static uint8_t buffer[4096] = {0};
         bool stop1 = false;
         bool stop2 = false;
@@ -220,7 +223,7 @@ namespace videocore
                     case kClientStateHandshake1s1:
                     {
                         if(m_streamInBuffer->size() >= kRTMPSignatureSize) {
-   
+                            
                             uint8_t* buf;
                             size_t size = m_streamInBuffer->read(&buf, kRTMPSignatureSize);
                             m_s1.resize(size);
@@ -261,7 +264,7 @@ namespace videocore
     RTMPSession::setClientState(ClientState_t state)
     {
         printf("RTMPStatus: %d\n", state);
-
+        
         m_state = state;
         m_callback(*this, state);
     }
@@ -328,13 +331,13 @@ namespace videocore
     RTMPSession::handshake1()
     {
         setClientState(kClientStateHandshake1s0);
-
+        
         m_c1.resize(kRTMPSignatureSize);
         uint8_t* p;
         m_c1.read(&p, kRTMPSignatureSize);
         uint64_t zero = 0;
         m_c1.put((uint8_t*)&zero, sizeof(uint64_t));
-
+        
         write(p, kRTMPSignatureSize);
         
     }
@@ -357,7 +360,7 @@ namespace videocore
         if(m_uri.port > 0) {
             url << m_uri.protocol << "://" << m_uri.host << ":" << m_uri.port << "/" << m_app;
         } else {
-           url << m_uri.protocol << "://" << m_uri.host << "/" << m_app;
+            url << m_uri.protocol << "://" << m_uri.host << "/" << m_app;
         }
         put_string(buff, "connect");
         put_double(buff, ++m_numberOfInvokes);
@@ -445,7 +448,7 @@ namespace videocore
         
         std::vector<uint8_t> enc;
         RTMPChunk_0 metadata = {{0}};
-
+        
         put_string(enc, "@setDataFrame");
         put_string(enc, "onMetaData");
         put_byte(enc, kAMFEMCAArray);
@@ -471,9 +474,9 @@ namespace videocore
         put_byte(enc, kAMFObjectEnd);
         size_t len = enc.size();
         
-
+        
         put_buff(outBuffer, (uint8_t*)&enc[0], static_cast<size_t>(len));
-
+        
         
         metadata.msg_type_id = FLV_TAG_TYPE_META;
         metadata.msg_stream_id = kAudioChannelStreamId;
@@ -481,7 +484,7 @@ namespace videocore
         metadata.timestamp.data = 0;
         
         sendPacket(&outBuffer[0], outBuffer.size(), metadata);
-
+        
     }
     void
     RTMPSession::sendDeleteStream()
@@ -498,7 +501,7 @@ namespace videocore
         metadata.msg_length.data = static_cast<int>( buff.size() );
         
         sendPacket(&buff[0], buff.size(), metadata);
-
+        
     }
     bool
     RTMPSession::parseCurrentData()
@@ -523,9 +526,9 @@ namespace videocore
                 switch(chunk.msg_type_id) {
                     case 1:
                     {
-                       // printf("Current chunk size %zu ->", m_currentChunkSize );
-                       // m_currentChunkSize = get_be32(p);
-                       // printf(" %zu\n", m_currentChunkSize);
+                        // printf("Current chunk size %zu ->", m_currentChunkSize );
+                        // m_currentChunkSize = get_be32(p);
+                        // printf(" %zu\n", m_currentChunkSize);
                     }
                         break;
                     case FLV_TAG_TYPE_INVOKE:
@@ -559,7 +562,7 @@ namespace videocore
                         } else if(m_state == kClientStateInitializing2) {
                             sendHeaderPacket();
                             setClientState(kClientStateSessionStarted);
-
+                            
                         }
                     }
                         break;
@@ -592,6 +595,6 @@ namespace videocore
         }
         m_streamInBuffer->read(&p, p-start);
         return true;
-
+        
     }
 }
