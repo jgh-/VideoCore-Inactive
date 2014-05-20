@@ -54,8 +54,8 @@ namespace videocore { namespace Apple {
         auto outp = m_output.lock();
         
         if(outp) {
-            void* loc = CVPixelBufferGetBaseAddress((CVPixelBufferRef)m_pixelBuffer);
             CVPixelBufferLockBaseAddress((CVPixelBufferRef)m_pixelBuffer, 0);
+            void* loc = CVPixelBufferGetBaseAddress((CVPixelBufferRef)m_pixelBuffer);
             memcpy(loc, data, size);
             CVPixelBufferUnlockBaseAddress((CVPixelBufferRef)m_pixelBuffer, 0);
             
