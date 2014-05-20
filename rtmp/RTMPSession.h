@@ -99,6 +99,7 @@ namespace videocore
         void sendDeleteStream();
         
         bool parseCurrentData();
+        void handleInvoke(uint8_t* p);
     private:
         
         JobQueue            m_jobQueue;
@@ -121,6 +122,7 @@ namespace videocore
         int64_t         m_previousTimestamp;        
         size_t          m_currentChunkSize;
         int32_t         m_streamId;
+        int32_t         m_createStreamInvoke;
         int32_t         m_numberOfInvokes;
         int32_t         m_frameWidth;
         int32_t         m_frameHeight;

@@ -33,7 +33,7 @@
 namespace videocore
 {
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback_t callback)
-    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback),  m_previousTimestamp(0), m_currentChunkSize(128), m_streamId(0),  m_numberOfInvokes(0), m_state(kClientStateNone)
+    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback),  m_previousTimestamp(0), m_currentChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone)
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
@@ -59,9 +59,9 @@ namespace videocore
         }
         {
             if(m_uri.search.length() > 0) {
-                pp << m_playPath << "?" << m_uri.search;
-                m_playPath = pp.str();
+                pp << "?" << m_uri.search;
             }
+            m_playPath = pp.str();
         }
         long port = (m_uri.port > 0) ? m_uri.port : 1935;
         
@@ -105,6 +105,7 @@ namespace videocore
             std::vector<uint8_t> & outb = this->m_outBuffer;
             size_t len = buf->size();
             size_t tosend = std::min(len, m_currentChunkSize);
+            printf("will send %zu bytes min(%zu, %zu)\n", tosend, len, m_currentChunkSize);
             uint8_t* p;
             buf->read(&p, buf->size());
             uint64_t ts = inMetadata.getData<kRTMPMetadataTimestamp>();
@@ -202,7 +203,9 @@ namespace videocore
         do {
             
             size_t maxlen = m_streamInBuffer->total() - m_streamInBuffer->size();
+            printf("max to read: %d\n", maxlen);
             size_t len = m_streamSession->read(buffer, maxlen);
+            printf("read: = %d\n", len);
             
             m_streamInBuffer->put(&buffer[0], len);
             
@@ -240,7 +243,7 @@ namespace videocore
                             uint8_t* buf;
                             m_streamInBuffer->read(&buf, kRTMPSignatureSize);
                             
-                            setClientState(kClientStateInitializing0);
+                            setClientState(kClientStateHandshakeComplete);
                             handshake();
                             sendConnectPacket();
                         } else {
@@ -278,7 +281,7 @@ namespace videocore
             dataReceived();
         }
         if(status & kStreamStatusWriteBufferHasSpace) {
-            if(m_state < kClientStateSessionStarted) {
+            if(m_state < kClientStateHandshakeComplete) {
                 handshake();
             } else {
                 m_jobQueue.enqueue([this]() {
@@ -417,7 +420,8 @@ namespace videocore
         metadata.msg_type_id = FLV_TAG_TYPE_INVOKE;
         std::vector<uint8_t> buff;
         put_string(buff, "createStream");
-        put_double(buff, ++m_numberOfInvokes);
+        m_createStreamInvoke = ++m_numberOfInvokes;
+        put_double(buff, m_createStreamInvoke);
         put_byte(buff, kAMFNull);
         metadata.msg_length.data = static_cast<int>( buff.size() );
         
@@ -515,7 +519,7 @@ namespace videocore
         int header_type = (p[0] & 0xC0) >> 6;
         p++;
         switch(header_type) {
-            case 0:
+            case RTMP_HEADER_TYPE_FULL:
             {
                 RTMPChunk_0 chunk;
                 memcpy(&chunk, p, sizeof(RTMPChunk_0));
@@ -524,46 +528,71 @@ namespace videocore
                 p+=sizeof(chunk);
                 
                 switch(chunk.msg_type_id) {
-                    case 1:
+                    case RTMP_PT_BYTES_READ:
                     {
-                        // printf("Current chunk size %zu ->", m_currentChunkSize );
-                        // m_currentChunkSize = get_be32(p);
-                        // printf(" %zu\n", m_currentChunkSize);
+                        printf("received bytes read\n");
                     }
                         break;
-                    case FLV_TAG_TYPE_INVOKE:
+                        
+                    case RTMP_PT_CHUNK_SIZE:
                     {
-                        if(m_state == kClientStateInitializing0) {
-                            sendReleaseStream();
-                            sendFCPublish();
-                            sendCreateStream();
-                            setClientState(kClientStateInitializing1);
-                            
-                        } else if(m_state == kClientStateInitializing1) {
-                            // send publish
-                            uint8_t* start = p;
-                            
-                            std::string result = get_string(p);
-                            if(result.length() < 0xFFFF) {
-                                p+=3+result.length();
-                            } else {
-                                p+=5+result.length();
-                            }
-                            if(result == "_result") {
-                                p+=11;
-                                
-                                double streamId = get_double(p);
-                                m_streamId = streamId;
-                                sendPublish();
-                                setClientState(kClientStateInitializing2);
-                            }
-                            p = start;
-                            
-                        } else if(m_state == kClientStateInitializing2) {
-                            sendHeaderPacket();
-                            setClientState(kClientStateSessionStarted);
-                            
-                        }
+                        unsigned long newChunkSize = get_be32(p);
+                        printf("Changing chunk size from %zu -> %zu\n", m_currentChunkSize, newChunkSize);
+                        //m_currentChunkSize = newChunkSize;
+                    }
+                        break;
+
+                    case RTMP_PT_PING:
+                    {
+                        printf("received ping\n");
+                    }
+                        break;
+
+                    case RTMP_PT_CLIENT_BW:
+                    {
+                        printf("received client bandwidth\n");
+                    }
+                        break;
+                        
+                    case RTMP_PT_SERVER_BW:
+                    {
+                        printf("received server bandwidth\n");
+                    }
+                        break;
+
+                    case RTMP_PT_INVOKE:
+                    {
+                        printf("received invoke\n");
+                        handleInvoke(p);
+                    }
+                        break;
+                    case RTMP_PT_VIDEO:
+                    {
+                        printf("received video\n");
+                    }
+                        break;
+                        
+                    case RTMP_PT_AUDIO:
+                    {
+                        printf("received audio\n");
+                    }
+                        break;
+                        
+                    case RTMP_PT_METADATA:
+                    {
+                        printf("received metadata\n");
+                    }
+                        break;
+                        
+                    case RTMP_PT_NOTIFY:
+                    {
+                        printf("received notify\n");
+                    }
+                        break;
+                        
+                    default:
+                    {
+                        printf("received unknown packet type: 0x%02X\n", chunk.msg_type_id);
                     }
                         break;
                 }
@@ -571,30 +600,145 @@ namespace videocore
                 p+=chunk.msg_length.data;
             }
                 break;
-            case 1:
+
+            case RTMP_HEADER_TYPE_NO_MSGID:
             {
                 RTMPChunk_1 chunk;
                 memcpy(&chunk, p, sizeof(RTMPChunk_1));
                 p+=sizeof(chunk)+m_currentChunkSize;
             }
                 break;
-            case 2:
+
+            case RTMP_HEADER_TYPE_TIMESTAMP:
             {
                 RTMPChunk_2 chunk;
                 memcpy(&chunk, p, sizeof(RTMPChunk_2));
                 p+=sizeof(chunk)+m_currentChunkSize;
             }
                 break;
-            case 3:
+
+            case RTMP_HEADER_TYPE_ONLY:
             {
                 p+=m_currentChunkSize;
             }
                 break;
+
             default:
                 return false;
         }
+
         m_streamInBuffer->read(&p, p-start);
+
         return true;
+    }
+    
+    void
+    RTMPSession::handleInvoke(uint8_t* p)
+    {
+        std::string result = get_string(p);
+        if (result == "_result") {
+            switch(m_state) {
+                case kClientStateHandshakeComplete:
+                {
+                    sendReleaseStream();
+                    sendFCPublish();
+                    sendCreateStream();
+                    setClientState(kClientStateFCPublish);
+                }
+                    break;
+                    
+                case kClientStateFCPublish:
+                {
+                    setClientState(kClientStateReleasing);
+                }
+                    break;
+                    
+                case kClientStateReleasing:
+                {
+                    setClientState(kClientStateFCPublish);
+                    // hack for Wowza Media Server, it does not send result for
+                    // releaseStream and FCPublish calls
+                    if (!p[10]) {
+                        int pktId = get_double(p+11);
+                        if (pktId == m_createStreamInvoke)
+                            setClientState(kClientStateConnecting);
+                    }
+                }
+                    if (m_state != kClientStateConnecting) break;
+                    
+                case kClientStateConnecting:
+                {
+                    if (p[10] || p[19] != 0x05 || p[20]) {
+                        printf("RTMP: Unexpected reply on connect()\n");
+                    } else {
+                        m_streamId = get_double(p+21);
+                    }
+                    sendPublish();
+                    setClientState(kClientStateReady);
+                }
+                    break;
+                    
+                case kClientStateReady:
+                {
+                    sendHeaderPacket();
+                    setClientState(kClientStatePublishing);
+                }
+                    break;
+            }
+        } else if (result == "onStatus") {
+            uint8_t tmp[256];
+            p += 3;
+            uint8_t *start = p;
+            p += strlen(result.c_str());
+            uint8_t type = p[0];
+            double num = get_double(p+1); // num
+            p += sizeof(num) + 1;
+            uint8_t sep = p[0]; // null
+            uint8_t objType = p[1]; // object type
+            uint16_t propLen = get_be16(p+2); // prop len
+            p += 2 + sizeof(propLen);
+            memcpy(tmp, p, propLen); // prop
+            p += propLen;
+            uint8_t valType = p[0];
+            uint16_t valLen = get_be16(p+1);
+            p += 1 + sizeof(valLen);
+            memcpy(tmp, p, valLen);
+            p = start;
+        } else {
+            
+        }
         
+        
+        //                        if(m_state == kClientStateInitializing0) {
+        //                            sendReleaseStream();
+        //                            sendFCPublish();
+        //                            sendCreateStream();
+        //                            setClientState(kClientStateInitializing1);
+        //
+        //                        } else if(m_state == kClientStateInitializing1) {
+        //                            // send publish
+        //                            uint8_t* start = p;
+        //
+        //                            std::string result = get_string(p);
+        //                            if(result.length() < 0xFFFF) {
+        //                                p+=3+result.length();
+        //                            } else {
+        //                                p+=5+result.length();
+        //                            }
+        //                            if(result == "_result") {
+        //                                p+=11;
+        //
+        //                                double streamId = get_double(p);
+        //                                m_streamId = streamId;
+        //                                sendPublish();
+        //                                setClientState(kClientStateInitializing2);
+        //                            }
+        //                            p = start;
+        //
+        //                        } else if(m_state == kClientStateInitializing2) {
+        //                            sendHeaderPacket();
+        //                            setClientState(kClientStateSessionStarted);
+        //
+        //                        }
     }
 }
