@@ -93,6 +93,7 @@ namespace videocore { namespace iOS {
         
         AudioUnitInitialize(m_audioUnit);
         AudioOutputUnitStart(m_audioUnit);
+
     }
     MicSource::~MicSource() {
         auto output = m_output.lock();

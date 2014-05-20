@@ -250,48 +250,51 @@ namespace videocore {
         const std::unique_ptr<short[]> buffer(new short[outBufferSize / sizeof(short)]);
         const std::unique_ptr<short[]> samples(new short[outBufferSize / sizeof(short)]);
         
+        auto nextMixTime = std::chrono::high_resolution_clock::now();
 
         while(!m_exiting.load()) {
             std::unique_lock<std::mutex> l(m_mixMutex);
-            const auto wt = std::chrono::high_resolution_clock::now() + us;
             
-            size_t sampleBufferSize = 0;
-            
-            // Mix and push
-            for ( auto it = m_inBuffer.begin() ; it != m_inBuffer.end() ; ++it )
-            {
-                auto size = it->second->get((uint8_t*)&buffer[0], outBufferSize);
-                if(size > sampleBufferSize) {
-                    sampleBufferSize = size;
+            if(std::chrono::high_resolution_clock::now() > nextMixTime) {
+                nextMixTime = std::chrono::high_resolution_clock::now() + us;
+                size_t sampleBufferSize = 0;
+                
+                // Mix and push
+                for ( auto it = m_inBuffer.begin() ; it != m_inBuffer.end() ; ++it )
+                {
+                    auto size = it->second->get((uint8_t*)&buffer[0], outBufferSize);
+                    if(size > sampleBufferSize) {
+                        sampleBufferSize = size;
+                    }
+                    const size_t count = (size/sizeof(short));
+                    const float gain = m_inGain[it->first];
+                    const float mult = g*gain;
+                    const short div ( 1.f / mult );
+                    for ( size_t i = 0 ; i <  count ; i+=8) {
+                        samples[i] += buffer[i] / div;
+                        samples[i+1] += buffer[i+1] / div;
+                        samples[i+2] += buffer[i+2] / div;
+                        samples[i+3] += buffer[i+3] / div;
+                        samples[i+4] += buffer[i+4] / div;
+                        samples[i+5] += buffer[i+5] / div;
+                        samples[i+6] += buffer[i+6] / div;
+                        samples[i+7] += buffer[i+7] / div;
+                    }
+                    
                 }
-                const size_t count = (size/sizeof(short));
-                const float gain = m_inGain[it->first];
-                const float mult = g*gain;
-                const short div ( 1.f / mult );
-                for ( size_t i = 0 ; i <  count ; i+=8) {
-                    samples[i] += buffer[i] / div;
-                    samples[i+1] += buffer[i+1] / div;
-                    samples[i+2] += buffer[i+2] / div;
-                    samples[i+3] += buffer[i+3] / div;
-                    samples[i+4] += buffer[i+4] / div;
-                    samples[i+5] += buffer[i+5] / div;
-                    samples[i+6] += buffer[i+6] / div;
-                    samples[i+7] += buffer[i+7] / div;
+                
+                if(sampleBufferSize) {
+                    MetaData<'soun'> md ( m_bufferDuration );
+                    
+                    auto out = m_output.lock();
+                    if(out) {
+                        out->pushBuffer((uint8_t*)&samples[0], sampleBufferSize, md);
+                    }
                 }
-
+                
+                memset(samples.get(), 0, outBufferSize);
             }
-
-            if(sampleBufferSize) {
-                MetaData<'soun'> md ( m_bufferDuration );
-            
-                auto out = m_output.lock();
-                if(out) {
-                    out->pushBuffer((uint8_t*)&samples[0], sampleBufferSize, md);
-                }
-            }
-            
-            memset(samples.get(), 0, outBufferSize);
-            m_mixThreadCond.wait_until(l, wt);
+            usleep(100);
         }
 
     }
