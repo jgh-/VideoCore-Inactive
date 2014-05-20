@@ -36,16 +36,9 @@ namespace videocore { namespace rtmp {
     }
     void H264Packetizer::pushBuffer(const uint8_t* const inBuffer, size_t inSize, IMetadata& inMetadata)
     {
-        const auto now = std::chrono::steady_clock::now();
-        const uint64_t bufferDuration(inMetadata.timestampDelta * 1000000.);
-        const double nowmicros (std::chrono::duration_cast<std::chrono::microseconds>(now - m_epoch).count());
         
-        const auto micros = std::nearbyint(nowmicros / double(bufferDuration)) * bufferDuration;
-        
-        TransformMetadata_t tmd = static_cast<TransformMetadata_t&>(inMetadata);
-        
-        double frameTime = tmd.timestampDelta * 1000.;
-
+      
+      
         
         std::vector<uint8_t>& outBuffer = m_outbuffer;
         
@@ -54,14 +47,14 @@ namespace videocore { namespace rtmp {
         uint8_t nal_type = inBuffer[4] & 0x1F;
         int flags = 0;
         const int flags_size = 5;
-        const int ts = micros / 1000;//m_videoTs;//
+        const int ts = inMetadata.timestampDelta;
 
         bool is_config = (nal_type == 7 || nal_type == 8);
         
         
         flags = FLV_CODECID_H264;
         auto output = m_output.lock();
-        RTMPMetadata_t outMeta(frameTime);
+        RTMPMetadata_t outMeta(inMetadata.timestampDelta);
 
         switch(nal_type) {
             case 7:
@@ -76,7 +69,7 @@ namespace videocore { namespace rtmp {
                     m_pps.resize(inSize-4);
                     memcpy(&m_pps[0], inBuffer+4, inSize-4);
                 }
-                frameTime = 0;
+
                 flags |= FLV_FRAME_KEY;
                 break;
             case 5:
@@ -116,7 +109,6 @@ namespace videocore { namespace rtmp {
                 put_buff(outBuffer, inBuffer, inSize);
             }
             
-            m_videoTs += frameTime;
             static auto prev_time = std::chrono::steady_clock::now();
             auto now = std::chrono::steady_clock::now();
             

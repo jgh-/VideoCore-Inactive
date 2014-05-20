@@ -35,12 +35,12 @@ namespace videocore { namespace rtmp {
     void
     AACPacketizer::pushBuffer(const uint8_t* const inBuffer, size_t inSize, IMetadata& metadata)
     {
-        const auto now = std::chrono::steady_clock::now();
-        const uint64_t bufferDuration(metadata.timestampDelta * 1000000.);
-        const double nowmicros (std::chrono::duration_cast<std::chrono::microseconds>(now - m_epoch).count());
+        //const auto now = std::chrono::steady_clock::now();
+        //const uint64_t bufferDuration(metadata.timestampDelta * 1000000.);
+        //const double nowmicros (std::chrono::duration_cast<std::chrono::microseconds>(now - m_epoch).count());
         
         
-        const auto micros = std::floor(nowmicros / double(bufferDuration)) * bufferDuration;
+        //const auto micros = std::floor(nowmicros / double(bufferDuration)) * bufferDuration;
         
         std::vector<uint8_t> & outBuffer = m_outbuffer;
         
@@ -48,13 +48,20 @@ namespace videocore { namespace rtmp {
         
         int flags = 0;
         const int flags_size = 2;
+    
         
-        //static int prev_ts = 0;
-        
-        int ts = micros / 1000; // m_audioTs * 1000.;//
+        int ts = metadata.timestampDelta;
 
+        /*static auto prev_time = std::chrono::high_resolution_clock::now();
+        auto nnow = std::chrono::high_resolution_clock::now();
+        
+        printf("audio diff: %lld\n", std::chrono::duration_cast<std::chrono::microseconds>(nnow - prev_time).count());
+        prev_time = nnow;
+        
+        */
         
         auto output = m_output.lock();
+        
         RTMPMetadata_t outMeta(metadata.timestampDelta);
         
         if(output) {

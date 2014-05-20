@@ -57,7 +57,7 @@
 namespace videocore { namespace iOS {
  
     GLESVideoMixer::GLESVideoMixer( int frame_w, int frame_h, double frameDuration, std::function<void(void*)> excludeContext )
-    : m_bufferDuration(frameDuration),m_glesCtx(nullptr), m_frameW(frame_w), m_frameH(frame_h),  m_exiting(false)
+    : m_bufferDuration(frameDuration),m_glesCtx(nullptr), m_frameW(frame_w), m_frameH(frame_h),  m_exiting(false), m_mixing(false)
     {
         m_glJobQueue.set_name("com.videocore.composite");
 
@@ -340,64 +340,72 @@ namespace videocore { namespace iOS {
         
         bool locked[2] = {false};
         
+        auto nextMixTime = std::chrono::high_resolution_clock::now();
+        
         while(!m_exiting.load())
         {
-            std::unique_lock<std::mutex> l (m_mutex);
-            auto wt = std::chrono::high_resolution_clock::now() + us;
-            
-            locked[current_fb] = true;
-            
-            PERF_GL_async({
+            if(std::chrono::high_resolution_clock::now() >= nextMixTime) {
 
-                glPushGroupMarkerEXT(0, "Mobcrush.mix");
-                CVPixelBufferLockBaseAddress(this->m_pixelBuffer[current_fb], 0);
+                nextMixTime += us;
                 
-                glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[current_fb]);
+                if(m_mixing.load()) {
+                    continue;
+                }
                 
-                glClear(GL_COLOR_BUFFER_BIT);
-                glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
-                glBindVertexArrayOES(this->m_vao);
-                glUseProgram(this->m_prog);
+                locked[current_fb] = true;
                 
-                for ( int i = 0 ; i < VideoLayer_Count ; ++i) {
+                m_mixing = true;
+                PERF_GL_async({
+                    glPushGroupMarkerEXT(0, "Mobcrush.mix");
+                    CVPixelBufferLockBaseAddress(this->m_pixelBuffer[current_fb], 0);
                     
-                    for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {
-                        CVPixelBufferLockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly); // Lock, read-only.
-                        CVOpenGLESTextureRef texture = NULL;
-                        auto iTex = this->m_sourceTextures.find(*it);
-                        if(iTex == this->m_sourceTextures.end()) continue;
-                        texture = iTex->second;
-
-                        if(this->m_sourceProperties[*it].blends) {
-                            glEnable(GL_BLEND);
-                            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        }
-                        glUniformMatrix4fv(m_uMat, 1, GL_FALSE, &this->m_sourceMats[*it][0][0]);
-                        glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
-                        glDrawArrays(GL_TRIANGLES, 0, 6);
-                        GL_ERRORS(__LINE__);
-                        CVPixelBufferUnlockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly);
-                        if(this->m_sourceProperties[*it].blends) {
-                            glDisable(GL_BLEND);
+                    glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[current_fb]);
+                    
+                    glClear(GL_COLOR_BUFFER_BIT);
+                    glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
+                    glBindVertexArrayOES(this->m_vao);
+                    glUseProgram(this->m_prog);
+                    
+                    for ( int i = 0 ; i < VideoLayer_Count ; ++i) {
+                        
+                        for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {
+                            CVPixelBufferLockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly); // Lock, read-only.
+                            CVOpenGLESTextureRef texture = NULL;
+                            auto iTex = this->m_sourceTextures.find(*it);
+                            if(iTex == this->m_sourceTextures.end()) continue;
+                            texture = iTex->second;
+                            
+                            if(this->m_sourceProperties[*it].blends) {
+                                glEnable(GL_BLEND);
+                                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                            }
+                            glUniformMatrix4fv(m_uMat, 1, GL_FALSE, &this->m_sourceMats[*it][0][0]);
+                            glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
+                            glDrawArrays(GL_TRIANGLES, 0, 6);
+                            GL_ERRORS(__LINE__);
+                            CVPixelBufferUnlockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly);
+                            if(this->m_sourceProperties[*it].blends) {
+                                glDisable(GL_BLEND);
+                            }
                         }
                     }
-                }
-                glFlush();
-                glPopGroupMarkerEXT();
-                if(locked[!current_fb])
-                    CVPixelBufferUnlockBaseAddress(this->m_pixelBuffer[!current_fb], 0);
-                
-                auto lout = this->m_output.lock();
-                if(lout) {
+                    glFlush();
+                    glPopGroupMarkerEXT();
+                    if(locked[!current_fb])
+                        CVPixelBufferUnlockBaseAddress(this->m_pixelBuffer[!current_fb], 0);
                     
-                    MetaData<'vide'> md(this->m_bufferDuration);
-                    lout->pushBuffer((uint8_t*)this->m_pixelBuffer[!current_fb], sizeof(this->m_pixelBuffer[!current_fb]), md);
-                }
-
-                
-            });
-            current_fb = !current_fb;
-            m_mixThreadCond.wait_until(l, wt);
+                    auto lout = this->m_output.lock();
+                    if(lout) {
+                        
+                        MetaData<'vide'> md(std::chrono::duration_cast<std::chrono::milliseconds>(nextMixTime - m_epoch).count());
+                        lout->pushBuffer((uint8_t*)this->m_pixelBuffer[!current_fb], sizeof(this->m_pixelBuffer[!current_fb]), md);
+                    }
+                    this->m_mixing = false;
+                });
+                current_fb = !current_fb;
+            }
+            
+            usleep(100);
                 
         }
     }

@@ -54,7 +54,9 @@ namespace videocore { namespace iOS {
         void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
         void setOutput(std::shared_ptr<IOutput> output);
         void setSourceProperties(std::weak_ptr<ISource> source, videocore::SourceProperties properties);
-        
+        void setEpoch(const std::chrono::steady_clock::time_point epoch) {
+            m_epoch = epoch;
+        };
     private:
         
         const std::size_t hash(std::weak_ptr<ISource> source) const;
@@ -92,7 +94,11 @@ namespace videocore { namespace iOS {
         std::map< std::size_t, CVPixelBufferRef >   m_sourceBuffers;
         std::map< std::size_t, CVOpenGLESTextureRef > m_sourceTextures;
         std::map< std::size_t, SourceProperties >    m_sourceProperties;
+        
+        std::chrono::steady_clock::time_point m_epoch;
+        
         std::atomic<bool> m_exiting;
+        std::atomic<bool> m_mixing;
     };
     
 }
