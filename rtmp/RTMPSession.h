@@ -100,6 +100,8 @@ namespace videocore
         
         bool parseCurrentData();
         void handleInvoke(uint8_t* p);
+        std::string parseStatusCode(uint8_t *p);
+
     private:
         
         JobQueue            m_jobQueue;
@@ -118,6 +120,7 @@ namespace videocore
         RTMPSessionStateCallback_t      m_callback;
         std::string                     m_playPath;
         std::string                     m_app;
+        std::map<int32_t, std::string>  m_trackedCommands;
 	
         int64_t         m_previousTimestamp;        
         size_t          m_currentChunkSize;

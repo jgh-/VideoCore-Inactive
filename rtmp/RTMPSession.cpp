@@ -205,7 +205,7 @@ namespace videocore
             size_t maxlen = m_streamInBuffer->total() - m_streamInBuffer->size();
             printf("max to read: %d\n", maxlen);
             size_t len = m_streamSession->read(buffer, maxlen);
-            printf("read: = %d\n", len);
+            printf("read: = %zu\n", len);
             
             m_streamInBuffer->put(&buffer[0], len);
             
@@ -367,6 +367,7 @@ namespace videocore
         }
         put_string(buff, "connect");
         put_double(buff, ++m_numberOfInvokes);
+        m_trackedCommands[m_numberOfInvokes] = "connect";
         put_byte(buff, kAMFObject);
         put_named_string(buff, "app", m_app.c_str());
         put_named_string(buff,"type", "nonprivate");
@@ -391,6 +392,7 @@ namespace videocore
         std::vector<uint8_t> buff;
         put_string(buff, "releaseStream");
         put_double(buff, ++m_numberOfInvokes);
+        m_trackedCommands[m_numberOfInvokes] = "releaseStream";
         put_byte(buff, kAMFNull);
         put_string(buff, m_playPath);
         metadata.msg_length.data = static_cast<int> (buff.size());
@@ -406,6 +408,7 @@ namespace videocore
         std::vector<uint8_t> buff;
         put_string(buff, "FCPublish");
         put_double(buff, ++m_numberOfInvokes);
+        m_trackedCommands[m_numberOfInvokes] = "FCPublish";
         put_byte(buff, kAMFNull);
         put_string(buff, m_playPath);
         metadata.msg_length.data = static_cast<int>( buff.size() );
@@ -421,6 +424,7 @@ namespace videocore
         std::vector<uint8_t> buff;
         put_string(buff, "createStream");
         m_createStreamInvoke = ++m_numberOfInvokes;
+        m_trackedCommands[m_numberOfInvokes] = "createStream";
         put_double(buff, m_createStreamInvoke);
         put_byte(buff, kAMFNull);
         metadata.msg_length.data = static_cast<int>( buff.size() );
@@ -438,6 +442,7 @@ namespace videocore
         
         put_string(buff, "publish");
         put_double(buff, ++m_numberOfInvokes);
+        m_trackedCommands[m_numberOfInvokes] = "publish";
         put_byte(buff, kAMFNull);
         put_string(buff, m_playPath);
         put_string(buff, "live");
@@ -499,6 +504,7 @@ namespace videocore
         std::vector<uint8_t> buff;
         put_string(buff, "deleteStream");
         put_double(buff, ++m_numberOfInvokes);
+        m_trackedCommands[m_numberOfInvokes] = "deleteStream";
         put_byte(buff, kAMFNull);
         put_double(buff, m_streamId);
         
@@ -635,78 +641,73 @@ namespace videocore
     void
     RTMPSession::handleInvoke(uint8_t* p)
     {
-        std::string result = get_string(p);
-        if (result == "_result") {
-            switch(m_state) {
-                case kClientStateHandshakeComplete:
-                {
-                    sendReleaseStream();
-                    sendFCPublish();
-                    sendCreateStream();
-                    setClientState(kClientStateFCPublish);
+        std::string command = get_string(p);
+        int32_t pktId = get_double(p+11);
+        std::string trackedMethod = m_trackedCommands[pktId];
+        
+        if (command == "_result") {
+            if (trackedMethod == "connect") {
+                sendReleaseStream();
+                sendFCPublish();
+                sendCreateStream();
+                setClientState(kClientStateFCPublish);
+            } else if (trackedMethod == "createStream") {
+                if (p[10] || p[19] != 0x05 || p[20]) {
+                    printf("RTMP: Unexpected reply on connect()\n");
+                } else {
+                    m_streamId = get_double(p+21);
                 }
-                    break;
-                    
-                case kClientStateFCPublish:
-                {
-                    setClientState(kClientStateReleasing);
-                }
-                    break;
-                    
-                case kClientStateReleasing:
-                {
-                    setClientState(kClientStateFCPublish);
-                    // hack for Wowza Media Server, it does not send result for
-                    // releaseStream and FCPublish calls
-                    if (!p[10]) {
-                        int pktId = get_double(p+11);
-                        if (pktId == m_createStreamInvoke)
-                            setClientState(kClientStateConnecting);
-                    }
-                }
-                    if (m_state != kClientStateConnecting) break;
-                    
-                case kClientStateConnecting:
-                {
-                    if (p[10] || p[19] != 0x05 || p[20]) {
-                        printf("RTMP: Unexpected reply on connect()\n");
-                    } else {
-                        m_streamId = get_double(p+21);
-                    }
-                    sendPublish();
-                    setClientState(kClientStateReady);
-                }
-                    break;
-                    
-                case kClientStateReady:
-                {
-                    sendHeaderPacket();
-                    setClientState(kClientStatePublishing);
-                }
-                    break;
+                sendPublish();
+                setClientState(kClientStateReady);
             }
-        } else if (result == "onStatus") {
-            uint8_t tmp[256];
-            p += 3;
-            uint8_t *start = p;
-            p += strlen(result.c_str());
-            uint8_t type = p[0];
-            double num = get_double(p+1); // num
-            p += sizeof(num) + 1;
-            uint8_t sep = p[0]; // null
-            uint8_t objType = p[1]; // object type
-            uint16_t propLen = get_be16(p+2); // prop len
-            p += 2 + sizeof(propLen);
-            memcpy(tmp, p, propLen); // prop
-            p += propLen;
-            uint8_t valType = p[0];
-            uint16_t valLen = get_be16(p+1);
-            p += 1 + sizeof(valLen);
-            memcpy(tmp, p, valLen);
-            p = start;
+        } else if (command == "onStatus") {
+            std::string code = parseStatusCode(p + 3 + command.length());
+            printf("code : %s\n", code.c_str());
+            if (code == "NetStream.Publish.Start") {
+                sendHeaderPacket();
+                setClientState(kClientStatePublishing);
+            }
         } else {
-            
+            printf("received invoke command: %s", command.c_str());
         }
+        
+//            switch(m_state) {
+//                case kClientStateHandshakeComplete:
+//                {
+//                }
+//                    break;
+//                    
+//                case kClientStateFCPublish:
+//                {
+//                    setClientState(kClientStateReleasing);
+//                }
+//                    break;
+//                    
+//                case kClientStateReleasing:
+//                {
+//                    setClientState(kClientStateFCPublish);
+//                    // hack for Wowza Media Server, it does not send result for
+//                    // releaseStream and FCPublish calls
+//                    if (!p[10]) {
+//                        if (pktId == m_createStreamInvoke)
+//                            setClientState(kClientStateConnecting);
+//                    }
+//                }
+//                    if (m_state != kClientStateConnecting) break;
+//                    
+//                case kClientStateConnecting:
+//                {
+//                }
+//                    break;
+//                    
+//                case kClientStateReady:
+//                {
+//                    sendHeaderPacket();
+//                    setClientState(kClientStatePublishing);
+//                }
+//                    break;
+//            }
+
         
         
         //                        if(m_state == kClientStateInitializing0) {
@@ -740,5 +741,66 @@ namespace videocore
         //                            setClientState(kClientStateSessionStarted);
         //
         //                        }
+    }
+    
+    std::string RTMPSession::parseStatusCode(uint8_t *p) {
+        uint8_t *start = p;
+        std::map<std::string, std::string> props;
+        
+        // skip over the packet id
+        uint8_t type = p[0];
+        double num = get_double(p+1); // num
+        p += sizeof(num) + 1;
+        
+        // keep reading until we find an AMF Object
+        bool foundObject = false;
+        while (!foundObject) {
+            switch(p[0]) {
+                case AMF_DATA_TYPE_NUMBER:
+                    p += 9;
+                    continue;
+                    
+                case AMF_DATA_TYPE_BOOL:
+                    p += 2;
+                    continue;
+                    
+                case AMF_DATA_TYPE_NULL:
+                    p++;
+                    continue;
+                    
+                case AMF_DATA_TYPE_STRING:
+                    p += 3 + get_be16(p);
+                    continue;
+                    
+                case AMF_DATA_TYPE_LONG_STRING:
+                    p += 5 + get_be32(p);
+                    continue;
+                    
+                case AMF_DATA_TYPE_OBJECT:
+                    p += 1;
+                    foundObject = true;
+                    continue;
+            }
+        }
+        
+        // read the properties of the object
+        uint16_t nameLen, valLen;
+        char propName[128], propVal[128];
+        do {
+            nameLen = get_be16(p);
+            p += sizeof(nameLen);
+            strncpy(propName, (char*)p, nameLen);
+            propName[nameLen] = '\0';
+            p += nameLen + 1; // skip property value type -- assume string
+            valLen = get_be16(p);
+            p += 2;
+            strncpy(propVal, (char*)p, valLen);
+            propVal[valLen] = '\0';
+            p += valLen;
+            props[propName] = propVal;
+        } while (get_be24(p) != AMF_DATA_TYPE_OBJECT_END);
+        
+        p = start;
+        return props["code"];
     }
 }
