@@ -339,14 +339,14 @@ namespace videocore { namespace iOS {
         int current_fb = 0;
         
         bool locked[2] = {false};
-        
-        auto nextMixTime = std::chrono::high_resolution_clock::now();
-        
+
         while(!m_exiting.load())
         {
-            if(std::chrono::high_resolution_clock::now() >= nextMixTime) {
+            usleep(100);
+            
+            if(std::chrono::high_resolution_clock::now() >= m_nextMixTime) {
 
-                nextMixTime += us;
+                m_nextMixTime += us;
                 
                 if(m_mixing.load()) {
                     continue;
@@ -397,7 +397,7 @@ namespace videocore { namespace iOS {
                     auto lout = this->m_output.lock();
                     if(lout) {
                         
-                        MetaData<'vide'> md(std::chrono::duration_cast<std::chrono::milliseconds>(nextMixTime - m_epoch).count());
+                        MetaData<'vide'> md(std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count());
                         lout->pushBuffer((uint8_t*)this->m_pixelBuffer[!current_fb], sizeof(this->m_pixelBuffer[!current_fb]), md);
                     }
                     this->m_mixing = false;
@@ -405,7 +405,7 @@ namespace videocore { namespace iOS {
                 current_fb = !current_fb;
             }
             
-            usleep(100);
+            
                 
         }
     }

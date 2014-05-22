@@ -47,6 +47,7 @@ namespace videocore { namespace iOS {
         void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
     private:
         static OSStatus ioProc(AudioConverterRef audioConverter, UInt32 *ioNumDataPackets, AudioBufferList* ioData, AudioStreamPacketDescription** ioPacketDesc, void* inUserData );
+        void makeAsc(char sampleRateIndex, char channelCount);
     private:
         
         AudioConverterRef       m_audioConverter;
@@ -55,6 +56,9 @@ namespace videocore { namespace iOS {
         uint32_t                m_outputPacketMaxSize;
         
         Buffer                  m_outputBuffer;
+        
+        char m_asc[2];
+        bool m_sentConfig;
         
     };
     

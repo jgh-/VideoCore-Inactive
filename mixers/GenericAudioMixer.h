@@ -52,6 +52,7 @@ namespace videocore {
         void setSourceGain(std::weak_ptr<ISource> source, float gain);
         void setEpoch(const std::chrono::steady_clock::time_point epoch) {
             m_epoch = epoch;
+            m_nextMixTime = epoch;
         };
         
     protected:
@@ -62,6 +63,7 @@ namespace videocore {
         
     protected:
         std::chrono::steady_clock::time_point m_epoch;
+        std::chrono::steady_clock::time_point m_nextMixTime;
         
         double m_bufferDuration;
         

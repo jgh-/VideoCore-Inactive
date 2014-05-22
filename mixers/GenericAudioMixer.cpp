@@ -250,14 +250,12 @@ namespace videocore {
         const std::unique_ptr<short[]> buffer(new short[outBufferSize / sizeof(short)]);
         const std::unique_ptr<short[]> samples(new short[outBufferSize / sizeof(short)]);
         
-        auto nextMixTime = std::chrono::high_resolution_clock::now();
-
         while(!m_exiting.load()) {
             std::unique_lock<std::mutex> l(m_mixMutex);
             
-            if(std::chrono::high_resolution_clock::now() >= nextMixTime) {
+            if(std::chrono::high_resolution_clock::now() >= m_nextMixTime) {
                 
-                nextMixTime += us;
+                
                 
                 size_t sampleBufferSize = 0;
                 
@@ -286,7 +284,11 @@ namespace videocore {
                 }
                 
                 if(sampleBufferSize) {
-                    MetaData<'soun'> md ( std::chrono::duration_cast<std::chrono::milliseconds>(nextMixTime - m_epoch).count() );
+                    
+                    m_nextMixTime += us;
+                    
+                    MetaData<'soun'> md ( std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count() );
+                    
                     
                     auto out = m_output.lock();
                     if(out) {

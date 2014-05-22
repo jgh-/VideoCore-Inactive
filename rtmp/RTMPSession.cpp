@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <sstream>
 
+
 namespace videocore
 {
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback_t callback)
@@ -85,7 +86,7 @@ namespace videocore
         m_frameDuration = parms.getData<kRTMPSessionParameterFrameDuration>();
         m_frameHeight = parms.getData<kRTMPSessionParameterHeight>();
         m_frameWidth = parms.getData<kRTMPSessionParameterWidth>();
-        
+        m_audioSampleRate = parms.getData<kRTMPSessionParameterAudioFrequency>();
     }
     void
     RTMPSession::pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata)
@@ -104,15 +105,28 @@ namespace videocore
             size_t tosend = std::min(len, m_currentChunkSize);
             uint8_t* p;
             buf->read(&p, buf->size());
-            uint64_t ts = inMetadata.getData<kRTMPMetadataTimestamp>();
+            uint64_t ts = inMetadata.getData<kRTMPMetadataTimestamp>() ;
+            const int streamId = inMetadata.getData<kRTMPMetadataMsgStreamId>();
+            printf("ts[%d]: %lld\n", streamId , ts);
             if(ts < m_previousTimestamp) { ts = m_previousTimestamp; }
             m_previousTimestamp = ts;
-            const int streamId = inMetadata.getData<kRTMPMetadataMsgStreamId>();
-            put_byte(chunk, ( streamId & 0x1F));
-            put_be24(chunk, static_cast<uint32_t>(ts));
-            put_be24(chunk, inMetadata.getData<kRTMPMetadataMsgLength>());
-            put_byte(chunk, inMetadata.getData<kRTMPMetadataMsgTypeId>());
-            put_buff(chunk, (uint8_t*)&m_streamId, sizeof(int32_t)); // msg stream id is little-endian
+            
+            auto it = m_previousChunkData.find(streamId);
+            if(it == m_previousChunkData.end()) {
+                // Type 0.
+                put_byte(chunk, ( streamId & 0x1F));
+                put_be24(chunk, static_cast<uint32_t>(ts));
+                put_be24(chunk, inMetadata.getData<kRTMPMetadataMsgLength>());
+                put_byte(chunk, inMetadata.getData<kRTMPMetadataMsgTypeId>());
+                put_buff(chunk, (uint8_t*)&m_streamId, sizeof(int32_t)); // msg stream id is little-endian
+            } else {
+                // Type 1.
+                put_byte(chunk, RTMP_CHUNK_TYPE_1 | (streamId & 0x1F));
+                put_be24(chunk, static_cast<uint32_t>(ts - it->second)); // timestamp delta
+                put_be24(chunk, inMetadata.getData<kRTMPMetadataMsgLength>());
+                put_byte(chunk, inMetadata.getData<kRTMPMetadataMsgTypeId>());
+            }
+            m_previousChunkData[streamId] = ts;
             put_buff(chunk, p, tosend);
             
             outb.insert(outb.end(), chunk.begin(), chunk.end());
@@ -123,22 +137,22 @@ namespace videocore
             
             while(len > 0) {
                 tosend = std::min(len, m_currentChunkSize);
-                p[-1] = RTMP_CHUNK_TYPE_3 | (inMetadata.getData<kRTMPMetadataMsgStreamId>() & 0x1F);
+                p[-1] = RTMP_CHUNK_TYPE_3 | (streamId & 0x1F);
                 
                 outb.insert(outb.end(), p-1, p+tosend);
                 p+=tosend;
                 len-=tosend;
-                if(outb.size() > 3072) {
+                if(outb.size() > 1400) {
 
                     this->write(&outb[0], outb.size());
                     outb.clear();
                 }
                 
             }
-            if(this->m_state != kClientStateConnected || outb.size() > 3072) {
+            //if(this->m_state != kClientStateConnected || outb.size() > 3072) {
                 this->write(&outb[0], outb.size());
                 outb.clear();
-            }
+            //}
             
         });
 
@@ -340,6 +354,11 @@ namespace videocore
     RTMPSession::handshake2()
     {
         setClientState(kClientStateHandshake2);
+        uint8_t* p;
+        m_s1.read(&p, kRTMPSignatureSize);
+        p += 4;
+        uint32_t zero = 0;
+        memcpy(p, &zero, sizeof(uint32_t));
         
         write(m_s1(), m_s1.size());
     }
@@ -457,8 +476,8 @@ namespace videocore
         put_named_double(enc, "videocodecid", 7.);
         
         
-        put_named_double(enc, "audiodatarate", 128.);
-        put_named_double(enc, "audiosamplerate", 44100.);
+        put_named_double(enc, "audiodatarate", 131152. / 1024.);
+        put_named_double(enc, "audiosamplerate", m_audioSampleRate);
         put_named_double(enc, "audiosamplesize", 16);
         put_named_bool(enc, "stereo", true);
         put_named_double(enc, "audiocodecid", 10.);

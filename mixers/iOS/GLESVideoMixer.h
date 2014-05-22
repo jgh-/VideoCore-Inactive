@@ -56,6 +56,7 @@ namespace videocore { namespace iOS {
         void setSourceProperties(std::weak_ptr<ISource> source, videocore::SourceProperties properties);
         void setEpoch(const std::chrono::steady_clock::time_point epoch) {
             m_epoch = epoch;
+            m_nextMixTime = epoch;
         };
     private:
         
@@ -96,6 +97,7 @@ namespace videocore { namespace iOS {
         std::map< std::size_t, SourceProperties >    m_sourceProperties;
         
         std::chrono::steady_clock::time_point m_epoch;
+        std::chrono::steady_clock::time_point m_nextMixTime;
         
         std::atomic<bool> m_exiting;
         std::atomic<bool> m_mixing;

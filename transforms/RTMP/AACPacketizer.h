@@ -40,11 +40,13 @@ namespace videocore { namespace rtmp {
 
     private:
         
+        
         std::chrono::steady_clock::time_point m_epoch;
         std::weak_ptr<IOutput> m_output;
         std::vector<uint8_t> m_outbuffer;
         
         double m_audioTs;
+        char m_asc[2];
         bool m_sentAudioConfig;
     };
     

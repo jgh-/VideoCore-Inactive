@@ -47,15 +47,19 @@ static OSStatus handleInputBuffer(void *inRefCon, AudioUnitRenderActionFlags *io
     return status;
 }
 
+
 namespace videocore { namespace iOS {
  
-    MicSource::MicSource(std::function<void(AudioUnit&)> excludeAudioUnit) {
+    MicSource::MicSource(double audioSampleRate, std::function<void(AudioUnit&)> excludeAudioUnit)
+    : m_audioSampleRate(audioSampleRate)
+    {
         
         AVAudioSession *session = [AVAudioSession sharedInstance];
         
         [session setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
         [session setMode:AVAudioSessionModeVideoRecording error:nil];
         [session setActive:YES error:nil];
+        [session overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
         
         AudioComponentDescription acd;
         acd.componentType = kAudioUnitType_Output;
@@ -76,7 +80,7 @@ namespace videocore { namespace iOS {
         AudioUnitSetProperty(m_audioUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input, 1, &flagOne, sizeof(flagOne));
         
         AudioStreamBasicDescription desc = {0};
-        desc.mSampleRate = 44100.;
+        desc.mSampleRate = m_audioSampleRate;
         desc.mFormatID = kAudioFormatLinearPCM;
         desc.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
         desc.mChannelsPerFrame = 2;
@@ -110,7 +114,7 @@ namespace videocore { namespace iOS {
         auto output = m_output.lock();
         if(output) {
             videocore::AudioBufferMetadata md (0.);
-            md.setData(44100, 16, 2, false, shared_from_this());
+            md.setData(m_audioSampleRate, 16, 2, false, shared_from_this());
             output->pushBuffer(data, data_size, md);
         }
     }
