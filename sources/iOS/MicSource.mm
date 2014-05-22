@@ -56,10 +56,8 @@ namespace videocore { namespace iOS {
         
         AVAudioSession *session = [AVAudioSession sharedInstance];
         
-        [session setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
-        [session setMode:AVAudioSessionModeVideoRecording error:nil];
+        [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionMixWithOthers | AVAudioSessionCategoryOptionDefaultToSpeaker error:nil];
         [session setActive:YES error:nil];
-        [session overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
         
         AudioComponentDescription acd;
         acd.componentType = kAudioUnitType_Output;
