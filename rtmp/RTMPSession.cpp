@@ -105,7 +105,6 @@ namespace videocore
             std::vector<uint8_t> & outb = this->m_outBuffer;
             size_t len = buf->size();
             size_t tosend = std::min(len, m_currentChunkSize);
-            printf("will send %zu bytes min(%zu, %zu)\n", tosend, len, m_currentChunkSize);
             uint8_t* p;
             buf->read(&p, buf->size());
             uint64_t ts = inMetadata.getData<kRTMPMetadataTimestamp>();
@@ -203,9 +202,7 @@ namespace videocore
         do {
             
             size_t maxlen = m_streamInBuffer->total() - m_streamInBuffer->size();
-            printf("max to read: %d\n", maxlen);
             size_t len = m_streamSession->read(buffer, maxlen);
-            printf("read: = %zu\n", len);
             
             m_streamInBuffer->put(&buffer[0], len);
             
@@ -543,7 +540,7 @@ namespace videocore
                     case RTMP_PT_CHUNK_SIZE:
                     {
                         unsigned long newChunkSize = get_be32(p);
-                        printf("Changing chunk size from %zu -> %zu\n", m_currentChunkSize, newChunkSize);
+                        //printf("Request to change chunk size from %zu -> %zu\n", m_currentChunkSize, newChunkSize);
                         //m_currentChunkSize = newChunkSize;
                     }
                         break;
@@ -568,7 +565,6 @@ namespace videocore
 
                     case RTMP_PT_INVOKE:
                     {
-                        printf("received invoke\n");
                         handleInvoke(p);
                     }
                         break;
@@ -643,15 +639,18 @@ namespace videocore
     {
         std::string command = get_string(p);
         int32_t pktId = get_double(p+11);
-        std::string trackedMethod = m_trackedCommands[pktId];
-        
+        std::string trackedCommand = m_trackedCommands[pktId];
+
+        printf("received invoke %s\n", command.c_str());
+
         if (command == "_result") {
-            if (trackedMethod == "connect") {
+            printf("tracked command: %s\n", trackedCommand.c_str());
+            if (trackedCommand == "connect") {
                 sendReleaseStream();
                 sendFCPublish();
                 sendCreateStream();
                 setClientState(kClientStateFCPublish);
-            } else if (trackedMethod == "createStream") {
+            } else if (trackedCommand == "createStream") {
                 if (p[10] || p[19] != 0x05 || p[20]) {
                     printf("RTMP: Unexpected reply on connect()\n");
                 } else {
@@ -667,80 +666,8 @@ namespace videocore
                 sendHeaderPacket();
                 setClientState(kClientStatePublishing);
             }
-        } else {
-            printf("received invoke command: %s", command.c_str());
         }
         
-//            switch(m_state) {
-//                case kClientStateHandshakeComplete:
-//                {
-//                }
-//                    break;
-//                    
-//                case kClientStateFCPublish:
-//                {
-//                    setClientState(kClientStateReleasing);
-//                }
-//                    break;
-//                    
-//                case kClientStateReleasing:
-//                {
-//                    setClientState(kClientStateFCPublish);
-//                    // hack for Wowza Media Server, it does not send result for
-//                    // releaseStream and FCPublish calls
-//                    if (!p[10]) {
-//                        if (pktId == m_createStreamInvoke)
-//                            setClientState(kClientStateConnecting);
-//                    }
-//                }
-//                    if (m_state != kClientStateConnecting) break;
-//                    
-//                case kClientStateConnecting:
-//                {
-//                }
-//                    break;
-//                    
-//                case kClientStateReady:
-//                {
-//                    sendHeaderPacket();
-//                    setClientState(kClientStatePublishing);
-//                }
-//                    break;
-//            }
-
-        
-        
-        //                        if(m_state == kClientStateInitializing0) {
-        //                            sendReleaseStream();
-        //                            sendFCPublish();
-        //                            sendCreateStream();
-        //                            setClientState(kClientStateInitializing1);
-        //
-        //                        } else if(m_state == kClientStateInitializing1) {
-        //                            // send publish
-        //                            uint8_t* start = p;
-        //
-        //                            std::string result = get_string(p);
-        //                            if(result.length() < 0xFFFF) {
-        //                                p+=3+result.length();
-        //                            } else {
-        //                                p+=5+result.length();
-        //                            }
-        //                            if(result == "_result") {
-        //                                p+=11;
-        //
-        //                                double streamId = get_double(p);
-        //                                m_streamId = streamId;
-        //                                sendPublish();
-        //                                setClientState(kClientStateInitializing2);
-        //                            }
-        //                            p = start;
-        //
-        //                        } else if(m_state == kClientStateInitializing2) {
-        //                            sendHeaderPacket();
-        //                            setClientState(kClientStateSessionStarted);
-        //
-        //                        }
     }
     
     std::string RTMPSession::parseStatusCode(uint8_t *p) {
@@ -748,38 +675,18 @@ namespace videocore
         std::map<std::string, std::string> props;
         
         // skip over the packet id
-        uint8_t type = p[0];
         double num = get_double(p+1); // num
         p += sizeof(num) + 1;
         
         // keep reading until we find an AMF Object
         bool foundObject = false;
         while (!foundObject) {
-            switch(p[0]) {
-                case AMF_DATA_TYPE_NUMBER:
-                    p += 9;
-                    continue;
-                    
-                case AMF_DATA_TYPE_BOOL:
-                    p += 2;
-                    continue;
-                    
-                case AMF_DATA_TYPE_NULL:
-                    p++;
-                    continue;
-                    
-                case AMF_DATA_TYPE_STRING:
-                    p += 3 + get_be16(p);
-                    continue;
-                    
-                case AMF_DATA_TYPE_LONG_STRING:
-                    p += 5 + get_be32(p);
-                    continue;
-                    
-                case AMF_DATA_TYPE_OBJECT:
-                    p += 1;
-                    foundObject = true;
-                    continue;
+            if (p[0] == AMF_DATA_TYPE_OBJECT) {
+                p += 1;
+                foundObject = true;
+                continue;
+            } else {
+                p += amfPrimitiveObjectSize(p);
             }
         }
         
@@ -791,16 +698,33 @@ namespace videocore
             p += sizeof(nameLen);
             strncpy(propName, (char*)p, nameLen);
             propName[nameLen] = '\0';
-            p += nameLen + 1; // skip property value type -- assume string
-            valLen = get_be16(p);
-            p += 2;
-            strncpy(propVal, (char*)p, valLen);
-            propVal[valLen] = '\0';
-            p += valLen;
-            props[propName] = propVal;
+            p += nameLen;
+            if (p[0] == AMF_DATA_TYPE_STRING) {
+                valLen = get_be16(p+1);
+                p += sizeof(valLen) + 1;
+                strncpy(propVal, (char*)p, valLen);
+                propVal[valLen] = '\0';
+                p += valLen;
+                props[propName] = propVal;
+            } else {
+                // treat non-string property values as empty
+                p += amfPrimitiveObjectSize(p);
+                props[propName] = "";
+            }
         } while (get_be24(p) != AMF_DATA_TYPE_OBJECT_END);
         
         p = start;
         return props["code"];
+    }
+    
+    int32_t RTMPSession::amfPrimitiveObjectSize(uint8_t* p) {
+        switch(p[0]) {
+            case AMF_DATA_TYPE_NUMBER:       return 9;
+            case AMF_DATA_TYPE_BOOL:         return 2;
+            case AMF_DATA_TYPE_NULL:         return 1;
+            case AMF_DATA_TYPE_STRING:       return 3 + get_be16(p);
+            case AMF_DATA_TYPE_LONG_STRING:  return 5 + get_be32(p);
+        }
+        return -1; // not a primitive, likely an object
     }
 }

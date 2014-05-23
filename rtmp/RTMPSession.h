@@ -101,6 +101,7 @@ namespace videocore
         bool parseCurrentData();
         void handleInvoke(uint8_t* p);
         std::string parseStatusCode(uint8_t *p);
+        int32_t amfPrimitiveObjectSize(uint8_t* p);
 
     private:
         
