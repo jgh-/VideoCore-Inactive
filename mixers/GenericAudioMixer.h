@@ -50,6 +50,10 @@ namespace videocore {
         void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
         void setOutput(std::shared_ptr<IOutput> output);
         void setSourceGain(std::weak_ptr<ISource> source, float gain);
+        void setEpoch(const std::chrono::steady_clock::time_point epoch) {
+            m_epoch = epoch;
+            m_nextMixTime = epoch;
+        };
         
     protected:
         
@@ -58,6 +62,8 @@ namespace videocore {
         void mixThread();
         
     protected:
+        std::chrono::steady_clock::time_point m_epoch;
+        std::chrono::steady_clock::time_point m_nextMixTime;
         
         double m_bufferDuration;
         

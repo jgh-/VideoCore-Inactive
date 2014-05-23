@@ -35,7 +35,7 @@ namespace videocore { namespace iOS {
     {
     public:
         
-        MicSource(std::function<void(AudioUnit&)> excludeAudioUnit = nullptr);
+        MicSource(double audioSampleRate = 44100., std::function<void(AudioUnit&)> excludeAudioUnit = nullptr);
         ~MicSource();
         
         
@@ -50,8 +50,11 @@ namespace videocore { namespace iOS {
         
         AudioComponentInstance m_audioUnit;
         AudioComponent         m_component;
+    
+        double m_audioSampleRate;
         
         std::weak_ptr<IOutput> m_output;
+    
     };
     
 }

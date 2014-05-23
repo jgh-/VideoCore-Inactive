@@ -29,33 +29,30 @@ namespace videocore { namespace rtmp {
     AACPacketizer::AACPacketizer()
     : m_audioTs(0), m_sentAudioConfig(false)
     {
-        
+        memset(m_asc, 0, sizeof(m_asc));
     }
     
     void
     AACPacketizer::pushBuffer(const uint8_t* const inBuffer, size_t inSize, IMetadata& metadata)
     {
-        const auto now = std::chrono::steady_clock::now();
-        const uint64_t bufferDuration(metadata.timestampDelta * 1000000.);
-        const double nowmicros (std::chrono::duration_cast<std::chrono::microseconds>(now - m_epoch).count());
-        
-        
-        const auto micros = std::floor(nowmicros / double(bufferDuration)) * bufferDuration;
-        
         std::vector<uint8_t> & outBuffer = m_outbuffer;
         
         outBuffer.clear();
         
         int flags = 0;
         const int flags_size = 2;
+    
         
-        //static int prev_ts = 0;
-        
-        int ts = micros / 1000; // m_audioTs * 1000.;//
-
+        int ts = metadata.timestampDelta;
         
         auto output = m_output.lock();
+        
         RTMPMetadata_t outMeta(metadata.timestampDelta);
+        
+        if(inSize == 2 && !m_asc[0] && !m_asc[1]) {
+            m_asc[0] = inBuffer[0];
+            m_asc[1] = inBuffer[1];
+        }
         
         if(output) {
         
@@ -69,8 +66,7 @@ namespace videocore { namespace rtmp {
             if(!m_sentAudioConfig) {
                 
                 m_sentAudioConfig = true;
-                const char hdr[2] = { 0x12,0x10 };
-                put_buff(outBuffer, (uint8_t*)hdr, 2);
+                put_buff(outBuffer, (uint8_t*)m_asc, sizeof(m_asc));
                 
             } else {
                 

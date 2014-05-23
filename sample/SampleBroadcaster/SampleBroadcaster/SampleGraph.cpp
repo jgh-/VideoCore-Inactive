@@ -60,7 +60,7 @@ namespace videocore { namespace sample {
         }) );
         videocore::RTMPSessionParameters_t sp ( 0. );
         
-        sp.setData(frame_w, frame_h, 1. / static_cast<double>(fps), bitrate);
+        sp.setData(frame_w, frame_h, 1. / static_cast<double>(fps), bitrate, 44100);
         
         m_outputSession->setSessionParameters(sp);
         

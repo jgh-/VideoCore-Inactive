@@ -22,29 +22,6 @@
 #include <videocore/transforms/iOS/AACEncode.h>
 #include <sstream>
 
-extern std::string g_tmpFolder;
-
-/*
-static inline void make_ADTS(char buffer[7], size_t frameLength) {
-    
-    int totalSize = (7+frameLength) & 0x3FFF;
-    
-    buffer[0] = 0xFF; // syncword
-    buffer[1] = 0xF1; // syncword + protection absent
-    buffer[2] = 0x50; // 2:audio type-1, 4:sampling freq idx, 1: private, 1: channel config[1 of 3]
-    buffer[3] = 0x80 | ((totalSize >> 11) & 0x3); // 2: channel config[2,3] , originality/home/copyrighted stream/start, 2:frame length[2 of 13]
-    totalSize = totalSize & 0x7ff;
-    buffer[4] = (totalSize >> 3) & 0xFF; // frame length, next 8 bits.
-    totalSize = totalSize & 0x7;
-    buffer[5] = (totalSize << 5); // frame length, lower 3 bits + 5 bits buffer fullness[0]
-    buffer[6] = 0x1; // lower 6 bits bufer fullness[0], 2:number of AAC frames = 1
-    
-}
-static inline void make_ASC(char buffer[2], size_t frameLength) {
-    buffer[0] = (0x1 << 3) | (0x4 & 0xF) >> 1;
-    buffer[1] = 0x10 ;
-}*/
-
 namespace videocore { namespace iOS {
  
     struct UserData {
@@ -56,6 +33,7 @@ namespace videocore { namespace iOS {
     } ;
     
     AACEncode::AACEncode( int frequencyInHz, int channelCount )
+    : m_sentConfig(false)
     {
 
         AudioStreamBasicDescription in = {0}, out = {0};
@@ -101,9 +79,18 @@ namespace videocore { namespace iOS {
         
         m_bytesPerSample = 2 * channelCount;
         
+        makeAsc((frequencyInHz == 44100) ? 4 : 3, channelCount);
+        
     }
     AACEncode::~AACEncode() {
         AudioConverterDispose(m_audioConverter);
+    }
+    void
+    AACEncode::makeAsc(char sampleRateIndex, char channelCount)
+    {
+        // http://wiki.multimedia.cx/index.php?title=MPEG-4_Audio#Audio_Specific_Config
+        m_asc[0] = 0x10 | ((sampleRateIndex>>1) & 0x3);
+        m_asc[1] = ((sampleRateIndex & 0x1)<<7) | ((channelCount & 0xF) << 3);
     }
     OSStatus
     AACEncode::ioProc(AudioConverterRef audioConverter, UInt32 *ioNumDataPackets, AudioBufferList* ioData, AudioStreamPacketDescription** ioPacketDesc, void* inUserData )
@@ -155,9 +142,13 @@ namespace videocore { namespace iOS {
         }
         const size_t totalBytes = p - m_outputBuffer();
 
+        
         auto output = m_output.lock();
         if(output) {
-            
+            if(!m_sentConfig) {
+                output->pushBuffer((const uint8_t*)m_asc, sizeof(m_asc), metadata);
+                m_sentConfig = true;
+            }
             output->pushBuffer(m_outputBuffer(), totalBytes, metadata);
         }
     }

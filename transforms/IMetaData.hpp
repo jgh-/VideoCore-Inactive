@@ -33,6 +33,8 @@ namespace videocore
     struct IMetadata
     {
         IMetadata(double ts) : timestampDelta(ts) {};
+        IMetadata() : timestampDelta(0.) {};
+        
         virtual ~IMetadata() {};
         
         virtual const int32_t type() const = 0;
@@ -44,6 +46,7 @@ namespace videocore
     struct MetaData : public IMetadata
     {
         MetaData<Types...>(double ts) : IMetadata(ts) {};
+        MetaData<Types...>() : IMetadata() {};
         
         virtual const int32_t type() const { return MetaDataType; };
         

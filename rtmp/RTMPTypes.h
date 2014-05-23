@@ -37,7 +37,7 @@ typedef enum {
     kClientStateHandshakeComplete,
     kClientStateFCPublish,
     kClientStateReady,
-    kClientStatePublishing,
+    kClientStateSessionStarted,
     kClientStateError,
     kClientStateNotConnected
 } ClientState_t;

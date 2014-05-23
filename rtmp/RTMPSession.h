@@ -45,9 +45,10 @@ namespace videocore
         kRTMPSessionParameterWidth=0,
         kRTMPSessionParameterHeight,
         kRTMPSessionParameterFrameDuration,
-        kRTMPSessionParameterVideoBitrate
+        kRTMPSessionParameterVideoBitrate,
+        kRTMPSessionParameterAudioFrequency
     };
-    typedef MetaData<'rtmp', int32_t, int32_t, double, int32_t> RTMPSessionParameters_t;
+    typedef MetaData<'rtmp', int32_t, int32_t, double, int32_t, double> RTMPSessionParameters_t;
     enum {
         kRTMPMetadataTimestamp=0,
         kRTMPMetadataMsgLength,
@@ -112,7 +113,7 @@ namespace videocore
         
         std::queue<std::shared_ptr<Buffer> > m_streamOutQueue;
         
-        
+        std::map<int, uint64_t>                  m_previousChunkData;
         std::unique_ptr<RingBuffer>         m_streamInBuffer;
         std::unique_ptr<IStreamSession>     m_streamSession;
         std::vector<uint8_t> m_outBuffer;
@@ -132,6 +133,7 @@ namespace videocore
         int32_t         m_frameHeight;
         int32_t         m_bitrate;
         double          m_frameDuration;
+        double          m_audioSampleRate;
         
         ClientState_t  m_state;
     };

@@ -127,17 +127,17 @@ namespace videocore { namespace iOS {
             m_frameCount = 0;
             m_lastFilePos = 36;
             m_queue.enqueue([this,old]() {
-#ifdef DEBUG
+#if 0
                 [(id)this->m_assetWriters[old] finishWritingWithCompletionHandler:^{
 #endif
                     this->teardownWriter(old);
                     this->setupWriter(old);
-#ifdef DEBUG
+#if 0
                 }];
 #endif
             });
         } else if(m_sps.size() == 0 || m_pps.size() == 0) {
-            if(m_frameCount > m_fps) {
+            if(m_frameCount > 3) {
                 // after one GOP stop movie and get the sps and pps.
                 
                 int old = m_currentWriter;
