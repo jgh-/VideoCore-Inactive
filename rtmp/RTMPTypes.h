@@ -34,9 +34,9 @@ typedef enum {
     kClientStateHandshake1s0,    // waiting for s0
     kClientStateHandshake1s1,
     kClientStateHandshake2,
-    kClientStateInitializing0,
-    kClientStateInitializing1,
-    kClientStateInitializing2,
+    kClientStateHandshakeComplete,
+    kClientStateFCPublish,
+    kClientStateReady,
     kClientStateSessionStarted,
     kClientStateError,
     kClientStateNotConnected
@@ -98,10 +98,51 @@ enum {
 };
 
 enum {
-    FLV_TAG_TYPE_AUDIO = 0x08,
-    FLV_TAG_TYPE_VIDEO = 0x09,
-    FLV_TAG_TYPE_META  = 0x12,
+    FLV_TAG_TYPE_AUDIO  = 0x08,
+    FLV_TAG_TYPE_VIDEO  = 0x09,
+    FLV_TAG_TYPE_META   = 0x12,
     FLV_TAG_TYPE_INVOKE = 0x14
+};
+
+// RTMP header type is 1 byte
+enum {
+    RTMP_HEADER_TYPE_FULL      = 0x0, // RTMPChunk_0
+    RTMP_HEADER_TYPE_NO_MSGID  = 0x1, // RTMPChunk_1
+    RTMP_HEADER_TYPE_TIMESTAMP = 0x2, // RTMPChunk_2
+    RTMP_HEADER_TYPE_ONLY      = 0x3, // no chunk
+};
+
+enum {
+    RTMP_PT_CHUNK_SIZE   = 0x1,
+    RTMP_PT_BYTES_READ   = 0x3,
+    RTMP_PT_PING         = 0x4,
+    RTMP_PT_SERVER_BW    = 0x5,
+    RTMP_PT_CLIENT_BW    = 0x6,
+    RTMP_PT_AUDIO        = 0x8,
+    RTMP_PT_VIDEO        = 0x9,
+    RTMP_PT_FLEX_STREAM  = 0xF,
+    RTMP_PT_FLEX_OBJECT  = 0x10,
+    RTMP_PT_FLEX_MESSAGE = 0x11,
+    RTMP_PT_NOTIFY       = 0x12,
+    RTMP_PT_SHARED_OBJ   = 0x13,
+    RTMP_PT_INVOKE       = 0x14,
+    RTMP_PT_METADATA     = 0x16,
+};
+
+enum {
+    AMF_DATA_TYPE_NUMBER      = 0x00,
+    AMF_DATA_TYPE_BOOL        = 0x01,
+    AMF_DATA_TYPE_STRING      = 0x02,
+    AMF_DATA_TYPE_OBJECT      = 0x03,
+    AMF_DATA_TYPE_NULL        = 0x05,
+    AMF_DATA_TYPE_UNDEFINED   = 0x06,
+    AMF_DATA_TYPE_REFERENCE   = 0x07,
+    AMF_DATA_TYPE_MIXEDARRAY  = 0x08,
+    AMF_DATA_TYPE_OBJECT_END  = 0x09,
+    AMF_DATA_TYPE_ARRAY       = 0x0a,
+    AMF_DATA_TYPE_DATE        = 0x0b,
+    AMF_DATA_TYPE_LONG_STRING = 0x0c,
+    AMF_DATA_TYPE_UNSUPPORTED = 0x0d,
 };
 
 enum {
