@@ -57,14 +57,13 @@ namespace videocore { namespace rtmp {
         if(output) {
         
             flags = FLV_CODECID_AAC | FLV_SAMPLERATE_44100HZ | FLV_SAMPLESSIZE_16BIT | FLV_STEREO;
-        
-        
+           
             outBuffer.reserve(inSize + flags_size);
-        
+            
             put_byte(outBuffer, flags);
             put_byte(outBuffer, m_sentAudioConfig);
+
             if(!m_sentAudioConfig) {
-                
                 m_sentAudioConfig = true;
                 put_buff(outBuffer, (uint8_t*)m_asc, sizeof(m_asc));
                 

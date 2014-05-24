@@ -342,8 +342,7 @@ namespace videocore { namespace iOS {
 
         while(!m_exiting.load())
         {
-            usleep(100);
-            
+            std::unique_lock<std::mutex> l(m_mutex);
             if(std::chrono::high_resolution_clock::now() >= m_nextMixTime) {
 
                 m_nextMixTime += us;
@@ -405,7 +404,7 @@ namespace videocore { namespace iOS {
                 current_fb = !current_fb;
             }
             
-            
+            m_mixThreadCond.wait_until(l, m_nextMixTime);
                 
         }
     }

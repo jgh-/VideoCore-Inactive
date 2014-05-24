@@ -255,8 +255,6 @@ namespace videocore {
             
             if(std::chrono::high_resolution_clock::now() >= m_nextMixTime) {
                 
-                
-                
                 size_t sampleBufferSize = 0;
                 
                 // Mix and push
@@ -298,7 +296,8 @@ namespace videocore {
                 
                 memset(samples.get(), 0, outBufferSize);
             }
-            usleep(100);
+            //usleep(100);
+            m_mixThreadCond.wait_until(l, m_nextMixTime);
         }
 
     }
