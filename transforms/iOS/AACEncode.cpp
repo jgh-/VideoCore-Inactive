@@ -32,6 +32,8 @@ namespace videocore { namespace iOS {
         
     } ;
     
+    static const int kSamplesPerFrame = 1024;
+    
     AACEncode::AACEncode( int frequencyInHz, int channelCount )
     : m_sentConfig(false)
     {
@@ -49,7 +51,7 @@ namespace videocore { namespace iOS {
         
         out.mFormatID = kAudioFormatMPEG4AAC;
         out.mFormatFlags = 0;
-        out.mFramesPerPacket = 1024;
+        out.mFramesPerPacket = kSamplesPerFrame;
         out.mSampleRate = frequencyInHz;
         out.mChannelsPerFrame = channelCount;
         
@@ -111,7 +113,7 @@ namespace videocore { namespace iOS {
     AACEncode::pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata)
     {
         const size_t sampleCount = size / m_bytesPerSample;
-        const size_t aac_packet_count = sampleCount / 1024;
+        const size_t aac_packet_count = sampleCount / kSamplesPerFrame;
         const size_t required_bytes = aac_packet_count * m_outputPacketMaxSize;
         
         if(m_outputBuffer.total() < (required_bytes)) {
@@ -119,7 +121,7 @@ namespace videocore { namespace iOS {
         }
         uint8_t* p = m_outputBuffer();
         uint8_t* p_out = (uint8_t*)data;
-        
+
         for ( size_t i = 0 ; i < aac_packet_count ; ++i ) {
             UInt32 num_packets = 1;
 
@@ -129,7 +131,7 @@ namespace videocore { namespace iOS {
             l.mBuffers[0].mData = p;
             
             std::unique_ptr<UserData> ud(new UserData());
-            ud->size = static_cast<int>(1024 * m_bytesPerSample);
+            ud->size = static_cast<int>(kSamplesPerFrame * m_bytesPerSample);
             ud->data = const_cast<uint8_t*>(p_out);
             ud->packetSize = static_cast<int>(m_bytesPerSample);
             
@@ -138,17 +140,18 @@ namespace videocore { namespace iOS {
             AudioConverterFillComplexBuffer(m_audioConverter, AACEncode::ioProc, ud.get(), &num_packets, &l, output_packet_desc);
             
             p += output_packet_desc[0].mDataByteSize;
-            p_out += 1024 * m_bytesPerSample;
+            p_out += kSamplesPerFrame * m_bytesPerSample;
         }
         const size_t totalBytes = p - m_outputBuffer();
 
         
         auto output = m_output.lock();
-        if(output) {
+        if(output && totalBytes) {
             if(!m_sentConfig) {
                 output->pushBuffer((const uint8_t*)m_asc, sizeof(m_asc), metadata);
                 m_sentConfig = true;
             }
+            
             output->pushBuffer(m_outputBuffer(), totalBytes, metadata);
         }
     }
