@@ -403,8 +403,8 @@ namespace videocore { namespace iOS {
                 });
                 current_fb = !current_fb;
             }
-            
-            m_mixThreadCond.wait_until(l, m_nextMixTime);
+            usleep(300);
+            //m_mixThreadCond.wait_until(l, m_nextMixTime);
                 
         }
     }
