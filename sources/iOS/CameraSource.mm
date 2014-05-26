@@ -52,7 +52,9 @@
 {
     auto source = m_source.lock();
     if(source) {
-        source->reorientCamera();
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            source->reorientCamera();
+        });
     }
 }
 @end

@@ -296,8 +296,8 @@ namespace videocore {
                 
                 memset(samples.get(), 0, outBufferSize);
             }
-            //usleep(100);
-            m_mixThreadCond.wait_until(l, m_nextMixTime);
+            usleep(200);
+            //m_mixThreadCond.wait_until(l, m_nextMixTime);
         }
 
     }
