@@ -5,16 +5,29 @@ VideoCore
 SETUP
 
 git clone git@github.com:jamesghurley/VideoCore.git
-git submodule init
-git submodule update
 
-Find an example of setting up a transform graph at 
+
+Find an example of setting up a transform graph at
 
 https://github.com/jamesghurley/VideoCore/blob/master/sample
 
+The SampleBroadcaster project in the sample folder uses CocoaPods to bring in
+VideoCore as a dependency:
+
+cd sample/SampleBroadcaster
+pod install
+open SampleBroadcaster.xcworkspace
+
+... or you can build from the command-line:
+
+xcodebuild -workspace SampleBroadcaster.xcworkspace -scheme SampleBroadcaster build
+
+More on CocoaPods: http://cocoapods.org/
+
+
 LICENSING
 
-VideoCore library is licensed under LGPL 2.1.  I would like to make it clear 
+VideoCore library is licensed under LGPL 2.1.  I would like to make it clear
 that I explicitly give my permission for users of this library to statically link
 VideoCore for the purposes of using them with iOS Apps, as long as the developer provides
 an object file for download that can be relinked against a modified version of VideoCore.
@@ -37,7 +50,7 @@ If you would like to be included in this list, either make a pull request or con
 e.g. Source (GLES) -> Transform (Composite) -> Transform (H.264 Encode) -> Transform (RTMP Packetize) -> Output (RTMP)
 
 videocore/
-    
+
     sources/
         videocore::ISource
         videocore::IAudioSource : videocore::ISource
@@ -65,7 +78,7 @@ videocore/
             RTMP/
                 videocore::rtmp::H264Packetizer : videocore::ITransform
                 videocore::rtmp::AACPacketizer : videocore::ITransform
-                
+
     mixers/
         videocore::IMixer
         videocore::IAudioMixer : videocore::IMixer
@@ -75,11 +88,11 @@ videocore/
                 videocore::iOS::GLESVideoMixer : videocore::IVideoMixer
             OSX/
                 videocore::OSX::GLVideoMixer : videocore::IVideoMixer
-    
+
     rtmp/
         videocore::RTMPSession : videocore::IOutput
         videocore::FlvCtx
-    
+
     stream/
         videocore::IStreamSession
         Apple/
