@@ -1,0 +1,37 @@
+PODS:
+  - boost (1.51.0):
+    - boost/graph-includes
+    - boost/math-includes
+    - boost/numeric-includes
+    - boost/pointer_cast-includes
+    - boost/preprocessor-includes
+    - boost/shared_ptr-includes
+    - boost/string_algorithms-includes
+  - boost/graph-includes (1.51.0)
+  - boost/math-includes (1.51.0)
+  - boost/numeric-includes (1.51.0)
+  - boost/pointer_cast-includes (1.51.0)
+  - boost/preprocessor-includes (1.51.0)
+  - boost/shared_ptr-includes (1.51.0)
+  - boost/string_algorithms-includes (1.51.0)
+  - glm (0.9.4.6)
+  - UriParser (0.1.0)
+  - VideoCore (0.1.0):
+    - boost (~> 1.51.0)
+    - glm (~> 0.9.4.6)
+    - UriParser (~> 0.1.0)
+
+DEPENDENCIES:
+  - VideoCore (from `../..`)
+
+EXTERNAL SOURCES:
+  VideoCore:
+    :path: ../..
+
+SPEC CHECKSUMS:
+  boost: 581038adda16d11045576013ad27e3eeeabc2d10
+  glm: 840dd35fe3cc445935accf81ffd1384dad532ee7
+  UriParser: 146d027d5992e21e96eadc43f97dbcc2871e316a
+  VideoCore: 9682598ac65bed45b3a02a084b173f9bc239139c
+
+COCOAPODS: 0.33.1
