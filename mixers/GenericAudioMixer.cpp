@@ -137,18 +137,11 @@ namespace videocore {
                     // push buffer
                     uint8_t *p;
                     size_t rsize = ret->read(&p, ret->size());
-                    auto ret = m_inBuffer[hash]->put(p, rsize);
-                    if(ret < rsize) {
-                        printf("audio buffer full.\n");
-                    }
+                    m_inBuffer[hash]->put(p, rsize);
                     
                 } else {
                     // use data provided
-                    auto ret = m_inBuffer[hash]->put(const_cast<uint8_t*>(data), size);
-                    if(ret < size) {
-                        printf("audio buffer full.\n");
-                    }
-                    
+                    m_inBuffer[hash]->put(const_cast<uint8_t*>(data), size);
                 }
                 
             }
@@ -279,7 +272,6 @@ namespace videocore {
                 // Mix and push
                 for ( auto it = m_inBuffer.begin() ; it != m_inBuffer.end() ; ++it )
                 {
-                    printf("bufferSize: %zu requiredSize: %zu\n", it->second->size(), requiredBufferSize);
                     if(it->second->size() >= requiredBufferSize){
                         auto size = it->second->get((uint8_t*)&buffer[0], outBufferSize);
                         if(size > sampleBufferSize) {
