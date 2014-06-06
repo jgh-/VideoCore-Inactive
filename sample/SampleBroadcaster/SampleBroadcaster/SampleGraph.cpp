@@ -82,6 +82,9 @@ namespace videocore { namespace sample {
 #else
             addTransform(m_audioTransformChain, std::make_shared<videocore::GenericAudioMixer>(2,44100,16,aacPacketTime));
 #endif
+            
+            // The H.264 Encoder introduces about 2 frames of latency, so we will set the minimum audio buffer duration to 2 frames.
+            std::dynamic_pointer_cast<videocore::IAudioMixer>(m_audioTransformChain.back())->setMinimumBufferDuration(1./double(fps)*2);
         }
 #ifdef __APPLE__
 #ifdef TARGET_OS_IPHONE
