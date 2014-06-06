@@ -272,6 +272,10 @@ namespace videocore {
                 // Mix and push
                 for ( auto it = m_inBuffer.begin() ; it != m_inBuffer.end() ; ++it )
                 {
+                    
+                    //
+                    // TODO: A better approach is to put the buffer size requirement on the OUTPUT buffer, and not on the input buffers.
+                    //
                     if(it->second->size() >= requiredBufferSize){
                         auto size = it->second->get((uint8_t*)&buffer[0], outBufferSize);
                         if(size > sampleBufferSize) {
@@ -298,7 +302,6 @@ namespace videocore {
                 if(sampleBufferSize) {
                     
                     MetaData<'soun'> md ( std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count() );
-                    
                     
                     auto out = m_output.lock();
                     if(out) {
