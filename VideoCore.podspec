@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name                = "VideoCore"
-  s.version             = "0.1.0"
+  s.version             = "0.1.1"
   s.summary             = "An audio and video manipulation pipeline for iOS and Mac OS X."
   s.description      = <<-DESC
                           This is a work-in-progress library with the
@@ -29,7 +29,7 @@ Pod::Spec.new do |s|
 
   s.dependency          'boost', '~> 1.51.0'
   s.dependency          'glm', '~> 0.9.4.6'
-  s.dependency          'UriParser', '~> 0.1.0'
+  s.dependency          'UriParser-cpp', '~> 0.1.3'
 
   s.xcconfig            = { "HEADER_SEARCH_PATHS" => "${PODS_ROOT}/boost" }
 
