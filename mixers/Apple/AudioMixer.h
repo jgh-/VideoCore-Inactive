@@ -37,7 +37,7 @@ namespace videocore { namespace Apple {
     {
     public:
         
-        AudioMixer(int outChannelCount, int outFrequencyInHz, int outBitsPerChannel, double outBufferDuration);
+        AudioMixer(int outChannelCount, int outFrequencyInHz, int outBitsPerChannel, double frameDuration);
         ~AudioMixer();
         
     protected:

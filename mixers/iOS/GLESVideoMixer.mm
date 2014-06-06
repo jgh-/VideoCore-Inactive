@@ -343,7 +343,9 @@ namespace videocore { namespace iOS {
         while(!m_exiting.load())
         {
             std::unique_lock<std::mutex> l(m_mutex);
-            if(std::chrono::high_resolution_clock::now() >= m_nextMixTime) {
+            const auto now = std::chrono::steady_clock::now();
+            
+            if(now >= m_nextMixTime) {
 
                 m_nextMixTime += us;
                 
@@ -403,8 +405,12 @@ namespace videocore { namespace iOS {
                 });
                 current_fb = !current_fb;
             }
-            m_mixThreadCond.wait_until(l, m_nextMixTime);
-                
+            uint32_t sleepTime = static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::microseconds>(m_nextMixTime - now).count());
+            const uint32_t sleepMin = 100;
+            sleepTime = std::min(sleepTime / 4, sleepMin);
+            
+            usleep(sleepTime);
+            
         }
     }
 }
