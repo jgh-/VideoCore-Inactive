@@ -44,6 +44,7 @@ namespace videocore {
     public:
         virtual ~IAudioMixer() {};
         virtual void setSourceGain(std::weak_ptr<ISource> source, float gain) = 0;
+        virtual void setMinimumBufferDuration(const double duration) = 0;
     };
 }
 

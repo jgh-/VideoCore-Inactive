@@ -110,9 +110,7 @@ namespace videocore
             buf->read(&p, buf->size());
             uint64_t ts = inMetadata.getData<kRTMPMetadataTimestamp>() ;
             const int streamId = inMetadata.getData<kRTMPMetadataMsgStreamId>();
-            //if(ts < m_previousTimestamp) { ts = m_previousTimestamp; }
-            //m_previousTimestamp = ts;
-            
+
             auto it = m_previousChunkData.find(streamId);
             if(it == m_previousChunkData.end()) {
                 // Type 0.
