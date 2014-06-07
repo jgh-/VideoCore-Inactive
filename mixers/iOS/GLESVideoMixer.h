@@ -53,7 +53,6 @@ namespace videocore { namespace iOS {
         void unregisterSource(std::shared_ptr<ISource> source);
         void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
         void setOutput(std::shared_ptr<IOutput> output);
-        void setSourceProperties(std::weak_ptr<ISource> source, videocore::SourceProperties properties);
         void setEpoch(const std::chrono::steady_clock::time_point epoch) {
             m_epoch = epoch;
             m_nextMixTime = epoch;
@@ -89,12 +88,12 @@ namespace videocore { namespace iOS {
         int m_frameW;
         int m_frameH;
         
-        std::vector< std::size_t > m_layerMap[VideoLayer_Count];
+        std::pair<int, int> m_zRange;
+        std::map<int, std::vector< std::size_t >> m_layerMap;
         
         std::map< std::size_t, glm::mat4 >          m_sourceMats;
         std::map< std::size_t, CVPixelBufferRef >   m_sourceBuffers;
         std::map< std::size_t, CVOpenGLESTextureRef > m_sourceTextures;
-        std::map< std::size_t, SourceProperties >    m_sourceProperties;
         
         std::chrono::steady_clock::time_point m_epoch;
         std::chrono::steady_clock::time_point m_nextMixTime;

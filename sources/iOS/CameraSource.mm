@@ -25,6 +25,8 @@
 
 #import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 @interface sbCallback: NSObject<AVCaptureVideoDataOutputSampleBufferDelegate>
 {
@@ -61,7 +63,7 @@
 namespace videocore { namespace iOS {
     
     CameraSource::CameraSource(float x, float y, float w, float h, float vw, float vh, float aspect)
-    : m_size({x,y,w,h,vw,vh,aspect}), m_target_size(m_size), m_captureDevice(NULL),  m_isFirst(true), m_callbackSession(NULL)
+    : m_size({x,y,w,h,vw,vh,aspect}), m_target_size(m_size), m_captureDevice(NULL),  m_isFirst(true), m_callbackSession(NULL), m_fps(15)
     {
     }
     
@@ -74,9 +76,9 @@ namespace videocore { namespace iOS {
     }
     
     void
-    CameraSource::setupCamera(bool useFront)
+    CameraSource::setupCamera(int fps, bool useFront)
     {
-        
+        m_fps = fps;
         int position = useFront ? AVCaptureDevicePositionFront : AVCaptureDevicePositionBack;
         
         for(AVCaptureDevice* d in [AVCaptureDevice devices]) {
@@ -85,8 +87,8 @@ namespace videocore { namespace iOS {
                 m_captureDevice = d;
                 NSError* error;
                 [d lockForConfiguration:&error];
-                [d setActiveVideoMinFrameDuration:CMTimeMake(1, 15)];
-                [d setActiveVideoMaxFrameDuration:CMTimeMake(1, 15)];
+                [d setActiveVideoMinFrameDuration:CMTimeMake(1, fps)];
+                [d setActiveVideoMaxFrameDuration:CMTimeMake(1, fps)];
                 [d unlockForConfiguration];
             }
         }
@@ -178,15 +180,6 @@ namespace videocore { namespace iOS {
         auto mixer = std::static_pointer_cast<IVideoMixer>(output);
         
         [((sbCallback*)m_callbackSession) setSource:shared_from_this()];
-        
-        SourceProperties props;
-        props.blends = false;
-        props.x = m_size.x / m_size.vw;
-        props.y = m_size.y / m_size.vh;
-        props.width = m_size.w / m_size.vw;
-        props.height = m_size.h / m_size.vh;
-        
-        mixer->setSourceProperties(shared_from_this(), props);
     }
     void
     CameraSource::bufferCaptured(CVPixelBufferRef pixelBufferRef)
@@ -203,11 +196,16 @@ namespace videocore { namespace iOS {
                     m_size.h = m_target_size.h / diff;
                 }
                 m_isFirst = false;
-                setOutput(output);
             }
 
-            VideoBufferMetadata md(0.0666666);
-            md.setData(kLayerCamera, shared_from_this());
+            glm::mat4 mat(1.f);
+            mat = glm::translate(mat, glm::vec3(m_size.x, m_size.y, 0.f));
+            mat = glm::scale(mat, glm::vec3(m_size.w, m_size.h, 1.f));
+            
+            VideoBufferMetadata md(1.f / float(m_fps));
+            
+            md.setData(1, mat, shared_from_this());
+            
             CVPixelBufferRetain(pixelBufferRef);
             output->pushBuffer((uint8_t*)pixelBufferRef, sizeof(pixelBufferRef), md);
             CVPixelBufferRelease(pixelBufferRef);

@@ -38,7 +38,8 @@ namespace videocore { namespace iOS {
         
         void setOutput(std::shared_ptr<IOutput> output);
         
-        void setupCamera(bool useFront = true);
+        void setupCamera(int fps = 15, bool useFront = true);
+        
         
     public:
         // Used by Objective-C callbacks
@@ -59,6 +60,7 @@ namespace videocore { namespace iOS {
         void* m_captureDevice;
         void* m_callbackSession;
         
+        int  m_fps;
         bool m_isFirst;
         
     };
