@@ -32,6 +32,12 @@ that I explicitly give my permission for users of this library to statically lin
 VideoCore for the purposes of using them with iOS Apps, as long as the developer provides
 an object file for download that can be relinked against a modified version of VideoCore.
 
+=========
+Version history:
+
+0.1.3 ~ Fixes a serious bug in the GenericAudioMixer that was causing 100% cpu usage and audio lag.
+0.1.2 ~ Fixes Cocoapods namespace conflicts for UriParser-cpp
+0.1.1 ~ Initial CocoaPods version
 
 =========
 
@@ -59,8 +65,6 @@ videocore/
             iOS/
                 videocore::iOS::GLESSource : videocore::IVideoSource
                 videocore::iOS::CameraSource : videocore::IVideoSource
-                videocore::iOS::CoreAudioSource : videocore::IAudioSource
-                videocore::iOS::OpenALSource : videocore::IAudioSource
             Apple/
                 videocore::Apple::MicrophoneSource : videocore::IAudioSource
             OSX/
@@ -91,7 +95,6 @@ videocore/
 
     rtmp/
         videocore::RTMPSession : videocore::IOutput
-        videocore::FlvCtx
 
     stream/
         videocore::IStreamSession
