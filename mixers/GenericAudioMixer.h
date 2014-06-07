@@ -39,10 +39,13 @@ namespace videocore {
     {
       
     public:
-        
-        // note: For now channelCount = 2, bitsPerChannel = 16.
-        GenericAudioMixer(int outChannelCount, int outFrequencyInHz, int outBitsPerChannel, double outBufferDuration);
+        /*
+         *
+         */
+        GenericAudioMixer(int outChannelCount, int outFrequencyInHz, int outBitsPerChannel, double frameDuration);
         ~GenericAudioMixer();
+        
+        virtual void setMinimumBufferDuration(const double duration) ;
         
     public:
         void registerSource(std::shared_ptr<ISource> source, size_t inBufferSize = 0)  ;
@@ -65,6 +68,7 @@ namespace videocore {
         std::chrono::steady_clock::time_point m_epoch;
         std::chrono::steady_clock::time_point m_nextMixTime;
         
+        double m_frameDuration;
         double m_bufferDuration;
         
         std::thread m_mixThread;

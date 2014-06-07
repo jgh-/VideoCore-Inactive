@@ -72,8 +72,8 @@ namespace videocore {
         return (a[0]*mu*mu2+a[1]*mu2+a[2]*mu+a[3]);
         
     }
-    GenericAudioMixer::GenericAudioMixer(int outChannelCount, int outFrequencyInHz, int outBitsPerChannel, double outBufferDuration)
-    : m_bufferDuration(outBufferDuration), m_outChannelCount(2), m_outFrequencyInHz(outFrequencyInHz), m_outBitsPerChannel(16),  m_exiting(false)
+    GenericAudioMixer::GenericAudioMixer(int outChannelCount, int outFrequencyInHz, int outBitsPerChannel, double frameDuration)
+    : m_bufferDuration(frameDuration), m_frameDuration(frameDuration), m_outChannelCount(2), m_outFrequencyInHz(outFrequencyInHz), m_outBitsPerChannel(16),  m_exiting(false)
     {
         m_bytesPerSample = outChannelCount * outBitsPerChannel / 8;
         
@@ -89,10 +89,15 @@ namespace videocore {
         m_mixThread.join();
     }
     void
+    GenericAudioMixer::setMinimumBufferDuration(const double duration)
+    {
+        m_bufferDuration = duration;
+    }
+    void
     GenericAudioMixer::registerSource(std::shared_ptr<ISource> source, size_t inBufferSize)
     {
         auto hash = std::hash<std::shared_ptr< ISource> >()(source);
-        size_t bufferSize = (inBufferSize ? inBufferSize : (m_bytesPerSample * m_outFrequencyInHz * m_bufferDuration * 4));
+        size_t bufferSize = (inBufferSize ? inBufferSize : (m_bytesPerSample * m_outFrequencyInHz * m_bufferDuration * 4)); // 4 frames of buffer space.
         
         std::unique_ptr<RingBuffer> buffer(new RingBuffer(bufferSize));
         
@@ -137,7 +142,6 @@ namespace videocore {
                 } else {
                     // use data provided
                     m_inBuffer[hash]->put(const_cast<uint8_t*>(data), size);
-                    
                 }
                 
             }
@@ -243,50 +247,61 @@ namespace videocore {
     void
     GenericAudioMixer::mixThread()
     {
-        const auto us = std::chrono::microseconds(static_cast<long long>(m_bufferDuration * 1000000.)) ;
+        const auto us = std::chrono::microseconds(static_cast<long long>(m_frameDuration * 1000000.)) ;
         const float g = 0.70710678118f; // 1 / sqrt(2)
-        const size_t outSampleCount = static_cast<size_t>(m_outFrequencyInHz * m_bufferDuration);
+        const size_t outSampleCount = static_cast<size_t>(m_outFrequencyInHz * m_frameDuration);
         const size_t outBufferSize = outSampleCount * m_bytesPerSample ;
+        
+        const size_t requiredSampleCount = static_cast<size_t>(m_outFrequencyInHz * m_bufferDuration);
+        const size_t requiredBufferSize = requiredSampleCount * m_bytesPerSample;
+        
         const std::unique_ptr<short[]> buffer(new short[outBufferSize / sizeof(short)]);
         const std::unique_ptr<short[]> samples(new short[outBufferSize / sizeof(short)]);
+        
         
         while(!m_exiting.load()) {
             std::unique_lock<std::mutex> l(m_mixMutex);
             
-            if(std::chrono::high_resolution_clock::now() >= m_nextMixTime) {
+            const auto now = std::chrono::steady_clock::now();
+
+            if( now >= m_nextMixTime) {
                 
                 size_t sampleBufferSize = 0;
+                m_nextMixTime += us;
                 
                 // Mix and push
                 for ( auto it = m_inBuffer.begin() ; it != m_inBuffer.end() ; ++it )
                 {
-                    auto size = it->second->get((uint8_t*)&buffer[0], outBufferSize);
-                    if(size > sampleBufferSize) {
-                        sampleBufferSize = size;
-                    }
-                    const size_t count = (size/sizeof(short));
-                    const float gain = m_inGain[it->first];
-                    const float mult = g*gain;
-                    const short div ( 1.f / mult );
-                    for ( size_t i = 0 ; i <  count ; i+=8) {
-                        samples[i] += buffer[i] / div;
-                        samples[i+1] += buffer[i+1] / div;
-                        samples[i+2] += buffer[i+2] / div;
-                        samples[i+3] += buffer[i+3] / div;
-                        samples[i+4] += buffer[i+4] / div;
-                        samples[i+5] += buffer[i+5] / div;
-                        samples[i+6] += buffer[i+6] / div;
-                        samples[i+7] += buffer[i+7] / div;
-                    }
                     
+                    //
+                    // TODO: A better approach is to put the buffer size requirement on the OUTPUT buffer, and not on the input buffers.
+                    //
+                    if(it->second->size() >= requiredBufferSize){
+                        auto size = it->second->get((uint8_t*)&buffer[0], outBufferSize);
+                        if(size > sampleBufferSize) {
+                            sampleBufferSize = size;
+                        }
+                        
+                        const size_t count = (size/sizeof(short));
+                        const float gain = m_inGain[it->first];
+                        const float mult = g*gain;
+                        const short div ( 1.f / mult );
+                        for ( size_t i = 0 ; i <  count ; i+=8) {
+                            samples[i] += buffer[i] / div;
+                            samples[i+1] += buffer[i+1] / div;
+                            samples[i+2] += buffer[i+2] / div;
+                            samples[i+3] += buffer[i+3] / div;
+                            samples[i+4] += buffer[i+4] / div;
+                            samples[i+5] += buffer[i+5] / div;
+                            samples[i+6] += buffer[i+6] / div;
+                            samples[i+7] += buffer[i+7] / div;
+                        }
+                    }
                 }
                 
                 if(sampleBufferSize) {
                     
-                    m_nextMixTime += us;
-                    
                     MetaData<'soun'> md ( std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count() );
-                    
                     
                     auto out = m_output.lock();
                     if(out) {

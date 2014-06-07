@@ -343,7 +343,9 @@ namespace videocore { namespace iOS {
         while(!m_exiting.load())
         {
             std::unique_lock<std::mutex> l(m_mutex);
-            if(std::chrono::high_resolution_clock::now() >= m_nextMixTime) {
+            const auto now = std::chrono::steady_clock::now();
+            
+            if(now >= m_nextMixTime) {
 
                 m_nextMixTime += us;
                 
