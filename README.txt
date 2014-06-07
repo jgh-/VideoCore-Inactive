@@ -35,9 +35,10 @@ an object file for download that can be relinked against a modified version of V
 =========
 Version history:
 
-0.1.3 ~ Fixes a serious bug in the GenericAudioMixer that was causing 100% cpu usage and audio lag.
-0.1.2 ~ Fixes Cocoapods namespace conflicts for UriParser-cpp
-0.1.1 ~ Initial CocoaPods version
+0.1.3 ~ Update sample app with a more efficient viewport render
+0.1.2 ~ Fixes a serious bug in the GenericAudioMixer that was causing 100% cpu usage and audio lag.
+0.1.1 ~ Fixes Cocoapods namespace conflicts for UriParser-cpp
+0.1.0 ~ Initial CocoaPods version
 
 =========
 
