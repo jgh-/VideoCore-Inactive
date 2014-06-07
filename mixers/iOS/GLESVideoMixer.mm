@@ -405,12 +405,8 @@ namespace videocore { namespace iOS {
                 });
                 current_fb = !current_fb;
             }
-            uint32_t sleepTime = static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::microseconds>(m_nextMixTime - now).count());
-            const uint32_t sleepMin = 100;
-            sleepTime = std::min(sleepTime / 4, sleepMin);
-            
-            usleep(sleepTime);
-            
+            m_mixThreadCond.wait_until(l, m_nextMixTime);
+                
         }
     }
 }
