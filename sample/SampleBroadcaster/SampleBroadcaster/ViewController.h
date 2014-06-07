@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <GLKit/GLKit.h>
 
 #import "SampleGraph.h"
 
@@ -14,7 +15,8 @@
 {
     std::unique_ptr<videocore::sample::SampleGraph> _sampleGraph;
 }
-@property (retain, nonatomic) IBOutlet UIImageView *imgPreview;
+
+@property (retain, nonatomic) IBOutlet GLKView *glkView;
 @property (retain, nonatomic) IBOutlet UIButton *btnConnect;
 - (IBAction)btnConnectTouch:(id)sender;
 @end
