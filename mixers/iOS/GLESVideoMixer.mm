@@ -68,7 +68,7 @@ namespace videocore { namespace iOS {
             
         });
         m_zRange.first = INT_MAX;
-        m_zRange.second = 0;
+        m_zRange.second = INT_MIN;
         m_mixThread = std::thread([this](){ this->mixThread(); });
     
     }
