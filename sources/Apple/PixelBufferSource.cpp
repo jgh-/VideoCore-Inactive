@@ -21,7 +21,8 @@
  */
 #include <videocore/sources/Apple/PixelBufferSource.h>
 #include <videocore/mixers/IVideoMixer.hpp>
-
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <CoreVideo/CoreVideo.h>
 
 namespace videocore { namespace Apple {
@@ -58,9 +59,10 @@ namespace videocore { namespace Apple {
             void* loc = CVPixelBufferGetBaseAddress((CVPixelBufferRef)m_pixelBuffer);
             memcpy(loc, data, size);
             CVPixelBufferUnlockBaseAddress((CVPixelBufferRef)m_pixelBuffer, 0);
-            
+
+            glm::mat4 mat = glm::scale(glm::mat4(1.f), glm::vec3(1.f,-1.f,1.f));
             VideoBufferMetadata md(0.);
-            md.setData(0, shared_from_this());
+            md.setData(0, mat, shared_from_this());
             
             outp->pushBuffer((const uint8_t*)m_pixelBuffer, sizeof(CVPixelBufferRef), md);
         }
