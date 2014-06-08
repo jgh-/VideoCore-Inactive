@@ -26,6 +26,7 @@
 #include <videocore/sources/ISource.hpp>
 #include <videocore/transforms/IOutput.hpp>
 #include <CoreVideo/CoreVideo.h>
+#include <glm/glm.hpp>
 
 namespace videocore { namespace iOS {
     
@@ -52,6 +53,7 @@ namespace videocore { namespace iOS {
         
     private:
         
+        glm::mat4 m_matrix;
         struct { float x, y, w, h, vw, vh, a; } m_size, m_target_size;
         
         std::weak_ptr<IOutput> m_output;

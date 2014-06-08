@@ -196,15 +196,15 @@ namespace videocore { namespace iOS {
                     m_size.h = m_target_size.h / diff;
                 }
                 m_isFirst = false;
+                glm::mat4 mat(1.f);
+                mat = glm::translate(mat, glm::vec3((m_size.x / m_target_size.vw) * 2.f - 1.f, (m_size.y / m_target_size.vh) * 2.f - 1.f, 0.f));
+                mat = glm::scale(mat, glm::vec3(m_size.w / m_target_size.vw, m_size.h / m_target_size.vh, 1.f));
+                m_matrix = mat;
             }
 
-            glm::mat4 mat(1.f);
-            mat = glm::translate(mat, glm::vec3(m_size.x, m_size.y, 0.f));
-            mat = glm::scale(mat, glm::vec3(m_size.w, m_size.h, 1.f));
-            
             VideoBufferMetadata md(1.f / float(m_fps));
             
-            md.setData(1, mat, shared_from_this());
+            md.setData(1, m_matrix, shared_from_this());
             
             CVPixelBufferRetain(pixelBufferRef);
             output->pushBuffer((uint8_t*)pixelBufferRef, sizeof(pixelBufferRef), md);

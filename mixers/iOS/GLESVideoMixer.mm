@@ -35,6 +35,7 @@
 
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
@@ -215,7 +216,7 @@ namespace videocore { namespace iOS {
             }
             
         }
-        for ( int i = m_zRange.first ; i < m_zRange.second ; ++i )
+        for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i )
         {
             for ( auto iit = m_layerMap[i].begin() ; iit!= m_layerMap[i].end() ; ++iit) {
                 if((*iit) == h) {
@@ -360,7 +361,7 @@ namespace videocore { namespace iOS {
                     glBindVertexArrayOES(this->m_vao);
                     glUseProgram(this->m_prog);
                     
-                    for ( int i = m_zRange.first ; i < m_zRange.second ; ++i) {
+                    for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i) {
                         
                         for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {
                             CVPixelBufferLockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly); // Lock, read-only.
