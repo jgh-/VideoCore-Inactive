@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		1A7B35651942542400AB5FD6 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A7B35641942542400AB5FD6 /* GLKit.framework */; };
 		1A7B35671942564600AB5FD6 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A7B35661942564600AB5FD6 /* libPods.a */; };
+		1A7B356A1944CF9500AB5FD6 /* SampleImageTransform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A7B35681944CF9500AB5FD6 /* SampleImageTransform.cpp */; };
 		7265D5E0191994B80042DC3B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D5DF191994B80042DC3B /* Foundation.framework */; };
 		7265D5E2191994B80042DC3B /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D5E1191994B80042DC3B /* CoreGraphics.framework */; };
 		7265D5E4191994B80042DC3B /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D5E3191994B80042DC3B /* UIKit.framework */; };
@@ -44,6 +45,8 @@
 /* Begin PBXFileReference section */
 		1A7B35641942542400AB5FD6 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		1A7B35661942564600AB5FD6 /* libPods.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libPods.a; path = "Pods/build/Debug-iphoneos/libPods.a"; sourceTree = "<group>"; };
+		1A7B35681944CF9500AB5FD6 /* SampleImageTransform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SampleImageTransform.cpp; sourceTree = "<group>"; };
+		1A7B35691944CF9500AB5FD6 /* SampleImageTransform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SampleImageTransform.h; sourceTree = "<group>"; };
 		7265D5DC191994B80042DC3B /* SampleBroadcaster.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SampleBroadcaster.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7265D5DF191994B80042DC3B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		7265D5E1191994B80042DC3B /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -159,6 +162,8 @@
 				7265D5F8191994B80042DC3B /* ViewController.mm */,
 				7265D5FA191994B80042DC3B /* Images.xcassets */,
 				7265D5E6191994B80042DC3B /* Supporting Files */,
+				1A7B35681944CF9500AB5FD6 /* SampleImageTransform.cpp */,
+				1A7B35691944CF9500AB5FD6 /* SampleImageTransform.h */,
 			);
 			path = SampleBroadcaster;
 			sourceTree = "<group>";
@@ -310,6 +315,7 @@
 			files = (
 				7265D6751919BF6F0042DC3B /* SampleGraph.cpp in Sources */,
 				7265D5F9191994B80042DC3B /* ViewController.mm in Sources */,
+				1A7B356A1944CF9500AB5FD6 /* SampleImageTransform.cpp in Sources */,
 				7265D6721919B68B0042DC3B /* PixelBufferOutput.cpp in Sources */,
 				7265D5F0191994B80042DC3B /* AppDelegate.m in Sources */,
 				7265D5EC191994B80042DC3B /* main.m in Sources */,

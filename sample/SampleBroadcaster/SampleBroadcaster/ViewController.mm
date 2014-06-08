@@ -11,6 +11,7 @@
 @interface ViewController () <GLKViewDelegate>
 {
     GLuint _renderBuffer;
+    BOOL _spinning;
 }
 @property (nonatomic, retain) EAGLContext* glContext;
 @property (nonatomic, retain) CIContext*   ciContext;
@@ -31,6 +32,8 @@
     glBindRenderbuffer(GL_RENDERBUFFER, _renderBuffer);
     self.ciContext = [CIContext contextWithEAGLContext:self.glContext];
     self.glkView.delegate = self;
+    self.btnSpin.hidden = YES;
+    _spinning = false;
 }
 
 - (void)didReceiveMemoryWarning
@@ -42,6 +45,7 @@
 - (void)dealloc {
     [_btnConnect release];
     [_glkView release];
+    [_btnSpin release];
     [super dealloc];
 }
 - (void) glkView:(GLKView *)view drawInRect:(CGRect)rect
@@ -68,7 +72,7 @@
     
     if([self.btnConnect.titleLabel.text isEqualToString:@"Connect"]) {
         [self.btnConnect setTitle:@"Connecting..." forState:UIControlStateNormal];
-        NSString* rtmpUrl = @"rtmp://192.168.2.1/live/myStream";
+        NSString* rtmpUrl = @"rtmp://mobcrush.noip.me/mob/crush";
         
         _sampleGraph.reset(new videocore::sample::SampleGraph([self](videocore::sample::SessionState state){
             [self connectionStatusChange:state];
@@ -93,6 +97,13 @@
     
 }
 
+- (IBAction)btnSpinTouch:(id)sender {
+    _spinning = !_spinning;
+    if(_sampleGraph) {
+        _sampleGraph->spin(_spinning);
+    }
+}
+
 - (void) connectionStatusChange:(videocore::sample::SessionState) state
 {
     NSLog(@"Connection status: %d", state);
@@ -100,12 +111,13 @@
         NSLog(@"Connected");
         [self.btnConnect setTitle:@"Connected" forState:UIControlStateNormal];
         [self.btnConnect.titleLabel sizeToFit];
-
+        self.btnSpin.hidden = NO;
         
     } else if(state == videocore::sample::kSessionStateError || state == videocore::sample::kSessionStateEnded) {
         NSLog(@"Disconnected");
         [self.btnConnect setTitle:@"Connect" forState:UIControlStateNormal];
         _sampleGraph.reset();
+        self.btnSpin.hidden = YES;
     }
 }
 - (void) gotPixelBuffer: (const uint8_t* const) data withSize: (size_t) size {
