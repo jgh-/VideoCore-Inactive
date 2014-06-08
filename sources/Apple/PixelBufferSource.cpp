@@ -60,7 +60,7 @@ namespace videocore { namespace Apple {
             CVPixelBufferUnlockBaseAddress((CVPixelBufferRef)m_pixelBuffer, 0);
             
             VideoBufferMetadata md(0.);
-            md.setData(kLayerGame, shared_from_this());
+            md.setData(0, shared_from_this());
             
             outp->pushBuffer((const uint8_t*)m_pixelBuffer, sizeof(CVPixelBufferRef), md);
         }
