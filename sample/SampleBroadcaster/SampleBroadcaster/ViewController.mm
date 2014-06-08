@@ -72,7 +72,7 @@
     
     if([self.btnConnect.titleLabel.text isEqualToString:@"Connect"]) {
         [self.btnConnect setTitle:@"Connecting..." forState:UIControlStateNormal];
-        NSString* rtmpUrl = @"rtmp://mobcrush.noip.me/mob/crush";
+        NSString* rtmpUrl = @"rtmp://192.168.2.1/live/myStream";
         
         _sampleGraph.reset(new videocore::sample::SampleGraph([self](videocore::sample::SessionState state){
             [self connectionStatusChange:state];
