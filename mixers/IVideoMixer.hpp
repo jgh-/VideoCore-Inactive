@@ -23,39 +23,24 @@
 #define videocore_IVideoMixer_hpp
 
 #include <videocore/mixers/IMixer.hpp>
+#include <glm/glm.hpp>
 
 namespace videocore
 {
-    struct SourceProperties {
-        
-        // [0..1] range
-        float x, y;
-        float width, height;
-        
-        bool blends;
-        
-    } ;
-    
-    typedef enum {
-        kLayerGame,
-        kLayerCamera,
-        kLayerLogo,
-        VideoLayer_Count
-    } VideoLayer_t;
     
     enum {
-        kVideoMetadataLayer,
+        kVideoMetadataZIndex,
+        kVideoMetadataMatrix,
         kVideoMetadataSource
     };
     
-    typedef MetaData<'vide', VideoLayer_t, std::weak_ptr<ISource> > VideoBufferMetadata;
+    typedef MetaData<'vide', int, glm::mat4, std::weak_ptr<ISource> > VideoBufferMetadata;
     
     class IVideoMixer : public IMixer
     {
     public:
         virtual ~IVideoMixer() {};
         
-        virtual void setSourceProperties(std::weak_ptr<ISource> source, SourceProperties properties) = 0;
     };
 }
 

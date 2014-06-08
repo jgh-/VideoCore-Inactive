@@ -26,6 +26,7 @@
 #include <videocore/sources/ISource.hpp>
 #include <videocore/transforms/IOutput.hpp>
 #include <CoreVideo/CoreVideo.h>
+#include <glm/glm.hpp>
 
 namespace videocore { namespace iOS {
     
@@ -38,7 +39,8 @@ namespace videocore { namespace iOS {
         
         void setOutput(std::shared_ptr<IOutput> output);
         
-        void setupCamera(bool useFront = true);
+        void setupCamera(int fps = 15, bool useFront = true);
+        
         
     public:
         // Used by Objective-C callbacks
@@ -51,6 +53,7 @@ namespace videocore { namespace iOS {
         
     private:
         
+        glm::mat4 m_matrix;
         struct { float x, y, w, h, vw, vh, a; } m_size, m_target_size;
         
         std::weak_ptr<IOutput> m_output;
@@ -59,6 +62,7 @@ namespace videocore { namespace iOS {
         void* m_captureDevice;
         void* m_callbackSession;
         
+        int  m_fps;
         bool m_isFirst;
         
     };

@@ -35,6 +35,7 @@
 
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
@@ -67,7 +68,8 @@ namespace videocore { namespace iOS {
             this->setupGLES(excludeContext);
             
         });
-        
+        m_zRange.first = INT_MAX;
+        m_zRange.second = INT_MIN;
         m_mixThread = std::thread([this](){ this->mixThread(); });
     
     }
@@ -214,7 +216,7 @@ namespace videocore { namespace iOS {
             }
             
         }
-        for ( int i = 0 ; i < VideoLayer_Count ; ++i )
+        for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i )
         {
             for ( auto iit = m_layerMap[i].begin() ; iit!= m_layerMap[i].end() ; ++iit) {
                 if((*iit) == h) {
@@ -229,7 +231,16 @@ namespace videocore { namespace iOS {
     GLESVideoMixer::pushBuffer(const uint8_t *const data, size_t size, videocore::IMetadata &metadata)
     {
         VideoBufferMetadata & md = dynamic_cast<VideoBufferMetadata&>(metadata);
-        VideoLayer_t layer = md.getData<kVideoMetadataLayer>();
+        const int zIndex = md.getData<kVideoMetadataZIndex>();
+        
+        const glm::mat4 mat = md.getData<kVideoMetadataMatrix>();
+        
+        if(zIndex < m_zRange.first) {
+            m_zRange.first = zIndex;
+        }
+        if(zIndex > m_zRange.second){
+            m_zRange.second = zIndex;
+        }
         
         std::weak_ptr<ISource> source = md.getData<kVideoMetadataSource>();
 
@@ -289,11 +300,11 @@ namespace videocore { namespace iOS {
                         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                     }
                 }
-                auto it = std::find(m_layerMap[layer].begin(), m_layerMap[layer].end(), h);
-                if(it == m_layerMap[layer].end()) {
-                    m_layerMap[layer].push_back(h);
+                auto it = std::find(m_layerMap[zIndex].begin(), m_layerMap[zIndex].end(), h);
+                if(it == m_layerMap[zIndex].end()) {
+                    m_layerMap[zIndex].push_back(h);
                 }
-
+                m_sourceMats[h] = mat;
                 CVOpenGLESTextureCacheFlush(this->m_textureCache, 0);
             });
         }
@@ -311,23 +322,6 @@ namespace videocore { namespace iOS {
             return std::hash< std::shared_ptr<ISource> >()(l);
         }
         return 0;
-    }
-    void
-    GLESVideoMixer::setSourceProperties(std::weak_ptr<ISource> source, videocore::SourceProperties properties)
-    {
-        auto h = hash(source);
-        m_sourceProperties[h] = properties;
-        glm::mat4 mat = glm::mat4(1.f);
-        
-        float x = properties.x * 2.f - 1.f;
-        float y = properties.y * 2.f - 1.f;
-        
-        
-        mat = glm::translate(mat, glm::vec3(x, y, 0.f));
-        mat = glm::scale(mat, glm::vec3(properties.width, properties.height, 1.f));
-                                        
-        m_sourceMats[h] = mat;
-        
     }
     void
     GLESVideoMixer::mixThread()
@@ -367,7 +361,7 @@ namespace videocore { namespace iOS {
                     glBindVertexArrayOES(this->m_vao);
                     glUseProgram(this->m_prog);
                     
-                    for ( int i = 0 ; i < VideoLayer_Count ; ++i) {
+                    for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i) {
                         
                         for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {
                             CVPixelBufferLockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly); // Lock, read-only.
@@ -376,18 +370,19 @@ namespace videocore { namespace iOS {
                             if(iTex == this->m_sourceTextures.end()) continue;
                             texture = iTex->second;
                             
-                            if(this->m_sourceProperties[*it].blends) {
+                            // TODO: Add blending.
+                            /*if(this->m_sourceProperties[*it].blends) {
                                 glEnable(GL_BLEND);
                                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                            }
+                            }*/
                             glUniformMatrix4fv(m_uMat, 1, GL_FALSE, &this->m_sourceMats[*it][0][0]);
                             glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
                             glDrawArrays(GL_TRIANGLES, 0, 6);
                             GL_ERRORS(__LINE__);
                             CVPixelBufferUnlockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly);
-                            if(this->m_sourceProperties[*it].blends) {
+                            /*if(this->m_sourceProperties[*it].blends) {
                                 glDisable(GL_BLEND);
-                            }
+                            }*/
                         }
                     }
                     glFlush();
