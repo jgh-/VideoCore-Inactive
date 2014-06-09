@@ -28,6 +28,7 @@
 #include <videocore/transforms/Split.h>
 
 #include "PixelBufferOutput.h"
+#include "SampleImageTransform.h"
 
 #include <vector>
 
@@ -65,6 +66,7 @@ namespace videocore { namespace sample {
         // Starting a new session will end the current session.
         void startRtmpSession(std::string uri, int frame_w, int frame_h, int bitrate, int fps);
         
+        void spin(bool spin);
         
     private:
         void setupGraph(int frame_w, int frame_h, int fps, int bitrate);
@@ -80,6 +82,8 @@ namespace videocore { namespace sample {
         std::vector< std::shared_ptr<videocore::ITransform> > m_videoTransformChain;
         
         std::shared_ptr<videocore::IOutputSession> m_outputSession;
+        
+        std::weak_ptr<SampleImageTransform> m_spinTransform;
         
         SessionStateCallback m_callback;
         

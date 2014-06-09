@@ -16,7 +16,9 @@
     std::unique_ptr<videocore::sample::SampleGraph> _sampleGraph;
 }
 
+@property (retain, nonatomic) IBOutlet UIButton *btnSpin;
 @property (retain, nonatomic) IBOutlet GLKView *glkView;
 @property (retain, nonatomic) IBOutlet UIButton *btnConnect;
 - (IBAction)btnConnectTouch:(id)sender;
+- (IBAction)btnSpinTouch:(id)sender;
 @end

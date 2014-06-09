@@ -22,6 +22,8 @@
 #   include <videocore/mixers/GenericAudioMixer.h>
 #endif
 
+
+
 namespace videocore { namespace sample {
 
     void
@@ -89,6 +91,12 @@ namespace videocore { namespace sample {
 #ifdef __APPLE__
 #ifdef TARGET_OS_IPHONE
         
+        {
+            // Add sample image transformation
+            auto transform = std::make_shared<videocore::sample::SampleImageTransform>();
+            m_spinTransform = transform;
+            addTransform(m_videoTransformChain, transform);
+        }
         
         {
             // Add video mixer
@@ -181,5 +189,17 @@ namespace videocore { namespace sample {
         
     }
 
+    void
+    SampleGraph::spin(bool spin)
+    {
+        auto l = m_spinTransform.lock();
+        if(l) {
+            if(spin) {
+                l->startSpinning();
+            } else {
+                l->stopSpinning();
+            }
+        }
+    }
 }
 };
