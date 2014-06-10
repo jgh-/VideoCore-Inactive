@@ -193,7 +193,7 @@ namespace videocore { namespace iOS {
                 if( aspect < inp_aspect ) {
                     m_size.w = m_target_size.w / diff;
                 } else {
-                    m_size.h = m_target_size.h / diff;
+                    m_size.h = m_target_size.h * diff;
                 }
                 m_isFirst = false;
                 glm::mat4 mat(1.f);
