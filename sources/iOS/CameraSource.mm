@@ -189,11 +189,11 @@ namespace videocore { namespace iOS {
             if(m_isFirst) {
                 const float aspect = float(CVPixelBufferGetWidth(pixelBufferRef)) / float(CVPixelBufferGetHeight(pixelBufferRef));
                 const float inp_aspect = m_target_size.a;
-                const float diff = inp_aspect / aspect;
+                //const float diff = inp_aspect / aspect;
                 if( aspect < inp_aspect ) {
-                    m_size.w = m_target_size.w / diff;
+                    m_size.w = m_target_size.h * aspect;
                 } else {
-                    m_size.h = m_target_size.h * diff;
+                    m_size.h = m_target_size.w / aspect;
                 }
                 m_isFirst = false;
                 glm::mat4 mat(1.f);
