@@ -134,6 +134,11 @@ namespace videocore { namespace iOS {
         }
         
         reorientCamera();
+        AVCaptureVideoPreviewLayer* previewLayer;
+        previewLayer =  [AVCaptureVideoPreviewLayer layerWithSession:session];
+        previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+
+        m_previewLayer = previewLayer;
         
         [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
         
@@ -142,6 +147,58 @@ namespace videocore { namespace iOS {
         [output release];
 
     }
+    void
+    CameraSource::getPreviewLayer(void** outAVCaptureVideoPreviewLayer)
+    {
+        if(outAVCaptureVideoPreviewLayer) {
+            *outAVCaptureVideoPreviewLayer = m_previewLayer;
+        }
+    }
+    void*
+    CameraSource::cameraWithPosition(int pos)
+    {
+        AVCaptureDevicePosition position = (AVCaptureDevicePosition)pos;
+        
+        NSArray *devices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
+        for (AVCaptureDevice *device in devices)
+        {
+            if ([device position] == position) return device;
+        }
+        return nil;
+    
+    }
+    void
+    CameraSource::toggleCamera()
+    {
+        
+        if(!m_captureSession) return;
+        
+        AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
+        
+        [session beginConfiguration];
+        
+        AVCaptureInput* currentCameraInput = [session.inputs objectAtIndex:0];
+        
+        [session removeInput:currentCameraInput];
+        
+        AVCaptureDevice *newCamera = nil;
+        if(((AVCaptureDeviceInput*)currentCameraInput).device.position == AVCaptureDevicePositionBack)
+        {
+            newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionFront);
+        }
+        else
+        {
+            newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionBack);
+        }
+        
+        AVCaptureDeviceInput *newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:newCamera error:nil];
+        
+        [session addInput:newVideoInput];
+        
+        [session commitConfiguration];
+        
+    }
+    
     void
     CameraSource::reorientCamera()
     {
