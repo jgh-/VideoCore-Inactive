@@ -188,20 +188,19 @@ namespace videocore { namespace iOS {
         if(output) {
             if(m_isFirst) {
                 
+                
                 m_isFirst = false;
                 
-                const float inAspect = float(CVPixelBufferGetWidth(pixelBufferRef)) / float(CVPixelBufferGetHeight(pixelBufferRef));
-                const float targetAspect = m_targetSize.w / m_targetSize.h;
+                m_size.w = float(CVPixelBufferGetWidth(pixelBufferRef));
+                m_size.h = float(CVPixelBufferGetHeight(pixelBufferRef));
                 
-                const float diff = targetAspect / inAspect ;
+                const float wfac = m_targetSize.w / m_size.w;
+                const float hfac = m_targetSize.h / m_size.h;
                 
-                m_size = m_targetSize;
+                const float mult = wfac < hfac ? wfac : hfac;
                 
-                if( inAspect < targetAspect ) {
-                    m_size.w = m_targetSize.w / diff;
-                } else {
-                    m_size.h = m_targetSize.h / diff;
-                }
+                m_size.w *= mult;
+                m_size.h *= mult;
                 
                 glm::mat4 mat(1.f);
                 
