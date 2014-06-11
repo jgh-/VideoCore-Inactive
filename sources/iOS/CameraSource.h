@@ -28,9 +28,6 @@
 #include <CoreVideo/CoreVideo.h>
 #include <glm/glm.hpp>
 
-#import <AVFoundation/AVFoundation.h>
-
-#import <AVFoundation/AVCaptureVideoPreviewLayer.h>
 
 namespace videocore { namespace iOS {
     
@@ -44,7 +41,7 @@ namespace videocore { namespace iOS {
         void setOutput(std::shared_ptr<IOutput> output);
         
 
-        AVCaptureVideoPreviewLayer* getPreviewLayer();
+        void getPreviewLayer(void** outAVCaptureVideoPreviewLayer);
 
         void setupCamera(int fps = 15, bool useFront = true);
         
@@ -56,28 +53,25 @@ namespace videocore { namespace iOS {
         void bufferCaptured(CVPixelBufferRef pixelBufferRef);
         void reorientCamera();
         
-       
-        
-
-
     private:
         
-        AVCaptureDevice* cameraWithPosition(AVCaptureDevicePosition position);
+        void* cameraWithPosition(int position);
         
     private:
         
         glm::mat4 m_matrix;
-        struct { float x, y, w, h, vw, vh, a; } m_size, m_target_size;
+        struct { float x, y, w, h, vw, vh, a; } m_size, m_targetSize;
         
         std::weak_ptr<IOutput> m_output;
         
         void* m_captureSession;
         void* m_captureDevice;
         void* m_callbackSession;
+        void* m_previewLayer;
         
         int  m_fps;
         bool m_isFirst;
-        AVCaptureVideoPreviewLayer*  m_preview;
+        
     };
     
 }
