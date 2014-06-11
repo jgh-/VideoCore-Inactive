@@ -63,7 +63,7 @@
 namespace videocore { namespace iOS {
     
     CameraSource::CameraSource(float x, float y, float w, float h, float vw, float vh, float aspect)
-    : m_size({x,y,w,h,vw,vh,aspect}), m_targetSize(m_size), m_captureDevice(NULL),  m_isFirst(true), m_callbackSession(NULL), m_fps(15)
+    : m_size({x,y,w,h,vw,vh,aspect}), m_target_size(m_size), m_captureDevice(NULL),  m_isFirst(true), m_callbackSession(NULL),m_preview(NULL),m_fps(15)
     {
     }
     
@@ -93,7 +93,7 @@ namespace videocore { namespace iOS {
             }
         }
         
-        int mult = ceil(double(m_targetSize.h) / 270.0) * 270 ;
+        int mult = ceil(double(m_target_size.h) / 270.0) * 270 ;
         AVCaptureSession* session = [[AVCaptureSession alloc] init];
         AVCaptureDeviceInput* input;
         AVCaptureVideoDataOutput* output;
@@ -134,7 +134,10 @@ namespace videocore { namespace iOS {
         }
         
         reorientCamera();
-        
+
+        m_preview =  [AVCaptureVideoPreviewLayer layerWithSession:session];
+        m_preview.videoGravity = AVLayerVideoGravityResizeAspectFill;
+
         [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
         
         [[NSNotificationCenter defaultCenter] addObserver:((id)m_callbackSession) selector:@selector(deviceOrientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
@@ -142,6 +145,54 @@ namespace videocore { namespace iOS {
         [output release];
 
     }
+    AVCaptureVideoPreviewLayer*
+    CameraSource::getPreviewLayer()
+    {
+        return m_preview;
+    }
+    AVCaptureDevice*
+    CameraSource::cameraWithPosition(AVCaptureDevicePosition position)
+    {
+        NSArray *devices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
+        for (AVCaptureDevice *device in devices)
+        {
+            if ([device position] == position) return device;
+        }
+        return nil;
+    
+    }
+    void
+    CameraSource::toggleCamera()
+    {
+        
+        if(!m_captureSession) return;
+        
+        AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
+        
+        [session beginConfiguration];
+        
+        AVCaptureInput* currentCameraInput = [session.inputs objectAtIndex:0];
+        
+        [session removeInput:currentCameraInput];
+        
+        AVCaptureDevice *newCamera = nil;
+        if(((AVCaptureDeviceInput*)currentCameraInput).device.position == AVCaptureDevicePositionBack)
+        {
+            newCamera = cameraWithPosition(AVCaptureDevicePositionFront);
+        }
+        else
+        {
+            newCamera = cameraWithPosition(AVCaptureDevicePositionBack);
+        }
+        
+        AVCaptureDeviceInput *newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:newCamera error:nil];
+        
+        [session addInput:newVideoInput];
+        
+        [session commitConfiguration];
+        
+    }
+    
     void
     CameraSource::reorientCamera()
     {
@@ -187,33 +238,18 @@ namespace videocore { namespace iOS {
         auto output = m_output.lock();
         if(output) {
             if(m_isFirst) {
-                
-                
+                const float aspect = float(CVPixelBufferGetWidth(pixelBufferRef)) / float(CVPixelBufferGetHeight(pixelBufferRef));
+                const float inp_aspect = m_target_size.a;
+                //const float diff = inp_aspect / aspect;
+                if( aspect < inp_aspect ) {
+                    m_size.w = m_target_size.h * aspect;
+                } else {
+                    m_size.h = m_target_size.w / aspect;
+                }
                 m_isFirst = false;
-                
-                m_size.w = float(CVPixelBufferGetWidth(pixelBufferRef));
-                m_size.h = float(CVPixelBufferGetHeight(pixelBufferRef));
-                
-                const float wfac = m_targetSize.w / m_size.w;
-                const float hfac = m_targetSize.h / m_size.h;
-                
-                const float mult = wfac < hfac ? wfac : hfac;
-                
-                m_size.w *= mult;
-                m_size.h *= mult;
-                
                 glm::mat4 mat(1.f);
-                
-                mat = glm::translate(mat,
-                                     glm::vec3((m_size.x / m_targetSize.vw) * 2.f - 1.f,   // The compositor uses normalized device co-ordinates.
-                                               (m_size.y / m_targetSize.vh) * 2.f - 1.f,   // i.e. [ -1 .. 1 ]
-                                               0.f));
-                
-                mat = glm::scale(mat,
-                                 glm::vec3(m_size.w / m_targetSize.vw, //
-                                           m_size.h / m_targetSize.vh, // size is a percentage for scaling.
-                                           1.f));
-                
+                mat = glm::translate(mat, glm::vec3((m_size.x / m_target_size.vw) * 2.f - 1.f, (m_size.y / m_target_size.vh) * 2.f - 1.f, 0.f));
+                mat = glm::scale(mat, glm::vec3(m_size.w / m_target_size.vw, m_size.h / m_target_size.vh, 1.f));
                 m_matrix = mat;
             }
 
