@@ -63,7 +63,7 @@
 namespace videocore { namespace iOS {
     
     CameraSource::CameraSource(float x, float y, float w, float h, float vw, float vh, float aspect)
-    : m_size({x,y,w,h,vw,vh,aspect}), m_target_size(m_size), m_captureDevice(NULL),  m_isFirst(true), m_callbackSession(NULL), m_fps(15)
+    : m_size({x,y,w,h,vw,vh,aspect}), m_targetSize(m_size), m_captureDevice(NULL),  m_isFirst(true), m_callbackSession(NULL), m_fps(15)
     {
     }
     
@@ -93,7 +93,7 @@ namespace videocore { namespace iOS {
             }
         }
         
-        int mult = ceil(double(m_target_size.h) / 270.0) * 270 ;
+        int mult = ceil(double(m_targetSize.h) / 270.0) * 270 ;
         AVCaptureSession* session = [[AVCaptureSession alloc] init];
         AVCaptureDeviceInput* input;
         AVCaptureVideoDataOutput* output;
@@ -187,21 +187,32 @@ namespace videocore { namespace iOS {
         auto output = m_output.lock();
         if(output) {
             if(m_isFirst) {
-                const float aspect = float(CVPixelBufferGetWidth(pixelBufferRef)) / float(CVPixelBufferGetHeight(pixelBufferRef));
-                const float inp_aspect = m_target_size.w / m_target_size.h;
-                const float diff = inp_aspect / aspect;
-
-                m_size = m_target_size;
-                if( aspect < inp_aspect ) {
-                    m_size.w = m_target_size.w / diff;
-                } else {
-                    m_size.h = m_target_size.h / diff;
-                }
                 
                 m_isFirst = false;
+                
+                const float inAspect = float(CVPixelBufferGetWidth(pixelBufferRef)) / float(CVPixelBufferGetHeight(pixelBufferRef));
+                const float targetAspect = m_targetSize.w / m_targetSize.h;
+                
+                m_size = m_targetSize;
+                
+                if( inAspect < targetAspect ) {
+                    m_size.w = m_targetSize.h / inAspect;
+                } else {
+                    m_size.h = m_targetSize.w / inAspect;
+                }
+                
                 glm::mat4 mat(1.f);
-                mat = glm::translate(mat, glm::vec3((m_size.x / m_target_size.vw) * 2.f - 1.f, (m_size.y / m_target_size.vh) * 2.f - 1.f, 0.f));
-                mat = glm::scale(mat, glm::vec3(m_size.w / m_target_size.vw, m_size.h / m_target_size.vh, 1.f));
+                
+                mat = glm::translate(mat,
+                                     glm::vec3((m_size.x / m_targetSize.vw) * 2.f - 1.f,   // The compositor uses normalized device co-ordinates.
+                                               (m_size.y / m_targetSize.vh) * 2.f - 1.f,   // i.e. [ -1 .. 1 ]
+                                               0.f));
+                
+                mat = glm::scale(mat,
+                                 glm::vec3(m_size.w / m_targetSize.vw, //
+                                           m_size.h / m_targetSize.vh, // size is a percentage for scaling.
+                                           1.f));
+                
                 m_matrix = mat;
             }
 

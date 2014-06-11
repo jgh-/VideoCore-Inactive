@@ -54,7 +54,7 @@ namespace videocore { namespace iOS {
     private:
         
         glm::mat4 m_matrix;
-        struct { float x, y, w, h, vw, vh, a; } m_size, m_target_size;
+        struct { float x, y, w, h, vw, vh, a; } m_size, m_targetSize;
         
         std::weak_ptr<IOutput> m_output;
         
