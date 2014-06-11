@@ -24,16 +24,13 @@ xcodebuild -workspace SampleBroadcaster.xcworkspace -scheme SampleBroadcaster bu
 
 More on CocoaPods: http://cocoapods.org/
 
-
-LICENSING
-
-VideoCore library is licensed under LGPL 2.1.  I would like to make it clear
-that I explicitly give my permission for users of this library to statically link
-VideoCore for the purposes of using them with iOS Apps, as long as the developer provides
-an object file for download that can be relinked against a modified version of VideoCore.
-
 =========
 Version history:
+
+0.1.4 ~ Switch from LGPL 2.1 to MIT licensing.
+      ~ Add Camera preview layer. 
+      ~ Add front/back camera toggle.
+      ~ Fix aspect ratio bug in Camera source.
 
 0.1.3 ~ Update sample app with a more efficient viewport render
 0.1.2 ~ Fixes a serious bug in the GenericAudioMixer that was causing 100% cpu usage and audio lag.
