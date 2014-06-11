@@ -66,7 +66,7 @@
 namespace videocore { namespace iOS {
     
     CameraSource::CameraSource(float x, float y, float w, float h, float vw, float vh, float aspect)
-    : m_size({x,y,w,h,vw,vh,aspect}), m_targetSize(m_size), m_captureDevice(NULL),  m_isFirst(true), m_callbackSession(NULL), m_fps(15)
+    : m_size({x,y,w,h,vw,vh,aspect}), m_targetSize(m_size), m_captureDevice(NULL),  m_isFirst(true), m_callbackSession(NULL), m_aspectMode(kAspectFit), m_fps(15)
     {
     }
     
