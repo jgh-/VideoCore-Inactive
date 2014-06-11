@@ -82,6 +82,7 @@ namespace videocore { namespace iOS {
     CameraSource::setupCamera(int fps, bool useFront)
     {
         m_fps = fps;
+        
         int position = useFront ? AVCaptureDevicePositionFront : AVCaptureDevicePositionBack;
         
         for(AVCaptureDevice* d in [AVCaptureDevice devices]) {
@@ -149,6 +150,12 @@ namespace videocore { namespace iOS {
         
         [output release];
 
+    }
+    void
+    CameraSource::setAspectMode(AspectMode aspectMode)
+    {
+        m_aspectMode = aspectMode;
+        m_isFirst = true;           // Force the transformation matrix to be re-generated.
     }
     void
     CameraSource::getPreviewLayer(void** outAVCaptureVideoPreviewLayer)
@@ -257,7 +264,7 @@ namespace videocore { namespace iOS {
                 const float wfac = m_targetSize.w / m_size.w;
                 const float hfac = m_targetSize.h / m_size.h;
                 
-                const float mult = wfac < hfac ? wfac : hfac;
+                const float mult = (m_aspectMode == kAspectFit ? (wfac < hfac) : (wfac > hfac)) ? wfac : hfac;
                 
                 m_size.w *= mult;
                 m_size.h *= mult;

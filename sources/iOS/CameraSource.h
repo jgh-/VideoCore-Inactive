@@ -36,6 +36,12 @@ namespace videocore { namespace iOS {
     
     class CameraSource : public ISource, public std::enable_shared_from_this<CameraSource>
     {
+    public:
+        enum AspectMode
+        {
+            kAspectFit,
+            kAspectFill
+        };
         
     public:
         CameraSource(float x, float y, float w, float h, float videow, float videoh, float aspect);
@@ -43,10 +49,10 @@ namespace videocore { namespace iOS {
         
         void setOutput(std::shared_ptr<IOutput> output);
         
-
         void getPreviewLayer(void** outAVCaptureVideoPreviewLayer);
 
         void setupCamera(int fps = 15, bool useFront = true);
+        void setAspectMode( AspectMode aspectMode );
         
         void toggleCamera();
         
@@ -72,6 +78,7 @@ namespace videocore { namespace iOS {
         void* m_callbackSession;
         void* m_previewLayer;
         
+        AspectMode m_aspectMode;
         int  m_fps;
         bool m_isFirst;
         
