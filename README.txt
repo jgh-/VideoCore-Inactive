@@ -27,6 +27,7 @@ More on CocoaPods: http://cocoapods.org/
 =========
 Version history:
 
+0.1.5 ~ Add aspect fill to CameraSource
 0.1.4 ~ Switch from LGPL 2.1 to MIT licensing.
       ~ Add Camera preview layer. 
       ~ Add front/back camera toggle.
