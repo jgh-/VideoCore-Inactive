@@ -217,16 +217,17 @@ namespace videocore { namespace iOS {
         AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
         for (AVCaptureVideoDataOutput* output in session.outputs) {
             for (AVCaptureConnection * av in output.connections) {
-                switch ([UIApplication sharedApplication].statusBarOrientation) {
-                        
-                    case UIInterfaceOrientationPortraitUpsideDown:
+                switch ([[UIDevice currentDevice] orientation]) {
+                    // NOTE: device orientation and capture orientation for landscape
+                    //       left vs. right are swapped
+                    case UIDeviceOrientationPortraitUpsideDown:
                         av.videoOrientation = AVCaptureVideoOrientationPortraitUpsideDown;
                         break;
-                    case UIInterfaceOrientationLandscapeLeft:
-                        av.videoOrientation = AVCaptureVideoOrientationLandscapeLeft;
-                        break;
-                    case UIInterfaceOrientationLandscapeRight:
+                    case UIDeviceOrientationLandscapeLeft:
                         av.videoOrientation = AVCaptureVideoOrientationLandscapeRight;
+                        break;
+                    case UIDeviceOrientationLandscapeRight:
+                        av.videoOrientation = AVCaptureVideoOrientationLandscapeLeft;
                         break;
                     default:
                         av.videoOrientation = AVCaptureVideoOrientationPortrait;
