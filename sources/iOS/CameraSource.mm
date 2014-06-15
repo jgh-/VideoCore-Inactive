@@ -214,31 +214,53 @@ namespace videocore { namespace iOS {
     {
         if(!m_captureSession) return;
         
+        const auto orientation = [[UIDevice currentDevice] orientation];
+        
+        bool reorient = false;
+        
         AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
         for (AVCaptureVideoDataOutput* output in session.outputs) {
             for (AVCaptureConnection * av in output.connections) {
-                switch ([[UIDevice currentDevice] orientation]) {
-                    // NOTE: device orientation and capture orientation for landscape
-                    //       left vs. right are swapped
+               
+                switch (orientation) {
+                        // NOTE: device orientation and capture orientation for landscape
+                        //       left vs. right are swapped
                     case UIDeviceOrientationPortraitUpsideDown:
-                        av.videoOrientation = AVCaptureVideoOrientationPortraitUpsideDown;
+                        if(av.videoOrientation != AVCaptureVideoOrientationPortraitUpsideDown) {
+                            av.videoOrientation = AVCaptureVideoOrientationPortraitUpsideDown;
+                            reorient = true;
+                        }
                         break;
                     case UIDeviceOrientationLandscapeLeft:
-                        av.videoOrientation = AVCaptureVideoOrientationLandscapeRight;
+                        if(av.videoOrientation != AVCaptureVideoOrientationLandscapeRight) {
+                            av.videoOrientation = AVCaptureVideoOrientationLandscapeRight;
+                            reorient = true;
+                        }
                         break;
                     case UIDeviceOrientationLandscapeRight:
-                        av.videoOrientation = AVCaptureVideoOrientationLandscapeLeft;
+                        if(av.videoOrientation != AVCaptureVideoOrientationLandscapeLeft) {
+                            av.videoOrientation = AVCaptureVideoOrientationLandscapeLeft;
+                            reorient = true;
+                        }
                         break;
-                    default:
-                        av.videoOrientation = AVCaptureVideoOrientationPortrait;
+                    case UIDeviceOrientationPortrait:
+                        if(av.videoOrientation != AVCaptureVideoOrientationPortrait) {
+                            av.videoOrientation = AVCaptureVideoOrientationPortrait;
+                            reorient = true;
+                        }
+                        break;
+                    default:    // Don't do anything for faceup/facedown
                         break;
                 }
                 
+                
             }
         }
-        [session stopRunning];
-        [session startRunning];
-        m_isFirst = true;
+        if(reorient) {
+            [session stopRunning];
+            [session startRunning];
+            m_isFirst = true;
+        }
     }
     void
     CameraSource::setOutput(std::shared_ptr<IOutput> output)
