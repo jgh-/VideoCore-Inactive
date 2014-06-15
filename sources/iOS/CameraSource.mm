@@ -1,22 +1,25 @@
 /*
  
  Video Core
- Copyright (C) 2014 James G. Hurley
+ Copyright (c) 2014 James G. Hurley
  
- This library is free software; you can redistribute it and/or
- modify it under the terms of the GNU Lesser General Public
- License as published by the Free Software Foundation; either
- version 2.1 of the License, or (at your option) any later version.
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
  
- This library is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- Lesser General Public License for more details.
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
  
- You should have received a copy of the GNU Lesser General Public
- License along with this library; if not, write to the Free Software
- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
- USA
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
  
  */
 
@@ -63,7 +66,7 @@
 namespace videocore { namespace iOS {
     
     CameraSource::CameraSource(float x, float y, float w, float h, float vw, float vh, float aspect)
-    : m_size({x,y,w,h,vw,vh,aspect}), m_target_size(m_size), m_captureDevice(NULL),  m_isFirst(true), m_callbackSession(NULL), m_fps(15)
+    : m_size({x,y,w,h,vw,vh,aspect}), m_targetSize(m_size), m_captureDevice(NULL),  m_isFirst(true), m_callbackSession(NULL), m_aspectMode(kAspectFit), m_fps(15)
     {
     }
     
@@ -79,6 +82,7 @@ namespace videocore { namespace iOS {
     CameraSource::setupCamera(int fps, bool useFront)
     {
         m_fps = fps;
+        
         int position = useFront ? AVCaptureDevicePositionFront : AVCaptureDevicePositionBack;
         
         for(AVCaptureDevice* d in [AVCaptureDevice devices]) {
@@ -93,7 +97,7 @@ namespace videocore { namespace iOS {
             }
         }
         
-        int mult = ceil(double(m_target_size.h) / 270.0) * 270 ;
+        int mult = ceil(double(m_targetSize.h) / 270.0) * 270 ;
         AVCaptureSession* session = [[AVCaptureSession alloc] init];
         AVCaptureDeviceInput* input;
         AVCaptureVideoDataOutput* output;
@@ -134,6 +138,11 @@ namespace videocore { namespace iOS {
         }
         
         reorientCamera();
+        AVCaptureVideoPreviewLayer* previewLayer;
+        previewLayer =  [AVCaptureVideoPreviewLayer layerWithSession:session];
+        previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+
+        m_previewLayer = previewLayer;
         
         [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
         
@@ -143,34 +152,115 @@ namespace videocore { namespace iOS {
 
     }
     void
+    CameraSource::setAspectMode(AspectMode aspectMode)
+    {
+        m_aspectMode = aspectMode;
+        m_isFirst = true;           // Force the transformation matrix to be re-generated.
+    }
+    void
+    CameraSource::getPreviewLayer(void** outAVCaptureVideoPreviewLayer)
+    {
+        if(outAVCaptureVideoPreviewLayer) {
+            *outAVCaptureVideoPreviewLayer = m_previewLayer;
+        }
+    }
+    void*
+    CameraSource::cameraWithPosition(int pos)
+    {
+        AVCaptureDevicePosition position = (AVCaptureDevicePosition)pos;
+        
+        NSArray *devices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
+        for (AVCaptureDevice *device in devices)
+        {
+            if ([device position] == position) return device;
+        }
+        return nil;
+    
+    }
+    void
+    CameraSource::toggleCamera()
+    {
+        
+        if(!m_captureSession) return;
+        
+        AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
+        
+        [session beginConfiguration];
+        
+        AVCaptureInput* currentCameraInput = [session.inputs objectAtIndex:0];
+        
+        [session removeInput:currentCameraInput];
+        
+        AVCaptureDevice *newCamera = nil;
+        if(((AVCaptureDeviceInput*)currentCameraInput).device.position == AVCaptureDevicePositionBack)
+        {
+            newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionFront);
+        }
+        else
+        {
+            newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionBack);
+        }
+        
+        AVCaptureDeviceInput *newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:newCamera error:nil];
+        
+        [session addInput:newVideoInput];
+        
+        [session commitConfiguration];
+        
+    }
+    
+    void
     CameraSource::reorientCamera()
     {
         if(!m_captureSession) return;
         
+        const auto orientation = [[UIDevice currentDevice] orientation];
+        
+        bool reorient = false;
+        
         AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
         for (AVCaptureVideoDataOutput* output in session.outputs) {
             for (AVCaptureConnection * av in output.connections) {
-                switch ([UIApplication sharedApplication].statusBarOrientation) {
-                        
-                    case UIInterfaceOrientationPortraitUpsideDown:
-                        av.videoOrientation = AVCaptureVideoOrientationPortraitUpsideDown;
+               
+                switch (orientation) {
+                        // NOTE: device orientation and capture orientation for landscape
+                        //       left vs. right are swapped
+                    case UIDeviceOrientationPortraitUpsideDown:
+                        if(av.videoOrientation != AVCaptureVideoOrientationPortraitUpsideDown) {
+                            av.videoOrientation = AVCaptureVideoOrientationPortraitUpsideDown;
+                            reorient = true;
+                        }
                         break;
-                    case UIInterfaceOrientationLandscapeLeft:
-                        av.videoOrientation = AVCaptureVideoOrientationLandscapeLeft;
+                    case UIDeviceOrientationLandscapeLeft:
+                        if(av.videoOrientation != AVCaptureVideoOrientationLandscapeRight) {
+                            av.videoOrientation = AVCaptureVideoOrientationLandscapeRight;
+                            reorient = true;
+                        }
                         break;
-                    case UIInterfaceOrientationLandscapeRight:
-                        av.videoOrientation = AVCaptureVideoOrientationLandscapeRight;
+                    case UIDeviceOrientationLandscapeRight:
+                        if(av.videoOrientation != AVCaptureVideoOrientationLandscapeLeft) {
+                            av.videoOrientation = AVCaptureVideoOrientationLandscapeLeft;
+                            reorient = true;
+                        }
                         break;
-                    default:
-                        av.videoOrientation = AVCaptureVideoOrientationPortrait;
+                    case UIDeviceOrientationPortrait:
+                        if(av.videoOrientation != AVCaptureVideoOrientationPortrait) {
+                            av.videoOrientation = AVCaptureVideoOrientationPortrait;
+                            reorient = true;
+                        }
+                        break;
+                    default:    // Don't do anything for faceup/facedown
                         break;
                 }
                 
+                
             }
         }
-        [session stopRunning];
-        [session startRunning];
-        m_isFirst = true;
+        if(reorient) {
+            [session stopRunning];
+            [session startRunning];
+            m_isFirst = true;
+        }
     }
     void
     CameraSource::setOutput(std::shared_ptr<IOutput> output)
@@ -187,18 +277,33 @@ namespace videocore { namespace iOS {
         auto output = m_output.lock();
         if(output) {
             if(m_isFirst) {
-                const float aspect = float(CVPixelBufferGetWidth(pixelBufferRef)) / float(CVPixelBufferGetHeight(pixelBufferRef));
-                const float inp_aspect = m_target_size.a;
-                const float diff = inp_aspect / aspect;
-                if( aspect < inp_aspect ) {
-                    m_size.w = m_target_size.w / diff;
-                } else {
-                    m_size.h = m_target_size.h / diff;
-                }
+                
+                
                 m_isFirst = false;
+                
+                m_size.w = float(CVPixelBufferGetWidth(pixelBufferRef));
+                m_size.h = float(CVPixelBufferGetHeight(pixelBufferRef));
+                
+                const float wfac = m_targetSize.w / m_size.w;
+                const float hfac = m_targetSize.h / m_size.h;
+                
+                const float mult = (m_aspectMode == kAspectFit ? (wfac < hfac) : (wfac > hfac)) ? wfac : hfac;
+                
+                m_size.w *= mult;
+                m_size.h *= mult;
+                
                 glm::mat4 mat(1.f);
-                mat = glm::translate(mat, glm::vec3((m_size.x / m_target_size.vw) * 2.f - 1.f, (m_size.y / m_target_size.vh) * 2.f - 1.f, 0.f));
-                mat = glm::scale(mat, glm::vec3(m_size.w / m_target_size.vw, m_size.h / m_target_size.vh, 1.f));
+                
+                mat = glm::translate(mat,
+                                     glm::vec3((m_size.x / m_targetSize.vw) * 2.f - 1.f,   // The compositor uses normalized device co-ordinates.
+                                               (m_size.y / m_targetSize.vh) * 2.f - 1.f,   // i.e. [ -1 .. 1 ]
+                                               0.f));
+                
+                mat = glm::scale(mat,
+                                 glm::vec3(m_size.w / m_targetSize.vw, //
+                                           m_size.h / m_targetSize.vh, // size is a percentage for scaling.
+                                           1.f));
+                
                 m_matrix = mat;
             }
 

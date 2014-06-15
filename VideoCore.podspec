@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name                = "VideoCore"
-  s.version             = "0.1.3"
+  s.version             = "0.1.6"
   s.summary             = "An audio and video manipulation pipeline for iOS and Mac OS X."
   s.description      = <<-DESC
                           This is a work-in-progress library with the
@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
                           pipeline for iOS and Mac OS X.
                           DESC
   s.homepage            = "https://github.com/jamesghurley/VideoCore"
-  s.license             = 'LGPL 2.1'
+  s.license             = 'MIT'
   s.authors             = { "James Hurley" => "jamesghurley@gmail.com" }
   s.source              = { :git => "https://github.com/jamesghurley/VideoCore.git", :tag => s.version.to_s }
 
