@@ -40,7 +40,7 @@ More on CocoaPods: http://cocoapods.org/
 
 ##Architecture Overview
 
-VideoCore's architecture is inspired by Microsft Media Foundation (except with saner naming).  Samples start at the source, are passed through a series of transforms, and end up at the output.
+VideoCore's architecture is inspired by Microsoft Media Foundation (except with saner naming).  Samples start at the source, are passed through a series of transforms, and end up at the output.
 
 e.g. Source (Camera) -> Transform (Composite) -> Transform (H.264 Encode) -> Transform (RTMP Packetize) -> Output (RTMP)
 
