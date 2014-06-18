@@ -54,9 +54,11 @@ namespace videocore { namespace Apple {
     H264Encode::setupCompressionSession()
     {
         // Parts of this code pulled from https://github.com/galad87/HandBrake-QuickSync-Mac/blob/2c1332958f7095c640cbcbcb45ffc955739d5945/libhb/platform/macosx/encvt_h264.c
+        // More info from WWDC 2014 Session 513
         
         OSStatus err = noErr;
-        
+#if !TARGET_OS_IPHONE
+        /** iOS is always hardware-accelerated **/
         CFStringRef key = kVTVideoEncoderSpecification_EncoderID;
         CFStringRef value = CFSTR("com.apple.videotoolbox.videoencoder.h264.gva"); // this needs to be verified on iOS with VTCopyVideoEncoderList
         
@@ -76,10 +78,12 @@ namespace videocore { namespace Apple {
         CFDictionaryAddValue(encoderSpecifications, ckey, cvalue);
         CFDictionaryAddValue(encoderSpecifications, key, value);
         
+#endif
+        
         err = VTCompressionSessionCreate(
                                          kCFAllocatorDefault,
-                                         job->width,
-                                         job->height,
+                                         m_frameW,
+                                         m_frameH,
                                          kCMVideoCodecType_H264,
                                          encoderSpecifications,
                                          NULL,
@@ -99,6 +103,18 @@ namespace videocore { namespace Apple {
         if(err == noErr) {
             const int v = m_fps;
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_ExpectedFrameRate, &v);
+        }
+        if(err == noErr) {
+            const int v = 0;
+            err = VTSessionSetProperty(session , kVTCompressionPropertyKey_AllowFrameReordering, &v);
+        }
+        if(err == noErr) {
+            const int v = m_bitrate;
+            err = VTSessionSetProperty(session, kVTCompressionPropertyKey_AverageBitRate, &v);
+        }
+        if(err == noErr) {
+            const int v = 1;
+            err = VTSessionSetProperty(session, kVTCompressionPropertyKey_RealTime, &v);
         }
     }
     
