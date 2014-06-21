@@ -93,6 +93,7 @@ videocore/
 ##Projects Using VideoCore
 
 * MobCrush (http://www.mobcrush.com)
+* Cine.io (http://www.cine.io)
 
 _If you would like to be included in this list, either make a pull request or contact jamesghurley@gmail.com_
 
