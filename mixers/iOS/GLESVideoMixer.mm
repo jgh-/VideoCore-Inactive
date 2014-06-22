@@ -42,6 +42,7 @@
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
 
+// Convenience macro to dispatch an OpenGL ES job to the created videocore::JobQueue
 #define PERF_GL(x, dispatch) do {\
                                 m_glJobQueue.dispatch([=](){\
                                     EAGLContext* cur = [EAGLContext currentContext];\
@@ -52,15 +53,25 @@
                                     [EAGLContext setCurrentContext:cur];\
                                 });\
                             } while(0)
+// Dispatch and execute synchronously
 #define PERF_GL_sync(x) PERF_GL((x), enqueue_sync);
+// Dispatch and execute asynchronously
 #define PERF_GL_async(x) PERF_GL((x), enqueue);
 
 
 
 namespace videocore { namespace iOS {
  
-    GLESVideoMixer::GLESVideoMixer( int frame_w, int frame_h, double frameDuration, std::function<void(void*)> excludeContext )
-    : m_bufferDuration(frameDuration),m_glesCtx(nullptr), m_frameW(frame_w), m_frameH(frame_h),  m_exiting(false), m_mixing(false)
+    GLESVideoMixer::GLESVideoMixer(int frame_w,
+                                   int frame_h,
+                                   double frameDuration,
+                                   std::function<void(void*)> excludeContext )
+    : m_bufferDuration(frameDuration),
+    m_glesCtx(nullptr),
+    m_frameW(frame_w),
+    m_frameH(frame_h),
+    m_exiting(false),
+    m_mixing(false)
     {
         m_glJobQueue.set_name("com.videocore.composite");
 
@@ -116,6 +127,21 @@ namespace videocore { namespace iOS {
             excludeContext(m_glesCtx);
         }
         
+        //
+        // Shared-memory FBOs
+        //
+        // What we are doing here is creating a couple of shared-memory textures to double-buffer the mixer and give us
+        // direct access to the framebuffer data.
+        //
+        // There are several steps in this process:
+        // 1. Create CVPixelBuffers that are created as IOSurfaces.  This is mandatory and only
+        //    requires specifying the kCVPixelBufferIOSurfacePropertiesKey.
+        // 2. Create a CVOpenGLESTextureCache
+        // 3. Create a CVOpenGLESTextureRef for each CVPixelBuffer.
+        // 4. Create an OpenGL ES Framebuffer for each CVOpenGLESTextureRef and set that texture as the color attachment.
+        //
+        // We may now attach these FBOs as the render target and avoid using the costly glGetPixels.
+        
         NSDictionary* pixelBufferOptions = @{  (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
                                                (NSString*) kCVPixelBufferWidthKey : @(m_frameW),
                                                (NSString*) kCVPixelBufferHeightKey : @(m_frameH),
@@ -170,7 +196,8 @@ namespace videocore { namespace iOS {
 
     }
     void
-    GLESVideoMixer::registerSource(std::shared_ptr<ISource> source, size_t bufferSize)
+    GLESVideoMixer::registerSource(std::shared_ptr<ISource> source,
+                                   size_t bufferSize)
     {
         const auto hash = std::hash< std::shared_ptr<ISource> > () (source);
         bool registered = false;
@@ -230,7 +257,9 @@ namespace videocore { namespace iOS {
         
     }
     void
-    GLESVideoMixer::pushBuffer(const uint8_t *const data, size_t size, videocore::IMetadata &metadata)
+    GLESVideoMixer::pushBuffer(const uint8_t *const data,
+                               size_t size,
+                               videocore::IMetadata &metadata)
     {
         VideoBufferMetadata & md = dynamic_cast<VideoBufferMetadata&>(metadata);
         const int zIndex = md.getData<kVideoMetadataZIndex>();
@@ -253,6 +282,13 @@ namespace videocore { namespace iOS {
         bool refreshTexture = false;
         CVPixelBufferRef refreshRef = NULL;
         auto pbit = m_sourceBuffers.find(h);
+        
+        
+        // Since creating a new CVOpenGLESTextureRef is somewhat costly,
+        // we want to avoid creating them as much as possible.  Only create
+        // a new texture for a source if the source has not created a texture
+        // before or the source has specified a new input pixel buffer.  Some
+        // sources may in fact draw to the same pixel buffer repeatedly.
         
         if(pbit == m_sourceBuffers.end() || pbit->second != inPixelBuffer) {
             refreshRef = CVPixelBufferRetain(inPixelBuffer);
@@ -307,6 +343,7 @@ namespace videocore { namespace iOS {
                     m_layerMap[zIndex].push_back(h);
                 }
                 m_sourceMats[h] = mat;
+                // Flush the cache to deal with any texture creation or deletion
                 CVOpenGLESTextureCacheFlush(this->m_textureCache, 0);
             });
         }
@@ -353,7 +390,7 @@ namespace videocore { namespace iOS {
                 
                 m_mixing = true;
                 PERF_GL_async({
-                    glPushGroupMarkerEXT(0, "Mobcrush.mix");
+                    glPushGroupMarkerEXT(0, "Videocore.Mix");
                     CVPixelBufferLockBaseAddress(this->m_pixelBuffer[current_fb], 0);
                     
                     glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[current_fb]);

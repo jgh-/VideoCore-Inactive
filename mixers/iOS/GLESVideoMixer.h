@@ -22,11 +22,7 @@
  THE SOFTWARE.
  
  */
-/*
- *  iOS::GLESVideoMixer mixer :: Takes CVPixelBufferRef inputs and outputs a single CVPixelBufferRef that has been mixed from the various sources.
- *
- *
- */
+
 
 #ifndef __videocore__GLESVideoMixer__
 #define __videocore__GLESVideoMixer__
@@ -44,27 +40,76 @@
 
 namespace videocore { namespace iOS {
  
-
+    /*
+     *  Takes CVPixelBufferRef inputs and outputs a single CVPixelBufferRef that has been composited from the various sources.
+     *  Sources must output VideoBufferMetadata with their buffers. This compositor uses homogeneous coordinates.
+     */
     class GLESVideoMixer : public IVideoMixer
     {
       
     public:
-        GLESVideoMixer( int frame_w, int frame_h, double frameDuration, std::function<void(void*)> excludeContext = nullptr);
+        /*! Constructor.
+         *
+         *  \param frame_w          The width of the output frame
+         *  \param frame_h          The height of the output frame
+         *  \param frameDuration    The duration of time a frame is presented, in seconds. 30 FPS would be (1/30)
+         *  \param excludeContext   An optional lambda method that is called when the mixer generates its GL ES context.
+         *                          The parameter of this method will be a pointer to its EAGLContext.  This is useful for
+         *                          applications that may be capturing GLES data and do not wish to capture the mixer.
+         */
+        GLESVideoMixer(int frame_w,
+                       int frame_h,
+                       double frameDuration,
+                       std::function<void(void*)> excludeContext = nullptr);
+        
+        /*! Destructor */
         ~GLESVideoMixer();
         
-        void registerSource(std::shared_ptr<ISource> source, size_t bufferSize = 0)  ;
+        /*! IMixer::registerSource */
+        void registerSource(std::shared_ptr<ISource> source,
+                            size_t bufferSize = 0)  ;
+        
+        /*! IMixer::unregisterSource */
         void unregisterSource(std::shared_ptr<ISource> source);
-        void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
+        
+        /*! IOutput::pushBuffer */
+        void pushBuffer(const uint8_t* const data,
+                        size_t size,
+                        IMetadata& metadata);
+        
+        /*! ITransform::setOutput */
         void setOutput(std::shared_ptr<IOutput> output);
+        
+        /*! ITransform::setEpoch */
         void setEpoch(const std::chrono::steady_clock::time_point epoch) {
             m_epoch = epoch;
             m_nextMixTime = epoch;
         };
     private:
-        
+        /*!
+         * Hash a smart pointer to a source.
+         * 
+         * \return a hash based on the smart pointer to a source.
+         */
         const std::size_t hash(std::weak_ptr<ISource> source) const;
+        
+        /*!
+         *  Release a currently-retained buffer from a source.
+         *  
+         *  \param source  The source that created the buffer to be released.
+         */
         void releaseBuffer(std::weak_ptr<ISource> source);
+        
+        /*! Start the compositor thread */
         void mixThread();
+        
+        /*! 
+         * Setup the OpenGL ES context, shaders, and state.
+         *
+         * \param excludeContext An optional lambda method that is called when the mixer generates its GL ES context.
+         *                       The parameter of this method will be a pointer to its EAGLContext.  This is useful for
+         *                       applications that may be capturing GLES data and do not wish to capture the mixer.
+         */
         void setupGLES(std::function<void(void*)> excludeContext);
     private:
         

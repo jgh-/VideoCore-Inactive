@@ -22,11 +22,7 @@
  THE SOFTWARE.
  
  */
-/*
- *  Apple::AudioMixer mixer :: Takes raw LPCM buffers from a variety of sources, resamples, and mixes them and ouputs a single LPCM buffer.
- *                             Differs from GenericAudioMixer because it uses CoreAudio to resample
- *
- */
+
 #ifndef __videocore__AudioMixer__
 #define __videocore__AudioMixer__
 
@@ -35,20 +31,54 @@
 #include <AudioToolbox/AudioToolbox.h>
 
 namespace videocore { namespace Apple {
- 
+    /*
+     *   Takes raw LPCM buffers from a variety of sources, resamples, and mixes them and ouputs a single LPCM buffer.
+     *   Differs from GenericAudioMixer because it uses CoreAudio to resample.
+     *
+     */
     class AudioMixer : public GenericAudioMixer
     {
     public:
+        /*!
+         *  Constructor.
+         *
+         *  \param outChannelCount      number of channels to output.
+         *  \param outFrequencyInHz     sampling rate to output.
+         *  \param outBitsPerChannel    number of bits per channel to output
+         *  \param frameDuration        The duration of a single frame of audio.  For example, AAC uses 1024 samples per frame
+         *                              and therefore the duration is 1024 / sampling rate
+         */
+        AudioMixer(int outChannelCount,
+                   int outFrequencyInHz,
+                   int outBitsPerChannel,
+                   double frameDuration);
         
-        AudioMixer(int outChannelCount, int outFrequencyInHz, int outBitsPerChannel, double frameDuration);
+        /*! Destructor */
         ~AudioMixer();
         
     protected:
         
-        std::shared_ptr<Buffer> resample(const uint8_t* const buffer, size_t size, AudioBufferMetadata& metadata);
+        /*!
+         *  Called to resample a buffer of audio samples. You can change the quality of the resampling method
+         *  by changing s_samplingRateConverterComplexity and s_samplingRateConverterQuality in Apple/AudioMixer.cpp.
+         *
+         * \param buffer    The input samples
+         * \param size      The buffer size in bytes
+         * \param metadata  The associated AudioBufferMetadata that specifies the properties of this buffer.
+         *
+         * \return An audio buffer that has been resampled to match the output properties of the mixer.
+         */
+        std::shared_ptr<Buffer> resample(const uint8_t* const buffer,
+                                         size_t size,
+                                         AudioBufferMetadata& metadata);
 
     private:
-        static OSStatus ioProc(AudioConverterRef audioConverter, UInt32 *ioNumDataPackets, AudioBufferList* ioData, AudioStreamPacketDescription** ioPacketDesc, void* inUserData );
+        /*! Used by AudioConverterFillComplexBuffer. Do not call manually. */
+        static OSStatus ioProc(AudioConverterRef audioConverter,
+                               UInt32 *ioNumDataPackets,
+                               AudioBufferList* ioData,
+                               AudioStreamPacketDescription** ioPacketDesc,
+                               void* inUserData );
         
     };
 }
