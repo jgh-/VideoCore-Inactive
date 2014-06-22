@@ -32,7 +32,7 @@ namespace videocore
 {
     /*! Enum values for the VideoBufferMetadata tuple */
     enum {
-        kVideoMetadataZIndex, /*!< Specifies the sampling rate of the buffer */
+        kVideoMetadataZIndex, /*!< Specifies the z-Index the buffer (lower is farther back) */
         kVideoMetadataMatrix, /*!< Specifies the transformation matrix to use. Pass an Identity matrix if no transformation is to be applied.
                                    Note that the compositor operates using homogeneous coordinates (-1 to 1) unless otherwise specified. */
         kVideoMetadataSource  /*!< Specifies a smart pointer to the source */
