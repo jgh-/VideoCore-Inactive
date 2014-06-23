@@ -34,36 +34,93 @@
 
 namespace videocore { namespace iOS {
     
+    /*!
+     *  Capture video from the device's cameras.
+     */
     class CameraSource : public ISource, public std::enable_shared_from_this<CameraSource>
     {
     public:
+        
         enum AspectMode
         {
-            kAspectFit,
-            kAspectFill
+            kAspectFit,  /*!< An aspect mode which shrinks the incoming video to fit in the supplied boundaries. */
+            kAspectFill  /*!< An aspect mode which scales the video to fill the supplied boundaries and maintain aspect ratio. */
         };
         
     public:
-        CameraSource(float x, float y, float w, float h, float videow, float videoh, float aspect);
+        
+        /*!
+         *  Constructor. Deprecated. Replaced by PositionTransform and AspectTransform.
+         * 
+         *  \param x the x position of the source output in the video
+         *  \param y the y position of the source output in the video
+         *  \param w the width of the source output
+         *  \param h the height of the source output
+         *  \param videow the width of the video
+         *  \param videoh the height of the video
+         *  \param aspect Unused.
+         */
+        CameraSource(float x,
+                     float y,
+                     float w,
+                     float h,
+                     float videow,
+                     float videoh,
+                     float aspect) __attribute__ ((deprecated));
+        
+        /*! Constructor. */
+        CameraSource();
+        
+        /*! Destructor */
         ~CameraSource();
         
+        /*! ISource::setOutput */
         void setOutput(std::shared_ptr<IOutput> output);
         
+        /*! 
+         *  Get the AVCaptureVideoPreviewLayer associated with the camera output.
+         *
+         *  \param outAVCaputreVideoPreviewLayer a pointer to an AVCaptureVideoPreviewLayer pointer.
+         */
         void getPreviewLayer(void** outAVCaptureVideoPreviewLayer);
 
+        /*!
+         *  Setup camera properties
+         *
+         *  \param fps      Optional parameter to set the output frames per second.
+         *  \param useFront Start with the front-facing camera
+         */
         void setupCamera(int fps = 15, bool useFront = true);
-        void setAspectMode( AspectMode aspectMode );
+        /*!
+         * Set the aspect mode. The default is kAspectFit. Deprecated. Use the AspectTransform instead.
+         *
+         * \param aspectMode Set the aspect mode to use.
+         *
+         */
+        void setAspectMode( AspectMode aspectMode ) __attribute__ ((deprecated));
         
+        /*!
+         *  Toggle the camera between front and back-facing cameras.
+         */
         void toggleCamera();
         
         
     public:
-        // Used by Objective-C callbacks
+        /*! Used by Objective-C Capture Session */
         void bufferCaptured(CVPixelBufferRef pixelBufferRef);
+        
+        /*! Used by Objective-C Device Orientation Notifications */
         void reorientCamera();
         
     private:
         
+        /*! 
+         * Get a camera with a specified position
+         *
+         * \param position The position to search for.
+         * 
+         * \return the camera device, if found.
+         */
         void* cameraWithPosition(int position);
         
     private:
@@ -81,6 +138,7 @@ namespace videocore { namespace iOS {
         AspectMode m_aspectMode;
         int  m_fps;
         bool m_isFirst;
+        bool m_usingDeprecatedMethods;
         
     };
     
