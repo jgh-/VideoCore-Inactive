@@ -28,6 +28,7 @@
 
 #include <iostream>
 #include <videocore/transforms/ITransform.hpp>
+#include <glm/glm.hpp>
 
 namespace videocore {
 
@@ -54,6 +55,11 @@ namespace videocore {
         /*! Destructor */
         ~PositionTransform();
         
+        void setPosition(int x,
+                         int y);
+        
+        void setSize(int width,
+                     int height);
         
     public:
         
@@ -64,6 +70,21 @@ namespace videocore {
         void pushBuffer(const uint8_t* const data,
                         size_t size,
                         IMetadata& metadata);
+        
+    private:
+        
+        glm::mat4 m_matrix;
+        
+        std::weak_ptr<IOutput> m_output;
+        
+        int  m_posX;
+        int  m_posY;
+        int  m_width;
+        int  m_height;
+        int  m_contextWidth;
+        int  m_contextHeight;
+        
+        bool m_positionIsDirty;
     };
 }
 
