@@ -55,9 +55,21 @@ namespace videocore {
         /*! Destructor */
         ~PositionTransform();
         
+        /*!
+         *  Change the position of the image in the video context.
+         *
+         *  \param x  The x position of the image in the video context.
+         *  \param y  The y position of the image in the video context.
+         */
         void setPosition(int x,
                          int y);
         
+        /*!
+         *  Change the size of the image in the video context.
+         *
+         *  \param width            The width of the image.
+         *  \param height           The height of the image.
+         */
         void setSize(int width,
                      int height);
         
