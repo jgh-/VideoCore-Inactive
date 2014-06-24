@@ -41,16 +41,19 @@ namespace videocore { namespace iOS {
     {
     public:
         
+        /*!
+         *  Deprecated. Please see videocore::AspectTransform
+         */
         enum AspectMode
         {
             kAspectFit,  /*!< An aspect mode which shrinks the incoming video to fit in the supplied boundaries. */
             kAspectFill  /*!< An aspect mode which scales the video to fill the supplied boundaries and maintain aspect ratio. */
-        };
+        } __attribute__ ((deprecated));
         
     public:
         
         /*!
-         *  Constructor. Deprecated. Replaced by PositionTransform and AspectTransform.
+         *  Constructor. Deprecated. Replaced by videocore::PositionTransform and videocore::AspectTransform.
          * 
          *  \param x the x position of the source output in the video
          *  \param y the y position of the source output in the video

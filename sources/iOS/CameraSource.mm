@@ -297,8 +297,8 @@ namespace videocore { namespace iOS {
     {
         auto output = m_output.lock();
         if(output) {
+            
             if(m_usingDeprecatedMethods && m_isFirst) {
-                
                 
                 m_isFirst = false;
                 
@@ -328,6 +328,7 @@ namespace videocore { namespace iOS {
                 m_matrix = mat;
             }
 
+            
             VideoBufferMetadata md(1.f / float(m_fps));
             
             md.setData(1, m_matrix, shared_from_this());
