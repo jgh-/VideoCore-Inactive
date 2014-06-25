@@ -87,16 +87,20 @@ namespace videocore {
                 CVPixelBufferRef pb = (CVPixelBufferRef)data;
                 CVPixelBufferLockBaseAddress(pb, kCVPixelBufferLock_ReadOnly);
             
-                auto width = CVPixelBufferGetWidth(pb);
-                auto height = CVPixelBufferGetHeight(pb);
+                float width = CVPixelBufferGetWidth(pb);
+                float height = CVPixelBufferGetHeight(pb);
                 
-                const float wfac = float(m_boundingWidth) / float(width);
-                const float hfac = float(m_boundingHeight) / float(height);
+                
+                float wfac = float(m_boundingWidth) / width;
+                float hfac = float(m_boundingHeight) / height;
                 
                 const float mult = (m_aspectMode == kAspectFit ? (wfac < hfac) : (wfac > hfac)) ? wfac : hfac;
                 
-                m_scale = glm::vec3(mult,mult,1.f);
+                wfac = width*mult / float(m_boundingWidth);
+                hfac = height*mult / float(m_boundingHeight);
                 
+                m_scale = glm::vec3(wfac,hfac,1.f);
+    
                 CVPixelBufferUnlockBaseAddress(pb, kCVPixelBufferLock_ReadOnly);
                 
                 m_boundingBoxDirty = false;
