@@ -34,19 +34,41 @@
 
 namespace videocore { namespace iOS {
 
+    /*!
+     *  Capture audio from the device's microphone.
+     *
+     */
     class MicSource : public ISource, public std::enable_shared_from_this<MicSource>
     {
     public:
         
-        MicSource(double audioSampleRate = 44100., std::function<void(AudioUnit&)> excludeAudioUnit = nullptr);
+        /*!
+         *  Constructor.
+         *
+         *  \param audioSampleRate the sample rate in Hz to capture audio at.  Best results if this matches the mixer's sampling rate.
+         *  \param excludeAudioUnit An optional lambda method that is called when the source generates its Audio Unit.
+         *                          The parameter of this method will be a reference to its Audio Unit.  This is useful for
+         *                          applications that may be capturing Audio Unit data and do not wish to capture this source.
+         *
+         */
+        MicSource(double audioSampleRate = 44100.,
+                  std::function<void(AudioUnit&)> excludeAudioUnit = nullptr);
+        
+        /*! Destructor */
         ~MicSource();
         
         
     public:
+        
+        /*! ISource::setOutput */
         void setOutput(std::shared_ptr<IOutput> output);
         
+        /*! Used by the Audio Unit as a callback method */
         void inputCallback(uint8_t* data, size_t data_size);
         
+        /*! 
+         *  \return a reference to the source's Audio Unit
+         */
         const AudioUnit& audioUnit() const { return m_audioUnit; };
         
     private:

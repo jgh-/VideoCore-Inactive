@@ -65,10 +65,31 @@
 @end
 namespace videocore { namespace iOS {
     
-    CameraSource::CameraSource(float x, float y, float w, float h, float vw, float vh, float aspect)
-    : m_size({x,y,w,h,vw,vh,aspect}), m_targetSize(m_size), m_captureDevice(NULL),  m_isFirst(true), m_callbackSession(NULL), m_aspectMode(kAspectFit), m_fps(15)
+    CameraSource::CameraSource(float x,
+                               float y,
+                               float w,
+                               float h,
+                               float vw,
+                               float vh,
+                               float aspect)
+    : m_size({x,y,w,h,vw,vh,w/h}),
+    m_targetSize(m_size),
+    m_captureDevice(NULL),
+    m_isFirst(true),
+    m_callbackSession(NULL),
+    m_aspectMode(kAspectFit),
+    m_fps(15),
+    m_usingDeprecatedMethods(true)
     {
     }
+    
+    CameraSource::CameraSource()
+    :
+    m_captureDevice(nullptr),
+    m_callbackSession(nullptr),
+    m_matrix(glm::mat4(1.f)),
+    m_usingDeprecatedMethods(false)
+    {}
     
     CameraSource::~CameraSource()
     {
@@ -276,8 +297,8 @@ namespace videocore { namespace iOS {
     {
         auto output = m_output.lock();
         if(output) {
-            if(m_isFirst) {
-                
+            
+            if(m_usingDeprecatedMethods && m_isFirst) {
                 
                 m_isFirst = false;
                 
@@ -307,6 +328,7 @@ namespace videocore { namespace iOS {
                 m_matrix = mat;
             }
 
+            
             VideoBufferMetadata md(1.f / float(m_fps));
             
             md.setData(1, m_matrix, shared_from_this());

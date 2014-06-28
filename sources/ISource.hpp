@@ -30,14 +30,27 @@
 
 namespace videocore
 {
+    /*!
+     *  ISource interface.  Defines the interface for sources of data into a graph.
+     */
     class ISource
     {
     public:
+        /*!
+         *  Set the output for the source.
+         *
+         *  \param output a component that conforms to the videocore::IOutput interface and is compatible with the
+         *                data being vended by the source.
+         */
         virtual void setOutput(std::shared_ptr<IOutput> output) = 0;
+        
+        /*! Virtual destructor */
         virtual ~ISource() {};
     };
     
-    // CRTP used to provide a weak_ptr to the class upon instantiation.
+    
+    // TODO: Remove and replace with std::enable_shared_from_this on any legacy sources
+    /*! CRTP used to provide a weak_ptr to the class upon instantiation. */
     template <typename Derived>
     class StaticSource : public ISource
     {
@@ -46,7 +59,7 @@ namespace videocore
         {
             return Derived::staticCreateInstance();
         }
-    };
+    } __attribute__ ((deprecated)) ;
 }
 
 #endif
