@@ -62,7 +62,11 @@ static inline int16_t b24_to_b16(void* v) {
 extern std::string g_tmpFolder;
 
 namespace videocore {
-    static inline int cubicInterp(int y0, int y1, int y2, int y3, double mu)
+    static inline int cubicInterp(int y0,
+                                  int y1,
+                                  int y2,
+                                  int y3,
+                                  double mu)
     {
         double a[4], mu2;
         
@@ -75,8 +79,16 @@ namespace videocore {
         return (a[0]*mu*mu2+a[1]*mu2+a[2]*mu+a[3]);
         
     }
-    GenericAudioMixer::GenericAudioMixer(int outChannelCount, int outFrequencyInHz, int outBitsPerChannel, double frameDuration)
-    : m_bufferDuration(frameDuration), m_frameDuration(frameDuration), m_outChannelCount(2), m_outFrequencyInHz(outFrequencyInHz), m_outBitsPerChannel(16),  m_exiting(false)
+    GenericAudioMixer::GenericAudioMixer(int outChannelCount,
+                                         int outFrequencyInHz,
+                                         int outBitsPerChannel,
+                                         double frameDuration)
+    : m_bufferDuration(frameDuration),
+    m_frameDuration(frameDuration),
+    m_outChannelCount(2),
+    m_outFrequencyInHz(outFrequencyInHz),
+    m_outBitsPerChannel(16),
+    m_exiting(false)
     {
         m_bytesPerSample = outChannelCount * outBitsPerChannel / 8;
         
@@ -97,7 +109,8 @@ namespace videocore {
         m_bufferDuration = duration;
     }
     void
-    GenericAudioMixer::registerSource(std::shared_ptr<ISource> source, size_t inBufferSize)
+    GenericAudioMixer::registerSource(std::shared_ptr<ISource> source,
+                                      size_t inBufferSize)
     {
         auto hash = std::hash<std::shared_ptr< ISource> >()(source);
         size_t bufferSize = (inBufferSize ? inBufferSize : (m_bytesPerSample * m_outFrequencyInHz * m_bufferDuration * 4)); // 4 frames of buffer space.
@@ -123,7 +136,9 @@ namespace videocore {
         }
     }
     void
-    GenericAudioMixer::pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata)
+    GenericAudioMixer::pushBuffer(const uint8_t* const data,
+                                  size_t size,
+                                  IMetadata& metadata)
     {
         AudioBufferMetadata & inMeta = static_cast<AudioBufferMetadata&>(metadata);
         
@@ -151,7 +166,9 @@ namespace videocore {
         }
     }
     std::shared_ptr<Buffer>
-    GenericAudioMixer::resample(const uint8_t* const buffer, size_t size, AudioBufferMetadata &metadata)
+    GenericAudioMixer::resample(const uint8_t* const buffer,
+                                size_t size,
+                                AudioBufferMetadata &metadata)
     {
         const auto inFrequncyInHz = metadata.getData<kAudioMetadataFrequencyInHz>();
         const auto inBitsPerChannel = metadata.getData<kAudioMetadataBitsPerChannel>();
@@ -209,7 +226,6 @@ namespace videocore {
         
         const size_t channelStride = (inChannelCount > 1) * bytesPerChannel;
         
-        // Sample rate conversion is achieved by simple lerp for now.
         for( size_t i = 0 ; i < outSampleCount ; ++i )
         {
             size_t iSample = (static_cast<size_t>(std::floor(currentInByteOffset)) + (bytesPerSample-1)) & ~(bytesPerSample-1); // get an aligned sample.
@@ -236,7 +252,8 @@ namespace videocore {
         m_output = output;
     }
     void
-    GenericAudioMixer::setSourceGain(std::weak_ptr<ISource> source, float gain)
+    GenericAudioMixer::setSourceGain(std::weak_ptr<ISource> source,
+                                     float gain)
     {
         auto s = source.lock();
         if(s) {

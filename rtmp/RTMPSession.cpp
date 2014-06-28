@@ -555,7 +555,7 @@ namespace videocore
                         
                     case RTMP_PT_CHUNK_SIZE:
                     {
-                        unsigned long newChunkSize = get_be32(p);
+                        //unsigned long newChunkSize = get_be32(p);
                         //printf("Request to change chunk size from %zu -> %zu\n", m_currentChunkSize, newChunkSize);
                         //m_currentChunkSize = newChunkSize;
                     }

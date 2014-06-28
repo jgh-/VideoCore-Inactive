@@ -31,22 +31,45 @@
 
 namespace videocore {
     
+
+    /*! Enum values for the AudioBufferMetadata tuple */
     enum {
-        kAudioMetadataFrequencyInHz,
-        kAudioMetadataBitsPerChannel,
-        kAudioMetadataChannelCount,
-        kAudioMetadataLoops,
-        kAudioMetadataSource
+        kAudioMetadataFrequencyInHz,    /*!< Specifies the sampling rate of the buffer */
+        kAudioMetadataBitsPerChannel,   /*!< Specifies the number of bits per channel */
+        kAudioMetadataChannelCount,     /*!< Specifies the number of channels */
+        kAudioMetadataLoops,            /*!< Indicates whether or not the buffer should loop. Currently ignored. */
+        kAudioMetadataSource            /*!< A smart pointer to the source. */
     };
+    
+    /*!
+     *  Specifies the properties of the incoming audio buffer.
+     */
     typedef MetaData<'soun', int, int, int, bool, std::weak_ptr<ISource> > AudioBufferMetadata;
     
     class ISource;
     
+    /*! IAudioMixer interface.  Defines the required interface methods for Audio mixers. */
     class IAudioMixer : public IMixer
     {
     public:
+        
+        /*! Virtual destructor */
         virtual ~IAudioMixer() {};
-        virtual void setSourceGain(std::weak_ptr<ISource> source, float gain) = 0;
+        
+        /*! 
+         *  Set the output gain of the specified source.
+         *
+         *  \param source  A smart pointer to the source to be modified
+         *  \param gain    A value between 0 and 1 representing the desired gain.
+         */
+        virtual void setSourceGain(std::weak_ptr<ISource> source,
+                                   float gain) = 0;
+        
+        /*!
+         *  Set the amount of time to buffer before emitting mixed samples.
+         *
+         *  \param duration The duration, in seconds, to buffer.
+         */
         virtual void setMinimumBufferDuration(const double duration) = 0;
     };
 }

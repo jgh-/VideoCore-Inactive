@@ -29,7 +29,7 @@ static const UInt32 s_samplingRateConverterComplexity = kAudioConverterSampleRat
 static const UInt32 s_samplingRateConverterQuality = kAudioConverterQuality_High;
 
 namespace videocore { namespace Apple {
- 
+    
     struct UserData {
         uint8_t* data;
         uint8_t* p;
@@ -40,7 +40,10 @@ namespace videocore { namespace Apple {
         
     } ;
     
-    AudioMixer::AudioMixer(int outChannelCount, int outFrequencyInHz, int outBitsPerChannel, double frameDuration)
+    AudioMixer::AudioMixer(int outChannelCount,
+                           int outFrequencyInHz,
+                           int outBitsPerChannel,
+                           double frameDuration)
     : GenericAudioMixer(outChannelCount, outFrequencyInHz, outBitsPerChannel, frameDuration)
     {
     }
@@ -49,7 +52,9 @@ namespace videocore { namespace Apple {
         
     }
     std::shared_ptr<Buffer>
-    AudioMixer::resample(const uint8_t* const buffer, size_t size, AudioBufferMetadata& metadata)
+    AudioMixer::resample(const uint8_t* const buffer,
+                         size_t size,
+                         AudioBufferMetadata& metadata)
     {
         const auto inFrequncyInHz = metadata.getData<kAudioMetadataFrequencyInHz>();
         const auto inBitsPerChannel = metadata.getData<kAudioMetadataBitsPerChannel>();
@@ -100,7 +105,7 @@ namespace videocore { namespace Apple {
                                   kAudioConverterSampleRateConverterQuality,
                                   sizeof(s_samplingRateConverterQuality),
                                   &s_samplingRateConverterQuality);
-
+        
         
         std::unique_ptr<UserData> ud(new UserData());
         ud->size = static_cast<int>(size);
@@ -117,12 +122,12 @@ namespace videocore { namespace Apple {
         
         UInt32 sampleCount = outBufferSampleCount;
         AudioConverterFillComplexBuffer(audioConverter, /* AudioConverterRef inAudioConverter */
-                                                           AudioMixer::ioProc, /* AudioConverterComplexInputDataProc inInputDataProc */
-                                                           ud.get(), /* void *inInputDataProcUserData */
-                                                           &sampleCount, /* UInt32 *ioOutputDataPacketSize */
-                                                           &outBufferList, /* AudioBufferList *outOutputData */
-                                                           NULL /* AudioStreamPacketDescription *outPacketDescription */
-                                                           );
+                                        AudioMixer::ioProc, /* AudioConverterComplexInputDataProc inInputDataProc */
+                                        ud.get(), /* void *inInputDataProcUserData */
+                                        &sampleCount, /* UInt32 *ioOutputDataPacketSize */
+                                        &outBufferList, /* AudioBufferList *outOutputData */
+                                        NULL /* AudioStreamPacketDescription *outPacketDescription */
+                                        );
         
         AudioConverterDispose(audioConverter);
         outBuffer->setSize(outBufferList.mBuffers[0].mDataByteSize);
@@ -130,7 +135,11 @@ namespace videocore { namespace Apple {
     }
     //http://stackoverflow.com/questions/6610958/os-x-ios-sample-rate-conversion-for-a-buffer-using-audioconverterfillcomplex
     OSStatus
-    AudioMixer::ioProc(AudioConverterRef audioConverter, UInt32 *ioNumDataPackets, AudioBufferList* ioData, AudioStreamPacketDescription** ioPacketDesc, void* inUserData )
+    AudioMixer::ioProc(AudioConverterRef audioConverter,
+                       UInt32 *ioNumDataPackets,
+                       AudioBufferList* ioData,
+                       AudioStreamPacketDescription** ioPacketDesc,
+                       void* inUserData )
     {
         UserData* ud = static_cast<UserData*>(inUserData);
         
