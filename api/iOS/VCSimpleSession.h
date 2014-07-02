@@ -56,6 +56,7 @@ enum VCCameraState
 @property (nonatomic, readonly) VCSessionState rtmpSessionState;
 @property (nonatomic, strong, readonly) UIView* previewView;
 
+/*! Setters / Getters for session properties */
 @property (nonatomic) CGSize        videoSize;
 @property (nonatomic) int           bitrate;
 @property (nonatomic) int           fps;
