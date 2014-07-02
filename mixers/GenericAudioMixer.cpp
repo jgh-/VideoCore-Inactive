@@ -305,16 +305,16 @@ namespace videocore {
                         const size_t count = (size/sizeof(short));
                         const float gain = m_inGain[it->first];
                         const float mult = g*gain;
-                        const short div ( 1.f / mult );
+                       
                         for ( size_t i = 0 ; i <  count ; i+=8) {
-                            samples[i] += buffer[i] / div;
-                            samples[i+1] += buffer[i+1] / div;
-                            samples[i+2] += buffer[i+2] / div;
-                            samples[i+3] += buffer[i+3] / div;
-                            samples[i+4] += buffer[i+4] / div;
-                            samples[i+5] += buffer[i+5] / div;
-                            samples[i+6] += buffer[i+6] / div;
-                            samples[i+7] += buffer[i+7] / div;
+                            samples[i] += buffer[i] * mult;
+                            samples[i+1] += buffer[i+1] * mult;
+                            samples[i+2] += buffer[i+2] * mult;
+                            samples[i+3] += buffer[i+3] * mult;
+                            samples[i+4] += buffer[i+4] * mult;
+                            samples[i+5] += buffer[i+5] * mult;
+                            samples[i+6] += buffer[i+6] * mult;
+                            samples[i+7] += buffer[i+7] * mult;
                         }
                     }
                 }
