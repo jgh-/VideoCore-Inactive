@@ -67,7 +67,7 @@ typedef NS_ENUM(NSInteger, VCCameraState)
 @property (nonatomic) BOOL          torch;
 @property (nonatomic) float         videoZoomFactor;
 
-@property (nonatomic, weak) id<VCSessionDelegate> delegate;
+@property (nonatomic) id<VCSessionDelegate> delegate;
 
 // -----------------------------------------------------------------------------
 - (instancetype) initWithVideoSize:(CGSize)videoSize

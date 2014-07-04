@@ -109,7 +109,7 @@ namespace videocore { namespace simpleApi {
     BOOL   _torch;
 }
 @property (nonatomic, readwrite) VCSessionState rtmpSessionState;
-@property (nonatomic, strong, readwrite) VCPreviewView* previewView;
+@property (nonatomic, retain, readwrite) VCPreviewView* previewView;
 
 - (void) setupGraph;
 
@@ -222,7 +222,9 @@ static const float kAudioRate = 44100;
         self.bitrate = bps;
         self.videoSize = videoSize;
         self.fps = fps;
-        self.previewView = [[VCPreviewView alloc] init];
+        
+        _previewView = [[VCPreviewView alloc] init];
+        
         self.videoZoomFactor = 1.f;
         
         _cameraState = VCCameraStateBack;
@@ -234,6 +236,7 @@ static const float kAudioRate = 44100;
 
 - (void) dealloc
 {
+
     [self endRtmpSession];
     m_audioMixer.reset();
     m_videoMixer.reset();
@@ -242,6 +245,10 @@ static const float kAudioRate = 44100;
     m_aspectTransform.reset();
     m_positionTransform.reset();
     m_micSource.reset();
+    
+    self.previewView = nil;
+    
+    [super dealloc];
 }
 
 - (void) startRtmpSessionWithURL:(NSString *)rtmpUrl

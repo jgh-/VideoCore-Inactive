@@ -53,7 +53,7 @@
 @property (nonatomic, strong) NSDate* lastDraw;
 
 @property (nonatomic, strong) EAGLContext* context;
-@property (nonatomic, weak) CAEAGLLayer* glLayer;
+@property (nonatomic) CAEAGLLayer* glLayer;
 @end
 @implementation VCPreviewView
 
@@ -77,7 +77,9 @@
     if ((self = [super init])) {
         // Initialization code
         self.glLayer = (CAEAGLLayer*)self.layer;
-        self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+       
+        _context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+        
         if(!self.context) {
             NSLog(@"Context creation failed");
         } else {
@@ -123,6 +125,11 @@
         glDeleteFramebuffers(1, &_fbo);
     }
     CFRelease(_cache);
+    
+    self.context = nil;
+    self.lastDraw = nil;
+    
+    [super dealloc];
 }
 - (void) layoutSubviews
 {
