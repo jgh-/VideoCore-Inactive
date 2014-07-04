@@ -1,11 +1,27 @@
-//
-//  VCPreviewView.m
-//  VideoCoreDevelopment
-//
-//  Created by James Hurley on 7/3/14.
-//  Copyright (c) 2014 VideoCore. All rights reserved.
-//
-
+/*
+ 
+ Video Core
+ Copyright (c) 2014 James G. Hurley
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ 
+ */
 #import "VCPreviewView.h"
 
 #include <videocore/sources/iOS/GLESUtil.h>
@@ -97,11 +113,19 @@
     if(_shaderProgram) {
         glDeleteProgram(_shaderProgram);
     }
+    if(_vbo) {
+        glDeleteBuffers(1, &_vbo);
+    }
+    if(_vao) {
+        glDeleteVertexArrays(1, &_vao);
+    }
+    if(_fbo) {
+        glDeleteFramebuffers(1, &_fbo);
+    }
     CFRelease(_cache);
 }
 - (void) layoutSubviews
 {
-    NSLog(@"layoutSubviews: %@", NSStringFromCGRect( self.glLayer.bounds) );
     self.backgroundColor = [UIColor redColor];
     [self generateGLESBuffers];
 }
@@ -128,6 +152,7 @@
         
     }
     int currentBuffer = _currentBuffer;
+    __block VCPreviewView* bSelf = self;
     
     dispatch_async(dispatch_get_main_queue(), ^{
         EAGLContext* current = [EAGLContext currentContext];
@@ -137,50 +162,65 @@
         
         if(updateTexture) {
             // create a new texture
-            if(_texture[currentBuffer]) {
-                CFRelease(_texture[currentBuffer]);
+            if(bSelf->_texture[currentBuffer]) {
+                CFRelease(bSelf->_texture[currentBuffer]);
             }
             
-            CVPixelBufferLockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
-            CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, _cache, _currentRef[currentBuffer], NULL, GL_TEXTURE_2D, GL_RGBA, CVPixelBufferGetWidth(_currentRef[currentBuffer]), CVPixelBufferGetHeight(_currentRef[currentBuffer]), GL_BGRA, GL_UNSIGNED_BYTE, 0, &_texture[currentBuffer]);
+            CVPixelBufferLockBaseAddress(bSelf->_currentRef[currentBuffer],
+                                         kCVPixelBufferLock_ReadOnly);
+            CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                         bSelf->_cache,
+                                                         bSelf->_currentRef[currentBuffer],
+                                                         NULL,
+                                                         GL_TEXTURE_2D,
+                                                         GL_RGBA,
+                                                         CVPixelBufferGetWidth(bSelf->_currentRef[currentBuffer]),
+                                                         CVPixelBufferGetHeight(bSelf->_currentRef[currentBuffer]),
+                                                         GL_BGRA,
+                                                         GL_UNSIGNED_BYTE,
+                                                         0,
+                                                         &bSelf->_texture[currentBuffer]);
             
-            glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(_texture[currentBuffer]));
+            glBindTexture(GL_TEXTURE_2D,
+                          CVOpenGLESTextureGetName(bSelf->_texture[currentBuffer]));
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             
-            CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
+            
+            CVPixelBufferUnlockBaseAddress(bSelf->_currentRef[currentBuffer],
+                                           kCVPixelBufferLock_ReadOnly);
             
         }
         
         // draw
-        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, bSelf->_fbo);
         glClearColor(0.f, 1.f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
-        glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(_texture[currentBuffer]));
+        glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(bSelf->_texture[currentBuffer]));
         
         glm::mat4 matrix(1.f);
-        float width = CVPixelBufferGetWidth(_currentRef[currentBuffer]);
-        float height = CVPixelBufferGetHeight(_currentRef[currentBuffer]);
+        float width = CVPixelBufferGetWidth(bSelf->_currentRef[currentBuffer]);
+        float height = CVPixelBufferGetHeight(bSelf->_currentRef[currentBuffer]);
         
         
-        float wfac = float(self.bounds.size.width) / width;
-        float hfac = float(self.bounds.size.height) / height;
+        float wfac = float(bSelf.bounds.size.width) / width;
+        float hfac = float(bSelf.bounds.size.height) / height;
         
         bool aspectFit = false;
         
         const float mult = (aspectFit ? (wfac < hfac) : (wfac > hfac)) ? wfac : hfac;
         
-        wfac = width*mult / float(self.bounds.size.width);
-        hfac = height*mult / float(self.bounds.size.height);
+        wfac = width*mult / float(bSelf.bounds.size.width);
+        hfac = height*mult / float(bSelf.bounds.size.height);
         
         matrix = glm::scale(matrix, glm::vec3(1.f * wfac,-1.f * hfac,1.f));
         
-        glUniformMatrix4fv(_matrixPos, 1, GL_FALSE, &matrix[0][0]);
+        glUniformMatrix4fv(bSelf->_matrixPos, 1, GL_FALSE, &matrix[0][0]);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         GL_ERRORS(__LINE__)
-        glBindRenderbuffer(GL_RENDERBUFFER, _renderBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, bSelf->_renderBuffer);
         [self.context presentRenderbuffer:GL_RENDERBUFFER];
         [EAGLContext setCurrentContext:current];
     });

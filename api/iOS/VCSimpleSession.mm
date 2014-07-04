@@ -78,10 +78,11 @@ namespace videocore { namespace simpleApi {
 {
     std::shared_ptr<videocore::simpleApi::PixelBufferOutput> m_pbOutput;
     std::shared_ptr<videocore::ISource> m_micSource;
-    std::shared_ptr<videocore::ISource> m_cameraSource;
+    std::shared_ptr<videocore::iOS::CameraSource> m_cameraSource;
     
     std::weak_ptr<videocore::Split> m_videoSplit;
     std::shared_ptr<videocore::AspectTransform> m_aspectTransform;
+    std::shared_ptr<videocore::PositionTransform> m_positionTransform;
     
     std::vector< std::shared_ptr<videocore::ITransform> > m_audioTransformChain;
     std::vector< std::shared_ptr<videocore::ITransform> > m_videoTransformChain;
@@ -93,7 +94,10 @@ namespace videocore { namespace simpleApi {
     CGSize _videoSize;
     int    _bitrate;
     int    _fps;
+    float  _videoZoomFactor;
+    
     VCCameraState _cameraState;
+    VCSessionState _rtmpSessionState;
     BOOL   _torch;
 }
 @property (nonatomic, readwrite) VCSessionState rtmpSessionState;
@@ -103,12 +107,16 @@ namespace videocore { namespace simpleApi {
 
 @end
 
+static const float kAudioRate = 44100;
+
 @implementation VCSimpleSession
 @dynamic videoSize;
 @dynamic bitrate;
 @dynamic fps;
 @dynamic torch;
 @dynamic cameraState;
+@dynamic rtmpSessionState;
+@dynamic videoZoomFactor;
 // -----------------------------------------------------------------------------
 //  Properties Methods
 // -----------------------------------------------------------------------------
@@ -120,6 +128,13 @@ namespace videocore { namespace simpleApi {
 - (void) setVideoSize:(CGSize)videoSize
 {
     _videoSize = videoSize;
+    if(m_aspectTransform) {
+        m_aspectTransform->setBoundingSize(videoSize.width, videoSize.height);
+    }
+    if(m_positionTransform) {
+        m_positionTransform->setSize(videoSize.width * self.videoZoomFactor,
+                                     videoSize.height * self.videoZoomFactor);
+    }
 }
 - (int) bitrate
 {
@@ -151,7 +166,38 @@ namespace videocore { namespace simpleApi {
 }
 - (void) setCameraState:(VCCameraState)cameraState
 {
-    _cameraState = cameraState;
+    if(_cameraState != cameraState) {
+        _cameraState = cameraState;
+        if(m_cameraSource) {
+            m_cameraSource->toggleCamera();
+        }
+    }
+}
+- (void) setRtmpSessionState:(VCSessionState)rtmpSessionState
+{
+    _rtmpSessionState = rtmpSessionState;
+    [self.delegate connectionStatusChanged:rtmpSessionState];
+}
+- (VCSessionState) rtmpSessionState
+{
+    return _rtmpSessionState;
+}
+- (float) videoZoomFactor
+{
+    return _videoZoomFactor;
+}
+- (void) setVideoZoomFactor:(float)videoZoomFactor
+{
+    _videoZoomFactor = videoZoomFactor;
+    if(m_positionTransform) {
+        // We could use AVCaptureConnection's zoom factor, but in reality it's
+        // doing the exact same thing as this (in terms of the algorithm used),
+        // but it is not clear how CoreVideo accomplishes it.
+        // In this case this is just modifying the matrix
+        // multiplication that is already happening once per frame.
+        m_positionTransform->setSize(self.videoSize.width * videoZoomFactor,
+                                     self.videoSize.height * videoZoomFactor);
+    }
 }
 // -----------------------------------------------------------------------------
 //  Public Methods
@@ -167,6 +213,9 @@ namespace videocore { namespace simpleApi {
         self.videoSize = videoSize;
         self.fps = fps;
         self.previewView = [[VCPreviewView alloc] init];
+        self.videoZoomFactor = 1.f;
+        
+        _cameraState = VCCameraStateBack;
         
         [self setupGraph];
     }
@@ -181,7 +230,42 @@ namespace videocore { namespace simpleApi {
 - (void) startRtmpSessionWithURL:(NSString *)rtmpUrl
                     andStreamKey:(NSString *)streamKey
 {
+    std::string uri([rtmpUrl UTF8String]);
     
+    m_outputSession.reset(
+            new videocore::RTMPSession ( uri,
+                                        [=](videocore::RTMPSession& session,
+                                            ClientState_t state) {
+        
+        switch(state) {
+                
+            case kClientStateSessionStarted:
+            {
+                self.rtmpSessionState = VCSessionStateStarted;
+                [self addEncodersAndPacketizers];
+            }
+                break;
+            case kClientStateError:
+                self.rtmpSessionState = VCSessionStateError;
+                break;
+            case kClientStateNotConnected:
+                self.rtmpSessionState = VCSessionStateEnded;
+                break;
+            default:
+                break;
+                
+        }
+        
+    }) );
+    videocore::RTMPSessionParameters_t sp ( 0. );
+    
+    sp.setData(self.videoSize.width,
+               self.videoSize.height,
+               1. / static_cast<double>(self.fps),
+               self.bitrate,
+               kAudioRate);
+    
+    m_outputSession->setSessionParameters(sp);
 }
 - (void) endRtmpSession
 {
@@ -211,9 +295,9 @@ namespace videocore { namespace simpleApi {
     
     {
         // Add audio mixer
-        const double aacPacketTime = 1024. / 44100.0;
+        const double aacPacketTime = 1024. / kAudioRate;
         
-        [self addTransform:std::make_shared<videocore::Apple::AudioMixer>(2,44100,16,aacPacketTime)
+        [self addTransform:std::make_shared<videocore::Apple::AudioMixer>(2,kAudioRate,16,aacPacketTime)
                    toChain:m_audioTransformChain];
 
         
@@ -251,10 +335,42 @@ namespace videocore { namespace simpleApi {
         
     }
     
+#else
+#endif // TARGET_OS_IPHONE
+#endif // __APPLE__
+    
+    // Create sources
+    {
+        
+        // Add camera source
+        m_cameraSource = std::make_shared<videocore::iOS::CameraSource>();
+        auto aspectTransform = std::make_shared<videocore::AspectTransform>(self.videoSize.width,self.videoSize.height,videocore::AspectTransform::kAspectFit);
+        
+        auto positionTransform = std::make_shared<videocore::PositionTransform>(self.videoSize.width/2, self.videoSize.height/2,
+                                                                                self.videoSize.width, self.videoSize.height,
+                                                                                self.videoSize.width, self.videoSize.height
+                                                                                );
+        
+        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,false);
+        m_cameraSource->setOutput(aspectTransform);
+        aspectTransform->setOutput(positionTransform);
+        positionTransform->setOutput(m_videoTransformChain.front());
+        m_aspectTransform = aspectTransform;
+        m_positionTransform = positionTransform;
+    }
+    {
+        // Add mic source
+        m_micSource = std::make_shared<videocore::iOS::MicSource>();
+        m_micSource->setOutput(m_audioTransformChain.front());
+        
+    }
+}
+- (void) addEncodersAndPacketizers
+{
     {
         // Add encoders
         
-        [self addTransform:std::make_shared<videocore::iOS::AACEncode>(44100,2)
+        [self addTransform:std::make_shared<videocore::iOS::AACEncode>(kAudioRate,2)
                    toChain:m_audioTransformChain];
         [self addTransform:std::make_shared<videocore::iOS::H264Encode>(self.videoSize.width,
                                                                         self.videoSize.height,
@@ -263,18 +379,13 @@ namespace videocore { namespace simpleApi {
                    toChain:m_videoTransformChain];
         
     }
-    
-#else
-#endif // TARGET_OS_IPHONE
-#endif // __APPLE__
-    
-    [self addTransform:std::make_shared<videocore::rtmp::AACPacketizer>()
-               toChain:m_audioTransformChain];
-    [self addTransform:std::make_shared<videocore::rtmp::H264Packetizer>()
-               toChain:m_videoTransformChain];
-
-    
-    
+    {
+        [self addTransform:std::make_shared<videocore::rtmp::AACPacketizer>()
+                   toChain:m_audioTransformChain];
+        [self addTransform:std::make_shared<videocore::rtmp::H264Packetizer>()
+                   toChain:m_videoTransformChain];
+        
+    }
     const auto epoch = std::chrono::steady_clock::now();
     for(auto it = m_videoTransformChain.begin() ; it != m_videoTransformChain.end() ; ++it) {
         (*it)->setEpoch(epoch);
@@ -282,24 +393,10 @@ namespace videocore { namespace simpleApi {
     for(auto it = m_audioTransformChain.begin() ; it != m_audioTransformChain.end() ; ++it) {
         (*it)->setEpoch(epoch);
     }
+    m_videoTransformChain.back()->setOutput(m_outputSession);
+    m_audioTransformChain.back()->setOutput(m_outputSession);
     
+
     
-    // Create sources
-    {
-        
-        // Add camera source
-        m_cameraSource = std::make_shared<videocore::iOS::CameraSource>();
-        auto aspectTransform = std::make_shared<videocore::AspectTransform>(self.videoSize.width,self.videoSize.height,videocore::AspectTransform::kAspectFit);
-        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,false);
-        m_cameraSource->setOutput(aspectTransform);
-        aspectTransform->setOutput(m_videoTransformChain.front());
-        m_aspectTransform = aspectTransform;
-    }
-    {
-        // Add mic source
-        m_micSource = std::make_shared<videocore::iOS::MicSource>();
-        m_micSource->setOutput(m_audioTransformChain.front());
-        
-    }
 }
 @end

@@ -33,20 +33,20 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <UIKit/UIKit.h>
 
-typedef enum
+typedef NS_ENUM(NSInteger, VCSessionState)
 {
     VCSessionStateNone,
     VCSessionStateStarted,
     VCSessionStateEnded,
     VCSessionStateError
     
-} VCSessionState;
+};
 
-typedef enum
+typedef NS_ENUM(NSInteger, VCCameraState)
 {
     VCCameraStateFront,
     VCCameraStateBack
-} VCCameraState;
+};
 
 @protocol VCSessionDelegate
 @required
@@ -64,6 +64,7 @@ typedef enum
 @property (nonatomic) int           fps;
 @property (nonatomic) VCCameraState cameraState;
 @property (nonatomic) BOOL          torch;
+@property (nonatomic) float         videoZoomFactor;
 
 @property (nonatomic, weak) id<VCSessionDelegate> delegate;
 

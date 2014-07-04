@@ -163,6 +163,7 @@ namespace videocore { namespace iOS {
         }
         
         reorientCamera();
+        [session startRunning];
         AVCaptureVideoPreviewLayer* previewLayer;
         previewLayer =  [AVCaptureVideoPreviewLayer layerWithSession:session];
         previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
@@ -232,6 +233,8 @@ namespace videocore { namespace iOS {
         
         [session commitConfiguration];
         
+        reorientCamera();
+        
     }
     
     void
@@ -282,8 +285,6 @@ namespace videocore { namespace iOS {
             }
         }
         if(reorient) {
-            [session stopRunning];
-            [session startRunning];
             m_isFirst = true;
         }
     }
