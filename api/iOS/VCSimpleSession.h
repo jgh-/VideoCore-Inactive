@@ -36,6 +36,7 @@
 typedef NS_ENUM(NSInteger, VCSessionState)
 {
     VCSessionStateNone,
+    VCSessionStateStarting,
     VCSessionStateStarted,
     VCSessionStateEnded,
     VCSessionStateError

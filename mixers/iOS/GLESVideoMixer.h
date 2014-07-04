@@ -85,6 +85,10 @@ namespace videocore { namespace iOS {
             m_epoch = epoch;
             m_nextMixTime = epoch;
         };
+        
+    public:
+        
+        void mixPaused(bool paused);
     private:
         /*!
          * Hash a smart pointer to a source.
@@ -111,6 +115,9 @@ namespace videocore { namespace iOS {
          *                       applications that may be capturing GLES data and do not wish to capture the mixer.
          */
         void setupGLES(std::function<void(void*)> excludeContext);
+        
+        
+        
     private:
         
         JobQueue m_glJobQueue;
@@ -129,6 +136,7 @@ namespace videocore { namespace iOS {
         CVOpenGLESTextureCacheRef m_textureCache;
         CVOpenGLESTextureRef      m_texture[2];
         
+        void*       m_callbackSession;
         void*       m_glesCtx;
         unsigned    m_vbo, m_vao, m_fbo[2], m_prog, m_uMat;
         
@@ -148,6 +156,7 @@ namespace videocore { namespace iOS {
         
         std::atomic<bool> m_exiting;
         std::atomic<bool> m_mixing;
+        std::atomic<bool> m_paused;
     };
     
 }
