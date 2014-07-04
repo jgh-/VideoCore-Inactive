@@ -97,7 +97,8 @@ namespace videocore {
         
         int m_boundingWidth;
         int m_boundingHeight;
-        
+        int m_prevWidth;
+        int m_prevHeight;
         AspectMode m_aspectMode;
         
         bool m_boundingBoxDirty;

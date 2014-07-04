@@ -58,8 +58,41 @@
 // Dispatch and execute asynchronously
 #define PERF_GL_async(x) PERF_GL((x), enqueue);
 
+@interface GLESObjCCallback : NSObject
+{
+    videocore::iOS::GLESVideoMixer* _mixer;
+}
+- (void) setMixer: (videocore::iOS::GLESVideoMixer*) mixer;
+@end
+@implementation GLESObjCCallback
+- (instancetype) init {
+    if((self = [super init])) {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(notification:) name:UIApplicationDidEnterBackgroundNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(notification:) name:UIApplicationWillEnterForegroundNotification object:nil];
+        
+    }
+    return self;
+}
+- (void) dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
+}
+- (void) notification: (NSNotification*) notification {
+    if([notification.name isEqualToString:UIApplicationDidEnterBackgroundNotification]) {
 
+        _mixer->mixPaused(true);
+        
+    } else if([notification.name isEqualToString:UIApplicationWillEnterForegroundNotification]) {
 
+        _mixer->mixPaused(false);
+    
+    }
+}
+- (void) setMixer: (videocore::iOS::GLESVideoMixer*) mixer
+{
+    _mixer = mixer;
+}
+@end
 namespace videocore { namespace iOS {
  
     GLESVideoMixer::GLESVideoMixer(int frame_w,
@@ -71,7 +104,8 @@ namespace videocore { namespace iOS {
     m_frameW(frame_w),
     m_frameH(frame_h),
     m_exiting(false),
-    m_mixing(false)
+    m_mixing(false),
+    m_paused(false)
     {
         m_glJobQueue.set_name("com.videocore.composite");
 
@@ -84,6 +118,9 @@ namespace videocore { namespace iOS {
         m_zRange.first = INT_MAX;
         m_zRange.second = INT_MIN;
         m_mixThread = std::thread([this](){ this->mixThread(); });
+        
+        m_callbackSession = [[GLESObjCCallback alloc] init];
+        [(GLESObjCCallback*)m_callbackSession setMixer:this];
     
     }
     
@@ -107,6 +144,7 @@ namespace videocore { namespace iOS {
         CVPixelBufferRelease(m_pixelBuffer[0]);
         CVPixelBufferRelease(m_pixelBuffer[1]);
         [(id)m_glesCtx release];
+        [(id)m_callbackSession release];
     }
     void
     GLESVideoMixer::setupGLES(std::function<void(void*)> excludeContext)
@@ -261,6 +299,10 @@ namespace videocore { namespace iOS {
                                size_t size,
                                videocore::IMetadata &metadata)
     {
+        if(m_paused.load()) {
+            return;
+        }
+        
         VideoBufferMetadata & md = dynamic_cast<VideoBufferMetadata&>(metadata);
         const int zIndex = md.getData<kVideoMetadataZIndex>();
         
@@ -382,7 +424,7 @@ namespace videocore { namespace iOS {
 
                 m_nextMixTime += us;
                 
-                if(m_mixing.load()) {
+                if(m_mixing.load() || m_paused.load()) {
                     continue;
                 }
                 
@@ -442,6 +484,12 @@ namespace videocore { namespace iOS {
             m_mixThreadCond.wait_until(l, m_nextMixTime);
                 
         }
+    }
+    
+    void
+    GLESVideoMixer::mixPaused(bool paused)
+    {
+        m_paused = paused;
     }
 }
 }

@@ -25,6 +25,9 @@
 #ifndef videocore_GLESUtil_h
 #define videocore_GLESUtil_h
 
+#import <OpenGLES/ES2/gl.h>
+#import <OpenGLES/ES2/glext.h>
+#import <OpenGLES/ES3/gl.h>
 
 #define BUFFER_OFFSET(i) ((void*)(i))
 #ifdef DEBUG

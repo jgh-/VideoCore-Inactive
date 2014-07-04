@@ -31,18 +31,18 @@ static const size_t kRTMPDefaultChunkSize = 128;
 static const size_t kRTMPSignatureSize = 1536;
 
 typedef enum {
-    kClientStateNone=0,
-    kClientStateConnected,
-    kClientStateHandshake0,
-    kClientStateHandshake1s0,    // waiting for s0
-    kClientStateHandshake1s1,
-    kClientStateHandshake2,
-    kClientStateHandshakeComplete,
-    kClientStateFCPublish,
-    kClientStateReady,
-    kClientStateSessionStarted,
-    kClientStateError,
-    kClientStateNotConnected
+    kClientStateNone            =0,
+    kClientStateConnected       =1,
+    kClientStateHandshake0      =2,
+    kClientStateHandshake1s0    =3,    // waiting for s0
+    kClientStateHandshake1s1    =4,
+    kClientStateHandshake2      =5,
+    kClientStateHandshakeComplete=6,
+    kClientStateFCPublish       =7,
+    kClientStateReady           =8,
+    kClientStateSessionStarted  =9,
+    kClientStateError           =10,
+    kClientStateNotConnected    =11
 } ClientState_t;
 
 

@@ -79,7 +79,8 @@ namespace videocore { namespace iOS {
     m_callbackSession(NULL),
     m_aspectMode(kAspectFit),
     m_fps(15),
-    m_usingDeprecatedMethods(true)
+    m_usingDeprecatedMethods(true),
+    m_torchOn(false)
     {
     }
     
@@ -88,7 +89,8 @@ namespace videocore { namespace iOS {
     m_captureDevice(nullptr),
     m_callbackSession(nullptr),
     m_matrix(glm::mat4(1.f)),
-    m_usingDeprecatedMethods(false)
+    m_usingDeprecatedMethods(false),
+    m_torchOn(false)
     {}
     
     CameraSource::~CameraSource()
@@ -118,25 +120,29 @@ namespace videocore { namespace iOS {
             }
         }
         
-        int mult = ceil(double(m_targetSize.h) / 270.0) * 270 ;
+      
         AVCaptureSession* session = [[AVCaptureSession alloc] init];
         AVCaptureDeviceInput* input;
         AVCaptureVideoDataOutput* output;
         
-        NSString* preset = nil;
+        NSString* preset = AVCaptureSessionPresetHigh;
         
-        switch(mult) {
-            case 270:
-                preset = AVCaptureSessionPresetLow;
-                break;
-            case 540:
-                preset = AVCaptureSessionPresetMedium;
-                break;
-            default:
-                preset = AVCaptureSessionPresetHigh;
-                break;
+        if(m_usingDeprecatedMethods) {
+            int mult = ceil(double(m_targetSize.h) / 270.0) * 270 ;
+            switch(mult) {
+                case 270:
+                    preset = AVCaptureSessionPresetLow;
+                    break;
+                case 540:
+                    preset = AVCaptureSessionPresetMedium;
+                    break;
+                default:
+                    preset = AVCaptureSessionPresetHigh;
+                    break;
+            }
+            session.sessionPreset = preset;
         }
-        session.sessionPreset = preset;
+        
         m_captureSession = session;
         
         input = [AVCaptureDeviceInput deviceInputWithDevice:((AVCaptureDevice*)m_captureDevice) error:nil];
@@ -159,6 +165,7 @@ namespace videocore { namespace iOS {
         }
         
         reorientCamera();
+        [session startRunning];
         AVCaptureVideoPreviewLayer* previewLayer;
         previewLayer =  [AVCaptureVideoPreviewLayer layerWithSession:session];
         previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
@@ -198,6 +205,33 @@ namespace videocore { namespace iOS {
         return nil;
     
     }
+    bool
+    CameraSource::setTorch(bool torchOn)
+    {
+        bool ret = false;
+        if(!m_captureSession) return ret;
+        
+        AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
+        
+        [session beginConfiguration];
+        AVCaptureDeviceInput* currentCameraInput = [session.inputs objectAtIndex:0];
+        
+        if(currentCameraInput.device.torchAvailable) {
+            NSError* err = nil;
+            [currentCameraInput.device lockForConfiguration:&err];
+            if(!err) {
+                [currentCameraInput.device setTorchMode:( torchOn ? AVCaptureTorchModeOn : AVCaptureTorchModeOff ) ];
+                [currentCameraInput.device unlockForConfiguration];
+                ret = (currentCameraInput.device.torchMode == AVCaptureTorchModeOn);
+                
+            } else {
+                ret = false;
+            }
+        }
+        [session commitConfiguration];
+        m_torchOn = ret;
+        return ret;
+    }
     void
     CameraSource::toggleCamera()
     {
@@ -228,6 +262,8 @@ namespace videocore { namespace iOS {
         
         [session commitConfiguration];
         
+        reorientCamera();
+        
     }
     
     void
@@ -240,6 +276,8 @@ namespace videocore { namespace iOS {
         bool reorient = false;
         
         AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
+        [session beginConfiguration];
+
         for (AVCaptureVideoDataOutput* output in session.outputs) {
             for (AVCaptureConnection * av in output.connections) {
                
@@ -278,9 +316,11 @@ namespace videocore { namespace iOS {
             }
         }
         if(reorient) {
-            [session stopRunning];
-            [session startRunning];
             m_isFirst = true;
+        }
+        [session commitConfiguration];
+        if(m_torchOn) {
+            setTorch(m_torchOn);
         }
     }
     void
