@@ -99,6 +99,12 @@ _If you would like to be included in this list, either make a pull request or co
 
 ##Version History
 
+* 0.1.7 
+    * Add a simplified iOS API for the common case of streaming camera/microphone
+    * Deprecate camera aspect ratio and position
+    * Add a matrix transform for Position
+    * Add a matrix transform for Aspect Ratio
+    * Bugfixes
 * 0.1.6
 	* Use device orientation for CameraSource rather than interface orientation
 * 0.1.5 
