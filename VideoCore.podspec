@@ -23,7 +23,7 @@ Pod::Spec.new do |s|
                             'stream/**/*.h*', 'stream/**/*.cpp', 'stream/**/*.m*',
                             'system/**/*.h*', 'system/**/*.cpp', 'system/**/*.m*',
                             'transforms/**/*.h*', 'transforms/**/*.cpp', 'transforms/**/*.m*', 
-                            'api/**/*.h', 'api/**/*.m*' ]
+                            'api/**/*.h*', 'api/**/*.m*' ]
 
   s.frameworks          = [ 'AudioToolbox', 'AVFoundation', 'CFNetwork', 'CoreMedia',
                             'CoreVideo', 'OpenGLES', 'Foundation', 'CoreGraphics' ]
