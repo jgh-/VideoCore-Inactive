@@ -107,6 +107,14 @@ namespace videocore { namespace iOS {
          */
         void toggleCamera();
         
+        /*!
+         *  Attempt to turn the torch mode on or off.
+         *
+         *  \param torchOn  Bool indicating whether the torch should be on or off.
+         *  
+         *  \return the actual state of the torch.
+         */
+        bool setTorch(bool torchOn);
         
     public:
         /*! Used by Objective-C Capture Session */
@@ -142,7 +150,7 @@ namespace videocore { namespace iOS {
         int  m_fps;
         bool m_isFirst;
         bool m_usingDeprecatedMethods;
-        
+        bool m_torchOn;
     };
     
 }

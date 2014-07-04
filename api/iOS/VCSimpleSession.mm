@@ -166,7 +166,9 @@ static const float kAudioRate = 44100;
 }
 - (void) setTorch:(BOOL)torch
 {
-    _torch = torch;
+    if(m_cameraSource) {
+        _torch = m_cameraSource->setTorch(torch);
+    }
 }
 - (VCCameraState) cameraState
 {
