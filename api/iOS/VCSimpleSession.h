@@ -33,24 +33,26 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <UIKit/UIKit.h>
 
-enum VCSessionState
+typedef enum
 {
     VCSessionStateNone,
     VCSessionStateStarted,
     VCSessionStateEnded,
     VCSessionStateError
     
-} ;
+} VCSessionState;
 
-enum VCCameraState
+typedef enum
 {
     VCCameraStateFront,
     VCCameraStateBack
-};
+} VCCameraState;
+
 @protocol VCSessionDelegate
 @required
 - (void) connectionStatusChanged: (VCSessionState) sessionState;
 @end
+
 @interface VCSimpleSession : NSObject
 
 @property (nonatomic, readonly) VCSessionState rtmpSessionState;

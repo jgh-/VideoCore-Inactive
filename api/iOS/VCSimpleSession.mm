@@ -23,7 +23,8 @@
  
  */
 
-#import "VCSimpleSession.h"
+#import <videocore/api/iOS/VCSimpleSession.h>
+#import <videocore/api/iOS/VCPreviewView.h>
 
 #include <videocore/rtmp/RTMPSession.h>
 #include <videocore/transforms/RTMP/AACPacketizer.h>
@@ -80,6 +81,7 @@ namespace videocore { namespace simpleApi {
     std::shared_ptr<videocore::ISource> m_cameraSource;
     
     std::weak_ptr<videocore::Split> m_videoSplit;
+    std::shared_ptr<videocore::AspectTransform> m_aspectTransform;
     
     std::vector< std::shared_ptr<videocore::ITransform> > m_audioTransformChain;
     std::vector< std::shared_ptr<videocore::ITransform> > m_videoTransformChain;
@@ -95,7 +97,7 @@ namespace videocore { namespace simpleApi {
     BOOL   _torch;
 }
 @property (nonatomic, readwrite) VCSessionState rtmpSessionState;
-@property (nonatomic, strong, readwrite) UIView* previewView;
+@property (nonatomic, strong, readwrite) VCPreviewView* previewView;
 
 - (void) setupGraph;
 
@@ -164,6 +166,9 @@ namespace videocore { namespace simpleApi {
         self.bitrate = bps;
         self.videoSize = videoSize;
         self.fps = fps;
+        self.previewView = [[VCPreviewView alloc] init];
+        
+        [self setupGraph];
     }
     return self;
 }
@@ -232,16 +237,14 @@ namespace videocore { namespace simpleApi {
     }
     
     {
-        // [Optional] add splits
-        // Splits would be used to add different graph branches at various
-        // stages.  For example, if you wish to record an MP4 file while
-        // streaming to RTMP.
-        
         auto videoSplit = std::make_shared<videocore::Split>();
         
         m_videoSplit = videoSplit;
-        m_pbOutput = std::make_shared<videocore::simpleApi::PixelBufferOutput>([&self](const void* const data, size_t size){
-            
+        VCPreviewView* preview = (VCPreviewView*)self.previewView;
+        
+        m_pbOutput = std::make_shared<videocore::simpleApi::PixelBufferOutput>([=](const void* const data, size_t size){
+            CVPixelBufferRef ref = (CVPixelBufferRef)data;
+            [preview drawFrame:ref];
         });
         videoSplit->setOutput(m_pbOutput);
         [self addTransform:videoSplit toChain:m_videoTransformChain];
@@ -286,10 +289,11 @@ namespace videocore { namespace simpleApi {
         
         // Add camera source
         m_cameraSource = std::make_shared<videocore::iOS::CameraSource>();
-        auto aspectTransform = std::make_shared<videocore::AspectTransform>(self.videoSize.width,self.videoSize.height,videocore::AspectTransform::kAspectFill);
-        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(false);
+        auto aspectTransform = std::make_shared<videocore::AspectTransform>(self.videoSize.width,self.videoSize.height,videocore::AspectTransform::kAspectFit);
+        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,false);
         m_cameraSource->setOutput(aspectTransform);
         aspectTransform->setOutput(m_videoTransformChain.front());
+        m_aspectTransform = aspectTransform;
     }
     {
         // Add mic source

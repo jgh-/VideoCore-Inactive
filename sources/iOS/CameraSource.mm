@@ -118,25 +118,29 @@ namespace videocore { namespace iOS {
             }
         }
         
-        int mult = ceil(double(m_targetSize.h) / 270.0) * 270 ;
+      
         AVCaptureSession* session = [[AVCaptureSession alloc] init];
         AVCaptureDeviceInput* input;
         AVCaptureVideoDataOutput* output;
         
-        NSString* preset = nil;
+        NSString* preset = AVCaptureSessionPresetHigh;
         
-        switch(mult) {
-            case 270:
-                preset = AVCaptureSessionPresetLow;
-                break;
-            case 540:
-                preset = AVCaptureSessionPresetMedium;
-                break;
-            default:
-                preset = AVCaptureSessionPresetHigh;
-                break;
+        if(m_usingDeprecatedMethods) {
+            int mult = ceil(double(m_targetSize.h) / 270.0) * 270 ;
+            switch(mult) {
+                case 270:
+                    preset = AVCaptureSessionPresetLow;
+                    break;
+                case 540:
+                    preset = AVCaptureSessionPresetMedium;
+                    break;
+                default:
+                    preset = AVCaptureSessionPresetHigh;
+                    break;
+            }
+            session.sessionPreset = preset;
         }
-        session.sessionPreset = preset;
+        
         m_captureSession = session;
         
         input = [AVCaptureDeviceInput deviceInputWithDevice:((AVCaptureDevice*)m_captureDevice) error:nil];

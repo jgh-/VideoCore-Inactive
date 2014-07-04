@@ -38,7 +38,9 @@ namespace videocore {
     : m_boundingWidth(boundingWidth),
     m_boundingHeight(boundingHeight),
     m_aspectMode(aspectMode),
-    m_boundingBoxDirty(true)
+    m_boundingBoxDirty(true),
+    m_prevWidth(0),
+    m_prevHeight(0)
     {
     }
     
@@ -82,14 +84,20 @@ namespace videocore {
         auto output = m_output.lock();
         
         if(output) {
+            CVPixelBufferRef pb = (CVPixelBufferRef)data;
+            CVPixelBufferLockBaseAddress(pb, kCVPixelBufferLock_ReadOnly);
+            
+            float width = CVPixelBufferGetWidth(pb);
+            float height = CVPixelBufferGetHeight(pb);
+            
+            if(width != m_prevWidth || height != m_prevHeight) {
+                setBoundingBoxDirty();
+                m_prevHeight = height;
+                m_prevWidth = width;
+            }
+            
             if(m_boundingBoxDirty) {
                 // TODO: Replace CVPixelBufferRef with an internal format.
-                CVPixelBufferRef pb = (CVPixelBufferRef)data;
-                CVPixelBufferLockBaseAddress(pb, kCVPixelBufferLock_ReadOnly);
-            
-                float width = CVPixelBufferGetWidth(pb);
-                float height = CVPixelBufferGetHeight(pb);
-                
                 
                 float wfac = float(m_boundingWidth) / width;
                 float hfac = float(m_boundingHeight) / height;
@@ -100,11 +108,11 @@ namespace videocore {
                 hfac = height*mult / float(m_boundingHeight);
                 
                 m_scale = glm::vec3(wfac,hfac,1.f);
-    
-                CVPixelBufferUnlockBaseAddress(pb, kCVPixelBufferLock_ReadOnly);
                 
                 m_boundingBoxDirty = false;
             }
+            
+            CVPixelBufferUnlockBaseAddress(pb, kCVPixelBufferLock_ReadOnly);
             
             videocore::VideoBufferMetadata& md = dynamic_cast<videocore::VideoBufferMetadata&>(metadata);
             glm::mat4 & mat = md.getData<videocore::kVideoMetadataMatrix>();
