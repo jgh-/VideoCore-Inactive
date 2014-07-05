@@ -27,7 +27,7 @@
 #import "VCSimpleSession.h"
 
 
-@interface ViewController ()
+@interface ViewController () <VCSessionDelegate>
 @property (nonatomic, retain) VCSimpleSession* session;
 @end
 
@@ -42,6 +42,7 @@
     
     [self.previewView addSubview:_session.previewView];
     _session.previewView.frame = self.previewView.bounds;
+    _session.delegate = self;
 }
 
 - (void)didReceiveMemoryWarning
@@ -72,7 +73,7 @@
     }
 }
 
-- (void) connectionStatusChange:(VCSessionState) state
+- (void) connectionStatusChanged:(VCSessionState) state
 {
     switch(state) {
         case VCSessionStateStarting:
