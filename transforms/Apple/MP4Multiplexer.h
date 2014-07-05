@@ -30,7 +30,7 @@
 #include <vector>
 #include <videocore/transforms/IOutputSession.hpp>
 
-namespace videocore { namespace apple {
+namespace videocore { namespace Apple {
     
     enum {
         kMP4SessionFilename=0,
@@ -62,6 +62,7 @@ namespace videocore { namespace apple {
         void*       m_audioInput;
     
         void*       m_videoFormat;
+        void*       m_audioFormat;
         
         std::vector<uint8_t> m_sps;
         std::vector<uint8_t> m_pps;

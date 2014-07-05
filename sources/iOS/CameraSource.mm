@@ -80,6 +80,7 @@ namespace videocore { namespace iOS {
     m_aspectMode(kAspectFit),
     m_fps(15),
     m_usingDeprecatedMethods(true),
+    m_previewLayer(nullptr),
     m_torchOn(false)
     {
     }
@@ -88,6 +89,7 @@ namespace videocore { namespace iOS {
     :
     m_captureDevice(nullptr),
     m_callbackSession(nullptr),
+    m_previewLayer(nullptr),
     m_matrix(glm::mat4(1.f)),
     m_usingDeprecatedMethods(false),
     m_torchOn(false)
@@ -106,6 +108,7 @@ namespace videocore { namespace iOS {
     {
         m_fps = fps;
         
+
         int position = useFront ? AVCaptureDevicePositionFront : AVCaptureDevicePositionBack;
         
         for(AVCaptureDevice* d in [AVCaptureDevice devices]) {
@@ -120,13 +123,11 @@ namespace videocore { namespace iOS {
             }
         }
         
-      
         AVCaptureSession* session = [[AVCaptureSession alloc] init];
         AVCaptureDeviceInput* input;
         AVCaptureVideoDataOutput* output;
         
         NSString* preset = AVCaptureSessionPresetHigh;
-        
         if(m_usingDeprecatedMethods) {
             int mult = ceil(double(m_targetSize.h) / 270.0) * 270 ;
             switch(mult) {
@@ -142,7 +143,6 @@ namespace videocore { namespace iOS {
             }
             session.sessionPreset = preset;
         }
-        
         m_captureSession = session;
         
         input = [AVCaptureDeviceInput deviceInputWithDevice:((AVCaptureDevice*)m_captureDevice) error:nil];
@@ -150,7 +150,6 @@ namespace videocore { namespace iOS {
         output = [[AVCaptureVideoDataOutput alloc] init] ;
         
         output.videoSettings = @{(NSString*)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA) };
-        
         if(!m_callbackSession) {
             m_callbackSession = [[sbCallback alloc] init];
         }
@@ -162,16 +161,11 @@ namespace videocore { namespace iOS {
         }
         if([session canAddOutput:output]) {
             [session addOutput:output];
+            
         }
-        
         reorientCamera();
-        [session startRunning];
-        AVCaptureVideoPreviewLayer* previewLayer;
-        previewLayer =  [AVCaptureVideoPreviewLayer layerWithSession:session];
-        previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
-
-        m_previewLayer = previewLayer;
         
+        [session startRunning];
         [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
         
         [[NSNotificationCenter defaultCenter] addObserver:((id)m_callbackSession) selector:@selector(deviceOrientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
@@ -188,6 +182,13 @@ namespace videocore { namespace iOS {
     void
     CameraSource::getPreviewLayer(void** outAVCaptureVideoPreviewLayer)
     {
+        if(!m_previewLayer) {
+            AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
+            AVCaptureVideoPreviewLayer* previewLayer;
+            previewLayer =  [AVCaptureVideoPreviewLayer layerWithSession:session];
+            previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+            m_previewLayer = previewLayer;
+        }
         if(outAVCaptureVideoPreviewLayer) {
             *outAVCaptureVideoPreviewLayer = m_previewLayer;
         }
@@ -276,7 +277,7 @@ namespace videocore { namespace iOS {
         bool reorient = false;
         
         AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
-        [session beginConfiguration];
+       // [session beginConfiguration];
 
         for (AVCaptureVideoDataOutput* output in session.outputs) {
             for (AVCaptureConnection * av in output.connections) {
@@ -318,7 +319,7 @@ namespace videocore { namespace iOS {
         if(reorient) {
             m_isFirst = true;
         }
-        [session commitConfiguration];
+        //[session commitConfiguration];
         if(m_torchOn) {
             setTorch(m_torchOn);
         }

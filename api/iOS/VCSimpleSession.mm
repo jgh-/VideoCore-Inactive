@@ -36,6 +36,7 @@
 
 #ifdef __APPLE__
 #   include <videocore/mixers/Apple/AudioMixer.h>
+#   include <videocore/transforms/Apple/MP4Multiplexer.h>
 #   ifdef TARGET_OS_IPHONE
 #       include <videocore/sources/iOS/CameraSource.h>
 #       include <videocore/sources/iOS/MicSource.h>
@@ -94,6 +95,9 @@ namespace videocore { namespace simpleApi {
     std::shared_ptr<videocore::ITransform>  m_h264Packetizer;
     std::shared_ptr<videocore::ITransform>  m_aacPacketizer;
     
+    std::shared_ptr<videocore::Split>       m_aacSplit;
+    std::shared_ptr<videocore::Split>       m_h264Split;
+    std::shared_ptr<videocore::Apple::MP4Multiplexer> m_muxer;
     
     std::shared_ptr<videocore::IOutputSession> m_outputSession;
 
@@ -222,14 +226,16 @@ static const float kAudioRate = 44100;
         self.bitrate = bps;
         self.videoSize = videoSize;
         self.fps = fps;
-        
+
         _previewView = [[VCPreviewView alloc] init];
-        
         self.videoZoomFactor = 1.f;
         
         _cameraState = VCCameraStateBack;
         
-        [self setupGraph];
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            [self setupGraph];
+        });
+
     }
     return self;
 }
@@ -269,7 +275,6 @@ static const float kAudioRate = 44100;
                 break;
             case kClientStateSessionStarted:
             {
-                NSLog(@"SessionStarted");
                 self.rtmpSessionState = VCSessionStateStarted;
                 [self addEncodersAndPacketizers];
             }
@@ -320,6 +325,7 @@ static const float kAudioRate = 44100;
 {
     const double frameDuration = 1. / static_cast<double>(self.fps);
     
+
     {
         // Add audio mixer
         const double aacPacketTime = 1024. / kAudioRate;
@@ -339,11 +345,9 @@ static const float kAudioRate = 44100;
     
     {
         // Add video mixer
-        
         m_videoMixer = std::make_shared<videocore::iOS::GLESVideoMixer>(self.videoSize.width,
                                                                       self.videoSize.height,
                                                                       frameDuration);
-        
         
     }
     
@@ -368,7 +372,6 @@ static const float kAudioRate = 44100;
     
     // Create sources
     {
-        
         // Add camera source
         m_cameraSource = std::make_shared<videocore::iOS::CameraSource>();
         auto aspectTransform = std::make_shared<videocore::AspectTransform>(self.videoSize.width,self.videoSize.height,videocore::AspectTransform::kAspectFit);
@@ -390,6 +393,7 @@ static const float kAudioRate = 44100;
         m_micSource = std::make_shared<videocore::iOS::MicSource>();
         m_micSource->setOutput(m_audioMixer);
         
+        
     }
 }
 - (void) addEncodersAndPacketizers
@@ -408,12 +412,27 @@ static const float kAudioRate = 44100;
         
     }
     {
+        m_aacSplit = std::make_shared<videocore::Split>();
+        m_h264Split = std::make_shared<videocore::Split>();
+        m_aacEncoder->setOutput(m_aacSplit);
+        m_h264Encoder->setOutput(m_h264Split);
+    }
+    {
         m_h264Packetizer = std::make_shared<videocore::rtmp::H264Packetizer>();
         m_aacPacketizer = std::make_shared<videocore::rtmp::AACPacketizer>();
         
-        m_h264Encoder->setOutput(m_h264Packetizer);
-        m_aacEncoder->setOutput(m_aacPacketizer);
+        m_h264Split->setOutput(m_h264Packetizer);
+        m_aacSplit->setOutput(m_aacPacketizer);
         
+    }
+    {
+        /*m_muxer = std::make_shared<videocore::Apple::MP4Multiplexer>();
+        videocore::Apple::MP4SessionParameters_t parms(0.) ;
+        std::string file = [[[self applicationDocumentsDirectory] stringByAppendingString:@"/output.mp4"] UTF8String];
+        parms.setData(file, self.fps, self.videoSize.width, self.videoSize.height);
+        m_muxer->setSessionParameters(parms);
+        m_aacSplit->setOutput(m_muxer);
+        m_h264Split->setOutput(m_muxer);*/
     }
     const auto epoch = std::chrono::steady_clock::now();
     
@@ -424,5 +443,11 @@ static const float kAudioRate = 44100;
     m_aacPacketizer->setOutput(m_outputSession);
 
     
+}
+- (NSString *) applicationDocumentsDirectory
+{
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *basePath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
+    return basePath;
 }
 @end

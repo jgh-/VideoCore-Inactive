@@ -321,7 +321,10 @@ namespace videocore {
                 
                 if(sampleBufferSize) {
                     
-                    MetaData<'soun'> md ( std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count() );
+                    AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count() );
+                    std::shared_ptr<videocore::ISource> blank;
+                    
+                    md.setData(m_outFrequencyInHz, m_outBitsPerChannel, m_outChannelCount, false, blank);
                     
                     auto out = m_output.lock();
                     if(out) {

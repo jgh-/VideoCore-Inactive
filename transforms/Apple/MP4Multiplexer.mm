@@ -25,17 +25,22 @@
 #import <AVFoundation/AVFoundation.h>
 
 #include <videocore/transforms/Apple/MP4Multiplexer.h>
+#include <videocore/mixers/IAudioMixer.hpp>
 
-namespace videocore { namespace apple {
+namespace videocore { namespace Apple {
  
     
-    MP4Multiplexer::MP4Multiplexer() : m_assetWriter(nullptr), m_videoInput(nullptr), m_audioInput(nullptr), m_videoFormat(nullptr), m_fps(30), m_framecount(0)
+    MP4Multiplexer::MP4Multiplexer() : m_assetWriter(nullptr), m_videoInput(nullptr), m_audioInput(nullptr), m_videoFormat(nullptr), m_audioFormat(nullptr), m_fps(30), m_framecount(0)
     {
         
     }
     MP4Multiplexer::~MP4Multiplexer()
     {
         if(m_assetWriter) {
+            __block AVAssetWriter* writer = (AVAssetWriter*)m_assetWriter;
+            [writer finishWritingWithCompletionHandler:^{
+                [writer release];
+            }];
             
         }
         if(m_videoFormat) {
@@ -46,13 +51,13 @@ namespace videocore { namespace apple {
     void
     MP4Multiplexer::setSessionParameters(videocore::IMetadata &parameters)
     {
-        auto & parms = dynamic_cast<videocore::apple::MP4SessionParameters_t&>(parameters);
+        auto & parms = dynamic_cast<videocore::Apple::MP4SessionParameters_t&>(parameters);
         
         auto filename = parms.getData<kMP4SessionFilename>()  ;
         m_fps = parms.getData<kMP4SessionFPS>();
         m_width = parms.getData<kMP4SessionWidth>();
         m_height = parms.getData<kMP4SessionHeight>();
-        
+        NSLog(@"(%d, %d, %d)", m_fps, m_width, m_height);
         m_filename = filename;
         
         CMFormatDescriptionRef audioDesc, videoDesc ;
@@ -60,11 +65,13 @@ namespace videocore { namespace apple {
         CMFormatDescriptionCreate(kCFAllocatorDefault, kCMMediaType_Audio, 'aac ', NULL, &audioDesc);
         CMFormatDescriptionCreate(kCFAllocatorDefault, kCMMediaType_Video, 'avc1', NULL, &videoDesc);
         
-        AVAssetWriterInput* video = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo outputSettings:nil sourceFormatHint:videoDesc];
-        AVAssetWriterInput* audio = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeAudio outputSettings:nil sourceFormatHint:audioDesc];
+        AVAssetWriterInput* video = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo outputSettings:nil sourceFormatHint:nil];
+        AVAssetWriterInput* audio = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeAudio outputSettings:nil sourceFormatHint:nil];
         
         NSURL* fileUrl = [NSURL fileURLWithPath:[NSString stringWithUTF8String:filename.c_str()]];
         AVAssetWriter* writer = [[AVAssetWriter alloc] initWithURL:fileUrl fileType:AVFileTypeQuickTimeMovie error:nil];
+        video.expectsMediaDataInRealTime = YES;
+        audio.expectsMediaDataInRealTime = YES;
         
         [writer addInput:video];
         [writer addInput:audio];
@@ -73,8 +80,13 @@ namespace videocore { namespace apple {
         time.timescale = m_fps;
         time.flags = kCMTimeFlags_Valid;
         
-        [writer startSessionAtSourceTime:time];
         [writer startWriting];
+        [writer startSessionAtSourceTime:time];
+        
+        m_assetWriter = writer;
+        m_audioInput = audio;
+        m_videoInput = video;
+        
     }
     void
     MP4Multiplexer::pushBuffer(const uint8_t *const data, size_t size, videocore::IMetadata &metadata)
@@ -118,10 +130,19 @@ namespace videocore { namespace apple {
             CMBlockBufferRef buffer;
             CMBlockBufferCreateWithMemoryBlock(kCFAllocatorDefault, (void*)data, size, kCFAllocatorDefault, NULL, 0, size, kCMBlockBufferAssureMemoryNowFlag, &buffer);
             
-            CMSampleTimingInfo videoSampleTimingInformation = {CMTimeMake(m_framecount++, m_fps)};
+            CMSampleTimingInfo videoSampleTimingInformation = {CMTimeMake(metadata.timestampDelta, 1000.)};
             CMSampleBufferCreate(kCFAllocatorDefault, buffer, true, NULL, NULL, (CMFormatDescriptionRef)m_videoFormat, 1, 1, &videoSampleTimingInformation, 1, &size, &sample);
             CMSampleBufferMakeDataReady(sample);
             
+            AVAssetWriterInput* video = (AVAssetWriterInput*)m_videoInput;
+            
+            NSLog(@"Appending video");
+            if(video.readyForMoreMediaData) {
+                [video appendSampleBuffer:sample];
+            }
+            NSLog(@"Done video");
+            CFRelease(sample);
+            //CFRelease(buffer);
             
         }
         
@@ -129,7 +150,55 @@ namespace videocore { namespace apple {
     void
     MP4Multiplexer::pushAudioBuffer(const uint8_t *const data, size_t size, videocore::IMetadata &metadata)
     {
-        
+        return;
+        if(!m_audioFormat)
+        {
+            AudioBufferMetadata& md = dynamic_cast<AudioBufferMetadata&>(metadata);
+            
+            
+            AudioStreamBasicDescription asbd = {0};
+            asbd.mFormatID = kAudioFormatMPEG4AAC;
+            asbd.mFormatFlags = 0;
+            asbd.mFramesPerPacket = 1024;
+            asbd.mSampleRate = md.getData<kAudioMetadataFrequencyInHz>();
+            asbd.mChannelsPerFrame = md.getData<kAudioMetadataChannelCount>();
+            
+            CMAudioFormatDescriptionCreate(kCFAllocatorDefault, &asbd, 0, nullptr, size, data, NULL, (CMAudioFormatDescriptionRef*)&m_audioFormat);
+            
+        } else {
+            
+            CMSampleTimingInfo audioSampleTimingInformation = {CMTimeMake(metadata.timestampDelta, 1000.)};
+            
+            CMSampleBufferRef sample;
+            CMBlockBufferRef buffer;
+            CMBlockBufferCreateWithMemoryBlock(kCFAllocatorDefault, (void*)data, size, kCFAllocatorDefault, NULL, 0, size, kCMBlockBufferAssureMemoryNowFlag, &buffer);
+    
+
+            CMSampleBufferCreate(kCFAllocatorDefault,
+                                 buffer,
+                                 true,
+                                 NULL,
+                                 NULL,
+                                 (CMFormatDescriptionRef)m_audioFormat,
+                                 1,
+                                 1,
+                                 &audioSampleTimingInformation,
+                                 1,
+                                 &size,
+                                 &sample);
+            CMSampleBufferMakeDataReady(sample);
+            CFDictionaryRef dict = CMTimeCopyAsDictionary(CMTimeMake(1, 1000), kCFAllocatorDefault);
+            
+            CMSetAttachment(sample, kCMSampleBufferAttachmentKey_TrimDurationAtStart, dict, kCMAttachmentMode_ShouldNotPropagate);
+            AVAssetWriterInput* audio = (AVAssetWriterInput*)m_audioInput;
+            
+            NSLog(@"Appending audio");
+            [audio appendSampleBuffer:sample];
+            NSLog(@"Done audio");
+            CFRelease(sample);
+            CFRelease(dict);
+            //CFRelease(buffer);
+        }
     }
     void
     MP4Multiplexer::createAVCC()
