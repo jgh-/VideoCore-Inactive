@@ -1,21 +1,34 @@
-//
-//  ViewController.m
-//  SampleBroadcaster
-//
-//  Created by James Hurley on 5/6/14.
-//  Copyright (c) 2014 videocore. All rights reserved.
-//
+/*
+ 
+ Video Core
+ Copyright (c) 2014 James G. Hurley
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ 
+ */
 
 #import "ViewController.h"
+#import "VCSimpleSession.h"
 
-@interface ViewController () <GLKViewDelegate>
-{
-    GLuint _renderBuffer;
-    BOOL _spinning;
-}
-@property (nonatomic, retain) EAGLContext* glContext;
-@property (nonatomic, retain) CIContext*   ciContext;
-@property (nonatomic) CIImage* ciImage;
+
+@interface ViewController () <VCSessionDelegate>
+@property (nonatomic, retain) VCSimpleSession* session;
 @end
 
 @implementation ViewController
@@ -24,16 +37,12 @@
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
-    self.glContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
-    [EAGLContext setCurrentContext:self.glContext];
-    self.glkView.context = self.glContext;
-    self.glkView.drawableDepthFormat = GLKViewDrawableDepthFormat24;
-    glGenRenderbuffers(1, &_renderBuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, _renderBuffer);
-    self.ciContext = [CIContext contextWithEAGLContext:self.glContext];
-    self.glkView.delegate = self;
-    self.btnSpin.hidden = YES;
-    _spinning = false;
+    
+    _session = [[VCSimpleSession alloc] initWithVideoSize:CGSizeMake(1280, 720) frameRate:30 bitrate:1000000];
+    
+    [self.previewView addSubview:_session.previewView];
+    _session.previewView.frame = self.previewView.bounds;
+    _session.delegate = self;
 }
 
 - (void)didReceiveMemoryWarning
@@ -44,96 +53,39 @@
 
 - (void)dealloc {
     [_btnConnect release];
-    [_glkView release];
-    [_btnSpin release];
+    [_previewView release];
+    [_session release];
+    
     [super dealloc];
 }
-- (void) glkView:(GLKView *)view drawInRect:(CGRect)rect
-{
-    float aspect = self.ciImage.extent.size.width / self.ciImage.extent.size.height;
-    float aspect_w = aspect > 1.f ? 1.f : aspect;
-    float aspect_h = aspect <= 1.f ? 1.f : aspect;
-    
-    rect.size.height *= [UIScreen mainScreen].scale;
-    rect.size.width *= [UIScreen mainScreen].scale;
-    
-    CGRect nRect = rect;
-    nRect.size.width /= aspect_w;
-    nRect.size.height /= aspect_h;
-    
-    nRect.origin.x -= (nRect.size.width - rect.size.width) / 2;
-    nRect.origin.y -= (nRect.size.height - rect.size.height) / 2;
-    
-    [self.ciContext drawImage:self.ciImage inRect:nRect fromRect:self.ciImage.extent];
-    
-    self.ciImage = nil;
-}
+
 - (IBAction)btnConnectTouch:(id)sender {
     
-    if([self.btnConnect.titleLabel.text isEqualToString:@"Connect"]) {
-        [self.btnConnect setTitle:@"Connecting..." forState:UIControlStateNormal];
-        NSString* rtmpUrl = @"rtmp://mobcrush.noip.me/mob/crush";
-        
-        _sampleGraph.reset(new videocore::sample::SampleGraph([self](videocore::sample::SessionState state){
-            [self connectionStatusChange:state];
-        }));
-    
-        
-        _sampleGraph->setPBCallback([=](const uint8_t* const data, size_t size) {
-            [self gotPixelBuffer: data withSize: size];
-        });
-        
-        float scr_w = 480;
-        float scr_h = 320;
-        
-        _sampleGraph->startRtmpSession([rtmpUrl UTF8String], scr_w, scr_h, 500000 /* video bitrate */, 15 /* video fps */);
-    }
-    else if ( [self.btnConnect.titleLabel.text isEqualToString:@"Connected"]) {
-        // disconnect
-        _sampleGraph.reset();
-        [self.btnConnect setTitle:@"Connect" forState:UIControlStateNormal];
-
-    }
-    
-}
-
-- (IBAction)btnSpinTouch:(id)sender {
-    _spinning = !_spinning;
-    if(_sampleGraph) {
-        _sampleGraph->spin(_spinning);
+    switch(_session.rtmpSessionState) {
+        case VCSessionStateEnded:
+        case VCSessionStateError:
+        case VCSessionStateNone:
+            [_session startRtmpSessionWithURL:@"rtmp://192.168.1.151/live" andStreamKey:@"myStream"];
+            break;
+        default:
+            [_session endRtmpSession];
+            break;
     }
 }
 
-- (void) connectionStatusChange:(videocore::sample::SessionState) state
+- (void) connectionStatusChanged:(VCSessionState) state
 {
-    NSLog(@"Connection status: %d", state);
-    if(state == videocore::sample::kSessionStateStarted) {
-        NSLog(@"Connected");
-        [self.btnConnect setTitle:@"Connected" forState:UIControlStateNormal];
-        [self.btnConnect.titleLabel sizeToFit];
-        self.btnSpin.hidden = NO;
-        
-    } else if(state == videocore::sample::kSessionStateError || state == videocore::sample::kSessionStateEnded) {
-        NSLog(@"Disconnected");
-        [self.btnConnect setTitle:@"Connect" forState:UIControlStateNormal];
-        _sampleGraph.reset();
-        self.btnSpin.hidden = YES;
+    switch(state) {
+        case VCSessionStateStarting:
+            [self.btnConnect setTitle:@"Connecting" forState:UIControlStateNormal];
+            break;
+        case VCSessionStateStarted:
+            [self.btnConnect setTitle:@"Disconnect" forState:UIControlStateNormal];
+            break;
+        default:
+            [self.btnConnect setTitle:@"Connect" forState:UIControlStateNormal];
+            break;
     }
 }
-- (void) gotPixelBuffer: (const uint8_t* const) data withSize: (size_t) size {
-    
-    @autoreleasepool {
-        
-       
-        CVPixelBufferRef pb = (CVPixelBufferRef) data;
-        CVPixelBufferLockBaseAddress(pb, 1);
-        CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pb];
-        
-        self.ciImage = ciImage;
-        [self.glkView display];
-        
-        CVPixelBufferUnlockBaseAddress(pb, 0);
 
-    }
-}
 @end

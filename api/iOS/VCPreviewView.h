@@ -22,16 +22,11 @@
  THE SOFTWARE.
  
  */
+
 #import <UIKit/UIKit.h>
-#import <GLKit/GLKit.h>
 
+@interface VCPreviewView : UIView
 
-@interface ViewController : UIViewController
-
-
-@property (retain, nonatomic) IBOutlet UIView *previewView;
-@property (retain, nonatomic) IBOutlet UIButton *btnConnect;
-
-- (IBAction)btnConnectTouch:(id)sender;
+- (void) drawFrame: (CVPixelBufferRef) pixelBuffer;
 
 @end

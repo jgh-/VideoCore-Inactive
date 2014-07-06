@@ -79,7 +79,9 @@ namespace videocore { namespace iOS {
     m_callbackSession(NULL),
     m_aspectMode(kAspectFit),
     m_fps(15),
-    m_usingDeprecatedMethods(true)
+    m_usingDeprecatedMethods(true),
+    m_previewLayer(nullptr),
+    m_torchOn(false)
     {
     }
     
@@ -87,8 +89,10 @@ namespace videocore { namespace iOS {
     :
     m_captureDevice(nullptr),
     m_callbackSession(nullptr),
+    m_previewLayer(nullptr),
     m_matrix(glm::mat4(1.f)),
-    m_usingDeprecatedMethods(false)
+    m_usingDeprecatedMethods(false),
+    m_torchOn(false)
     {}
     
     CameraSource::~CameraSource()
@@ -104,6 +108,7 @@ namespace videocore { namespace iOS {
     {
         m_fps = fps;
         
+
         int position = useFront ? AVCaptureDevicePositionFront : AVCaptureDevicePositionBack;
         
         for(AVCaptureDevice* d in [AVCaptureDevice devices]) {
@@ -118,25 +123,26 @@ namespace videocore { namespace iOS {
             }
         }
         
-        int mult = ceil(double(m_targetSize.h) / 270.0) * 270 ;
         AVCaptureSession* session = [[AVCaptureSession alloc] init];
         AVCaptureDeviceInput* input;
         AVCaptureVideoDataOutput* output;
         
-        NSString* preset = nil;
-        
-        switch(mult) {
-            case 270:
-                preset = AVCaptureSessionPresetLow;
-                break;
-            case 540:
-                preset = AVCaptureSessionPresetMedium;
-                break;
-            default:
-                preset = AVCaptureSessionPresetHigh;
-                break;
+        NSString* preset = AVCaptureSessionPresetHigh;
+        if(m_usingDeprecatedMethods) {
+            int mult = ceil(double(m_targetSize.h) / 270.0) * 270 ;
+            switch(mult) {
+                case 270:
+                    preset = AVCaptureSessionPresetLow;
+                    break;
+                case 540:
+                    preset = AVCaptureSessionPresetMedium;
+                    break;
+                default:
+                    preset = AVCaptureSessionPresetHigh;
+                    break;
+            }
+            session.sessionPreset = preset;
         }
-        session.sessionPreset = preset;
         m_captureSession = session;
         
         input = [AVCaptureDeviceInput deviceInputWithDevice:((AVCaptureDevice*)m_captureDevice) error:nil];
@@ -144,7 +150,6 @@ namespace videocore { namespace iOS {
         output = [[AVCaptureVideoDataOutput alloc] init] ;
         
         output.videoSettings = @{(NSString*)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA) };
-        
         if(!m_callbackSession) {
             m_callbackSession = [[sbCallback alloc] init];
         }
@@ -156,15 +161,11 @@ namespace videocore { namespace iOS {
         }
         if([session canAddOutput:output]) {
             [session addOutput:output];
+            
         }
-        
         reorientCamera();
-        AVCaptureVideoPreviewLayer* previewLayer;
-        previewLayer =  [AVCaptureVideoPreviewLayer layerWithSession:session];
-        previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
-
-        m_previewLayer = previewLayer;
         
+        [session startRunning];
         [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
         
         [[NSNotificationCenter defaultCenter] addObserver:((id)m_callbackSession) selector:@selector(deviceOrientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
@@ -181,6 +182,13 @@ namespace videocore { namespace iOS {
     void
     CameraSource::getPreviewLayer(void** outAVCaptureVideoPreviewLayer)
     {
+        if(!m_previewLayer) {
+            AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
+            AVCaptureVideoPreviewLayer* previewLayer;
+            previewLayer =  [AVCaptureVideoPreviewLayer layerWithSession:session];
+            previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+            m_previewLayer = previewLayer;
+        }
         if(outAVCaptureVideoPreviewLayer) {
             *outAVCaptureVideoPreviewLayer = m_previewLayer;
         }
@@ -197,6 +205,33 @@ namespace videocore { namespace iOS {
         }
         return nil;
     
+    }
+    bool
+    CameraSource::setTorch(bool torchOn)
+    {
+        bool ret = false;
+        if(!m_captureSession) return ret;
+        
+        AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
+        
+        [session beginConfiguration];
+        AVCaptureDeviceInput* currentCameraInput = [session.inputs objectAtIndex:0];
+        
+        if(currentCameraInput.device.torchAvailable) {
+            NSError* err = nil;
+            [currentCameraInput.device lockForConfiguration:&err];
+            if(!err) {
+                [currentCameraInput.device setTorchMode:( torchOn ? AVCaptureTorchModeOn : AVCaptureTorchModeOff ) ];
+                [currentCameraInput.device unlockForConfiguration];
+                ret = (currentCameraInput.device.torchMode == AVCaptureTorchModeOn);
+                
+            } else {
+                ret = false;
+            }
+        }
+        [session commitConfiguration];
+        m_torchOn = ret;
+        return ret;
     }
     void
     CameraSource::toggleCamera()
@@ -228,6 +263,8 @@ namespace videocore { namespace iOS {
         
         [session commitConfiguration];
         
+        reorientCamera();
+        
     }
     
     void
@@ -240,6 +277,8 @@ namespace videocore { namespace iOS {
         bool reorient = false;
         
         AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
+       // [session beginConfiguration];
+
         for (AVCaptureVideoDataOutput* output in session.outputs) {
             for (AVCaptureConnection * av in output.connections) {
                
@@ -278,9 +317,11 @@ namespace videocore { namespace iOS {
             }
         }
         if(reorient) {
-            [session stopRunning];
-            [session startRunning];
             m_isFirst = true;
+        }
+        //[session commitConfiguration];
+        if(m_torchOn) {
+            setTorch(m_torchOn);
         }
     }
     void
