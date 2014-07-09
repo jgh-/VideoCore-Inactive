@@ -38,7 +38,7 @@ namespace videocore { namespace Apple {
         void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
         
     public:
-        void compressionSessionOutput(const uint8_t* data, size_t size);
+        void compressionSessionOutput(const uint8_t* data, size_t size, uint64_t ts);
         
     private:
         void setupCompressionSession();

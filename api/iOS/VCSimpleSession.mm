@@ -407,6 +407,7 @@ static const float kAudioRate = 44100;
         
         m_aacEncoder = std::make_shared<videocore::iOS::AACEncode>(kAudioRate,2);
         if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
+            // If >= iOS 8.0 use the VideoToolbox encoder that does not write to disk.
             m_h264Encoder = std::make_shared<videocore::Apple::H264Encode>(self.videoSize.width,
                                                                            self.videoSize.height,
                                                                            self.fps,

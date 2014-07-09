@@ -22,8 +22,9 @@
 
 #include <stdio.h>
 #include <videocore/transforms/Apple/H264Encode.h>
-#include <VideoToolbox/VideoToolbox.h>
+#include <videocore/mixers/IVideoMixer.hpp>
 
+#include <VideoToolbox/VideoToolbox.h>
 namespace videocore { namespace Apple {
 
     void vtCallback(void *outputCallbackRefCon,
@@ -34,11 +35,45 @@ namespace videocore { namespace Apple {
     {
         CMBlockBufferRef block = CMSampleBufferGetDataBuffer(sampleBuffer);
         CFArrayRef attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, false);
+        CMTime pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
         
+        bool isKeyframe = false;
+        if(attachments != NULL) {
+            CFDictionaryRef attachment;
+            CFBooleanRef dependsOnOthers;
+            attachment = (CFDictionaryRef)CFArrayGetValueAtIndex(attachments, 0);
+            dependsOnOthers = (CFBooleanRef)CFDictionaryGetValue(attachment, kCMSampleAttachmentKey_DependsOnOthers);
+            isKeyframe = (dependsOnOthers == kCFBooleanFalse);
+        }
+        if(isKeyframe) {
+            // Send the SPS and PPS.
+            CMFormatDescriptionRef format = CMSampleBufferGetFormatDescription(sampleBuffer);
+            size_t spsSize, ppsSize;
+            size_t parmCount;
+            const uint8_t* sps, *pps;
+            
+            CMVideoFormatDescriptionGetH264ParameterSetAtIndex(format, 0, &sps, &spsSize, &parmCount, nullptr );
+            CMVideoFormatDescriptionGetH264ParameterSetAtIndex(format, 1, &pps, &ppsSize, &parmCount, nullptr );
+            
+            std::unique_ptr<uint8_t[]> sps_buf (new uint8_t[spsSize + 4]) ;
+            std::unique_ptr<uint8_t[]> pps_buf (new uint8_t[ppsSize + 4]) ;
+            
+            memcpy(&sps_buf[4], sps, spsSize);
+            spsSize+=4 ;
+            memcpy(&sps_buf[0], &spsSize, 4);
+            memcpy(&pps_buf[4], pps, ppsSize);
+            ppsSize += 4;
+            memcpy(&pps_buf[0], &ppsSize, 4);
+            
+            ((H264Encode*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)sps_buf.get(),spsSize, pts.value);
+            ((H264Encode*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)pps_buf.get(),ppsSize, pts.value);
+        }
+       
         char* bufferData;
         size_t size;
         CMBlockBufferGetDataPointer(block, 0, NULL, &size, &bufferData);
-        ((H264Encode*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)bufferData,size);
+
+        ((H264Encode*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)bufferData,size, pts.value);
         
     }
     H264Encode::H264Encode( int frame_w, int frame_h, int fps, int bitrate )
@@ -48,8 +83,10 @@ namespace videocore { namespace Apple {
     }
     H264Encode::~H264Encode()
     {
-        VTCompressionSessionInvalidate((VTCompressionSessionRef)m_compressionSession);
-        CFRelease((VTCompressionSessionRef)m_compressionSession);
+        if(m_compressionSession) {
+            VTCompressionSessionInvalidate((VTCompressionSessionRef)m_compressionSession);
+            CFRelease((VTCompressionSessionRef)m_compressionSession);
+        }
     }
     void
     H264Encode::pushBuffer(const uint8_t *const data, size_t size, videocore::IMetadata &metadata)
@@ -59,7 +96,7 @@ namespace videocore { namespace Apple {
             
             CMTime pts = CMTimeMake(metadata.timestampDelta, 1000.); // timestamp is in ms.
             CMTime dur = CMTimeMake(1, m_fps);
-        
+            
             VTCompressionSessionEncodeFrame(session, (CVPixelBufferRef)data, pts, dur, NULL, NULL, NULL);
         }
     }
@@ -75,7 +112,7 @@ namespace videocore { namespace Apple {
 #if !TARGET_OS_IPHONE
         /** iOS is always hardware-accelerated **/
         CFStringRef key = kVTVideoEncoderSpecification_EncoderID;
-        CFStringRef value = CFSTR("com.apple.videotoolbox.videoencoder.h264.gva"); // this needs to be verified on iOS with VTCopyVideoEncoderList
+        CFStringRef value = CFSTR("com.apple.videotoolbox.videoencoder.h264.gva");
         
         CFStringRef bkey = CFSTR("EnableHardwareAcceleratedVideoEncoder");
         CFBooleanRef bvalue = kCFBooleanTrue;
@@ -116,66 +153,54 @@ namespace videocore { namespace Apple {
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_MaxKeyFrameInterval, ref);
             CFRelease(ref);
         }
-        else {
-            printf("[%d] Encoder error! %zu\n", __LINE__, err);
-        }
+
         if(err == noErr) {
             const int32_t v = m_fps / 2; // limit the number of frames kept in the buffer
             CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
             //err = VTSessionSetProperty(session, kVTCompressionPropertyKey_MaxFrameDelayCount, ref);
             CFRelease(ref);
         }
-        else {
-            printf("[%d] Encoder error! %zu\n", __LINE__, err);
-        }
+
         if(err == noErr) {
             const int v = m_fps;
             CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_ExpectedFrameRate, ref);
             CFRelease(ref);
         }
-        else {
-            printf("[%d] Encoder error! %zu\n", __LINE__, err);
-        }
+
         if(err == noErr) {
             err = VTSessionSetProperty(session , kVTCompressionPropertyKey_AllowFrameReordering, kCFBooleanFalse);
         }
-        else {
-            printf("[%d] Encoder error! %zu\n", __LINE__, err);
-        }
+
         if(err == noErr) {
             const int v = m_bitrate;
             CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_AverageBitRate, ref);
             CFRelease(ref);
         }
-        else {
-            printf("[%d] Encoder error! %zu\n", __LINE__, err);
-        }
+
         if(err == noErr) {
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue);
         }
-        else {
-            printf("[%d] Encoder error! %zu\n", __LINE__, err);
-        }
+        
         if(err == noErr) {
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_ProfileLevel, kVTProfileLevel_H264_Baseline_AutoLevel);
         }
-        else {
-            printf("[%d] Encoder error! %zu\n", __LINE__, err);
-        }
         if(err == noErr) {
-            printf("Successfully configured a session! Yay!\n");
+            VTCompressionSessionPrepareToEncodeFrames(session);
         }
-        else {
-            printf("[%d] Encoder error! %zu\n", __LINE__, err);
-        }
+       
     }
     
     void
-    H264Encode::compressionSessionOutput(const uint8_t *data, size_t size)
+    H264Encode::compressionSessionOutput(const uint8_t *data, size_t size, uint64_t ts)
     {
-        printf("Got frame size: %zu\n", size);
+        auto l = m_output.lock();
+        if(l) {
+            videocore::VideoBufferMetadata md(ts);
+            
+            l->pushBuffer(data, size, md);
+        }
     }
 }
 }
