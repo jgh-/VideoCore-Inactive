@@ -37,6 +37,7 @@
 #ifdef __APPLE__
 #   include <videocore/mixers/Apple/AudioMixer.h>
 #   include <videocore/transforms/Apple/MP4Multiplexer.h>
+#   include <videocore/transforms/Apple/H264Encode.h>
 #   ifdef TARGET_OS_IPHONE
 #       include <videocore/sources/iOS/CameraSource.h>
 #       include <videocore/sources/iOS/MicSource.h>
@@ -50,6 +51,8 @@
 #else
 #   include <videocore/mixers/GenericAudioMixer.h>
 #endif
+
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
 
 #include <sstream>
@@ -113,7 +116,7 @@ namespace videocore { namespace simpleApi {
     BOOL   _torch;
 }
 @property (nonatomic, readwrite) VCSessionState rtmpSessionState;
-@property (nonatomic, retain, readwrite) VCPreviewView* previewView;
+@property (nonatomic, retain, readwrite) UIView* previewView;
 
 - (void) setupGraph;
 
@@ -361,6 +364,7 @@ static const float kAudioRate = 44100;
             CVPixelBufferRef ref = (CVPixelBufferRef)data;
             [preview drawFrame:ref];
         });
+        
         videoSplit->setOutput(m_pbOutput);
         m_videoMixer->setOutput(videoSplit);
         
@@ -402,11 +406,17 @@ static const float kAudioRate = 44100;
         // Add encoders
         
         m_aacEncoder = std::make_shared<videocore::iOS::AACEncode>(kAudioRate,2);
-        
-        m_h264Encoder =std::make_shared<videocore::iOS::H264Encode>(self.videoSize.width,
+        if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
+            m_h264Encoder = std::make_shared<videocore::Apple::H264Encode>(self.videoSize.width,
+                                                                           self.videoSize.height,
+                                                                           self.fps,
+                                                                           self.bitrate);
+        } else {
+            m_h264Encoder =std::make_shared<videocore::iOS::H264Encode>(self.videoSize.width,
                                                                     self.videoSize.height,
                                                                     self.fps,
                                                                     self.bitrate);
+        }
         m_audioMixer->setOutput(m_aacEncoder);
         m_videoSplit->setOutput(m_h264Encoder);
         
