@@ -20,13 +20,19 @@
  
  */
 
+#define VERSION_OK (MAC_OS_X_VERSION_10_9 <= MAC_OS_X_VERSION_MAX_ALLOWED || __IPHONE_8_0  <= __IPHONE_OS_VERSION_MAX_ALLOWED)
+
 #include <stdio.h>
 #include <videocore/transforms/Apple/H264Encode.h>
 #include <videocore/mixers/IVideoMixer.hpp>
 
+#if VERSION_OK
 #include <VideoToolbox/VideoToolbox.h>
+#endif
+
 namespace videocore { namespace Apple {
 
+#if VERSION_OK
     void vtCallback(void *outputCallbackRefCon,
                     void *sourceFrameRefCon,
                     OSStatus status,
@@ -76,6 +82,7 @@ namespace videocore { namespace Apple {
         ((H264Encode*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)bufferData,size, pts.value);
         
     }
+#endif
     H264Encode::H264Encode( int frame_w, int frame_h, int fps, int bitrate )
     : m_frameW(frame_w), m_frameH(frame_h), m_fps(fps), m_bitrate(bitrate)
     {
@@ -83,14 +90,17 @@ namespace videocore { namespace Apple {
     }
     H264Encode::~H264Encode()
     {
+#if VERSION_OK
         if(m_compressionSession) {
             VTCompressionSessionInvalidate((VTCompressionSessionRef)m_compressionSession);
             CFRelease((VTCompressionSessionRef)m_compressionSession);
         }
+#endif
     }
     void
     H264Encode::pushBuffer(const uint8_t *const data, size_t size, videocore::IMetadata &metadata)
     {
+#if VERSION_OK
         if(m_compressionSession) {
             VTCompressionSessionRef session = (VTCompressionSessionRef)m_compressionSession;
             
@@ -99,10 +109,12 @@ namespace videocore { namespace Apple {
             
             VTCompressionSessionEncodeFrame(session, (CVPixelBufferRef)data, pts, dur, NULL, NULL, NULL);
         }
+#endif
     }
     void
     H264Encode::setupCompressionSession()
     {
+#if VERSION_OK
         // Parts of this code pulled from https://github.com/galad87/HandBrake-QuickSync-Mac/blob/2c1332958f7095c640cbcbcb45ffc955739d5945/libhb/platform/macosx/encvt_h264.c
         // More info from WWDC 2014 Session 513
         
@@ -189,18 +201,22 @@ namespace videocore { namespace Apple {
         if(err == noErr) {
             VTCompressionSessionPrepareToEncodeFrames(session);
         }
-       
+#endif
+        
     }
     
     void
     H264Encode::compressionSessionOutput(const uint8_t *data, size_t size, uint64_t ts)
     {
+#if VERSION_OK
         auto l = m_output.lock();
         if(l) {
             videocore::VideoBufferMetadata md(ts);
             
             l->pushBuffer(data, size, md);
         }
+#endif
+
     }
 }
 }

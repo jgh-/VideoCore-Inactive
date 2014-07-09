@@ -26,7 +26,6 @@
 #import <videocore/api/iOS/VCSimpleSession.h>
 #import <videocore/api/iOS/VCPreviewView.h>
 
-
 #include <videocore/rtmp/RTMPSession.h>
 #include <videocore/transforms/RTMP/AACPacketizer.h>
 #include <videocore/transforms/RTMP/H264Packetizer.h>
