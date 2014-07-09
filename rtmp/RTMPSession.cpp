@@ -175,6 +175,8 @@ namespace videocore
             std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(size);
             buf->put(data, size);
             m_streamOutQueue.push(buf);
+            static size_t count = 0;
+            count++;
         }
         if((m_streamSession->status() & kStreamStatusWriteBufferHasSpace) && m_streamOutRemainder.size()) {
             
@@ -655,8 +657,12 @@ namespace videocore
     {
         std::string command = get_string(p);
         int32_t pktId = get_double(p+11);
-        std::string trackedCommand = m_trackedCommands[pktId];
-
+        //std::string trackedCommand = m_trackedCommands[pktId];
+        std::string trackedCommand ;
+        auto it = m_trackedCommands.find(pktId) ;
+        if(it != m_trackedCommands.end()) {
+            trackedCommand = it->second;
+        }
         printf("received invoke %s\n", command.c_str());
 
         if (command == "_result") {
