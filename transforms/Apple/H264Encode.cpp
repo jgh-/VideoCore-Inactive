@@ -19,18 +19,24 @@
  USA
  
  */
+#include <Availability.h>
+#include <TargetConditionals.h>
 
 #if TARGET_OS_IPHONE
-#define VERSION_OK 80000  <= __IPHONE_OS_VERSION_MAX_ALLOWED
+#if defined(__PHONE_8_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_8_0
+#define VERSION_OK 1
 #else
-#define VERSION_OK 1090 <= MAC_OS_X_VERSION_MAX_ALLOWED
+#define VERSION_OK 0
+#endif
+#else
+#define VERSION_OK (1090 <= MAC_OS_X_VERSION_MAX_ALLOWED)
 #endif
 
 #include <stdio.h>
 #include <videocore/transforms/Apple/H264Encode.h>
 #include <videocore/mixers/IVideoMixer.hpp>
 
-#if VERSION_OK
+#if VERSION_OK==1
 #include <VideoToolbox/VideoToolbox.h>
 #endif
 
