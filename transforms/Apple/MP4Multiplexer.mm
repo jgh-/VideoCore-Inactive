@@ -150,7 +150,6 @@ namespace videocore { namespace Apple {
     void
     MP4Multiplexer::pushAudioBuffer(const uint8_t *const data, size_t size, videocore::IMetadata &metadata)
     {
-        return;
         if(!m_audioFormat)
         {
             AudioBufferMetadata& md = dynamic_cast<AudioBufferMetadata&>(metadata);

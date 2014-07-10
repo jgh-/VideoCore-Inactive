@@ -36,6 +36,7 @@
 typedef NS_ENUM(NSInteger, VCSessionState)
 {
     VCSessionStateNone,
+    VCSessionStatePreviewStarted,
     VCSessionStateStarting,
     VCSessionStateStarted,
     VCSessionStateEnded,
@@ -60,14 +61,15 @@ typedef NS_ENUM(NSInteger, VCCameraState)
 @property (nonatomic, strong, readonly) UIView* previewView;
 
 /*! Setters / Getters for session properties */
-@property (nonatomic) CGSize        videoSize;      // Change will not take place until the next RTMP Session
-@property (nonatomic) int           bitrate;        // Change will not take place until the next RTMP Session
-@property (nonatomic) int           fps;            // Change will not take place until the next RTMP Session
-@property (nonatomic) VCCameraState cameraState;
-@property (nonatomic) BOOL          torch;
-@property (nonatomic) float         videoZoomFactor;
+@property (nonatomic, assign) CGSize        videoSize;      // Change will not take place until the next RTMP Session
+@property (nonatomic, assign) int           bitrate;        // Change will not take place until the next RTMP Session
+@property (nonatomic, assign) int           fps;            // Change will not take place until the next RTMP Session
+@property (nonatomic, assign) VCCameraState cameraState;
+@property (nonatomic, assign) BOOL          torch;
+@property (nonatomic, assign) float         videoZoomFactor;
+@property (nonatomic, assign) float         micGain;        // [0..1]
 
-@property (nonatomic) id<VCSessionDelegate> delegate;
+@property (nonatomic, assign) id<VCSessionDelegate> delegate;
 
 // -----------------------------------------------------------------------------
 - (instancetype) initWithVideoSize:(CGSize)videoSize

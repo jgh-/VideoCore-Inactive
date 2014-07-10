@@ -109,6 +109,7 @@ namespace videocore { namespace simpleApi {
     int    _bitrate;
     int    _fps;
     float  _videoZoomFactor;
+    float  _micGain;
     
     VCCameraState _cameraState;
     VCSessionState _rtmpSessionState;
@@ -131,6 +132,8 @@ static const float kAudioRate = 44100;
 @dynamic cameraState;
 @dynamic rtmpSessionState;
 @dynamic videoZoomFactor;
+@dynamic micGain;
+
 // -----------------------------------------------------------------------------
 //  Properties Methods
 // -----------------------------------------------------------------------------
@@ -215,6 +218,17 @@ static const float kAudioRate = 44100;
                                      self.videoSize.height * videoZoomFactor);
     }
 }
+- (void) setMicGain:(float)micGain
+{
+    if(m_audioMixer) {
+        m_audioMixer->setSourceGain(m_micSource, micGain);
+        _micGain = micGain;
+    }
+}
+- (float) micGain
+{
+    return _micGain;
+}
 // -----------------------------------------------------------------------------
 //  Public Methods
 // -----------------------------------------------------------------------------
@@ -228,7 +242,8 @@ static const float kAudioRate = 44100;
         self.bitrate = bps;
         self.videoSize = videoSize;
         self.fps = fps;
-
+        self.micGain = 1.f;
+        
         _previewView = [[VCPreviewView alloc] init];
         self.videoZoomFactor = 1.f;
         
@@ -362,6 +377,9 @@ static const float kAudioRate = 44100;
         m_pbOutput = std::make_shared<videocore::simpleApi::PixelBufferOutput>([=](const void* const data, size_t size){
             CVPixelBufferRef ref = (CVPixelBufferRef)data;
             [preview drawFrame:ref];
+            if(self.rtmpSessionState == VCSessionStateNone) {
+                self.rtmpSessionState = VCSessionStatePreviewStarted;
+            }
         });
         
         videoSplit->setOutput(m_pbOutput);

@@ -94,7 +94,13 @@
         _currentBuffer = 1;
         
         self.lastDraw = [NSDate new];
-        [self setupGLES];
+        
+        __block VCPreviewView* bSelf = self;
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [bSelf setupGLES];
+        });
+        
     }
     return self;
 }
@@ -133,7 +139,7 @@
 }
 - (void) layoutSubviews
 {
-    self.backgroundColor = [UIColor redColor];
+    self.backgroundColor = [UIColor blackColor];
     [self generateGLESBuffers];
 }
 
@@ -141,6 +147,7 @@
 
 - (void) drawFrame:(CVPixelBufferRef)pixelBuffer
 {
+    
     bool updateTexture = false;
     
     if(pixelBuffer != _currentRef[_currentBuffer]) {
@@ -203,7 +210,6 @@
         
         // draw
         glBindFramebuffer(GL_FRAMEBUFFER, bSelf->_fbo);
-        glClearColor(0.f, 1.f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
         glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(bSelf->_texture[currentBuffer]));
         
