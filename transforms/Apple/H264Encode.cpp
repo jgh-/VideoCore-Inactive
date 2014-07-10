@@ -20,7 +20,11 @@
  
  */
 
-#define VERSION_OK (MAC_OS_X_VERSION_10_9 <= MAC_OS_X_VERSION_MAX_ALLOWED || __IPHONE_8_0  <= __IPHONE_OS_VERSION_MAX_ALLOWED)
+#if TARGET_OS_IPHONE
+#define VERSION_OK 80000  <= __IPHONE_OS_VERSION_MAX_ALLOWED
+#else
+#define VERSION_OK 1090 <= MAC_OS_X_VERSION_MAX_ALLOWED
+#endif
 
 #include <stdio.h>
 #include <videocore/transforms/Apple/H264Encode.h>
