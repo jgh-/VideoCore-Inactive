@@ -414,7 +414,9 @@ namespace videocore { namespace iOS {
         int current_fb = 0;
         
         bool locked[2] = {false};
-
+        
+        m_nextMixTime = std::chrono::steady_clock::now();
+        
         while(!m_exiting.load())
         {
             std::unique_lock<std::mutex> l(m_mutex);

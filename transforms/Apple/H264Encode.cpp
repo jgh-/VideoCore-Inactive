@@ -23,7 +23,7 @@
 #include <TargetConditionals.h>
 
 #if TARGET_OS_IPHONE
-#if defined(__PHONE_8_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_8_0
+#if defined(__IPHONE_8_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_8_0
 #define VERSION_OK 1
 #else
 #define VERSION_OK 0
@@ -124,6 +124,7 @@ namespace videocore { namespace Apple {
     void
     H264Encode::setupCompressionSession()
     {
+        
 #if VERSION_OK
         // Parts of this code pulled from https://github.com/galad87/HandBrake-QuickSync-Mac/blob/2c1332958f7095c640cbcbcb45ffc955739d5945/libhb/platform/macosx/encvt_h264.c
         // More info from WWDC 2014 Session 513

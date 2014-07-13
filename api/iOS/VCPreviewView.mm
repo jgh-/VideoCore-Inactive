@@ -78,6 +78,7 @@
         // Initialization code
         self.glLayer = (CAEAGLLayer*)self.layer;
        
+        NSLog(@"Creating context");
         _context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
         
         if(!self.context) {

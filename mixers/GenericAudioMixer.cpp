@@ -278,6 +278,7 @@ namespace videocore {
         const std::unique_ptr<short[]> buffer(new short[outBufferSize / sizeof(short)]);
         const std::unique_ptr<short[]> samples(new short[outBufferSize / sizeof(short)]);
         
+        m_nextMixTime = std::chrono::steady_clock::now();
         
         while(!m_exiting.load()) {
             std::unique_lock<std::mutex> l(m_mixMutex);
