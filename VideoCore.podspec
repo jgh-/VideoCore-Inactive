@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name                = "VideoCore"
-  s.version             = "0.1.8.4"
+  s.version             = "0.1.8.5"
   s.summary             = "An audio and video manipulation pipeline for iOS and Mac OS X."
   s.description      = <<-DESC
                           This is a work-in-progress library with the
@@ -22,12 +22,12 @@ Pod::Spec.new do |s|
                             'sources/**/*.h*', 'sources/**/*.cpp', 'sources/**/*.m*',
                             'stream/**/*.h*', 'stream/**/*.cpp', 'stream/**/*.m*',
                             'system/**/*.h*', 'system/**/*.cpp', 'system/**/*.m*',
-                            'transforms/**/*.h*', 'transforms/**/*.cpp', 'transforms/**/*.m*', 
+                            'transforms/**/*.h*', 'transforms/**/*.cpp', 'transforms/**/*.m*',
                             'api/**/*.h*', 'api/**/*.m*' ]
 
   s.frameworks          = [ 'VideoToolbox', 'AudioToolbox', 'AVFoundation', 'CFNetwork', 'CoreMedia',
                             'CoreVideo', 'OpenGLES', 'Foundation', 'CoreGraphics' ]
-                            
+
   s.libraries           = 'c++'
 
   s.dependency          'boost', '~> 1.51.0'

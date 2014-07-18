@@ -276,6 +276,8 @@ namespace videocore { namespace simpleApi {
         self.videoSize = videoSize;
         self.fps = fps;
         self.micGain = 1.f;
+        self.audioChannelCount = 2;
+        self.audioSampleRate = 44100.;
 
         _previewView = [[VCPreviewView alloc] init];
         self.videoZoomFactor = 1.f;
@@ -446,7 +448,7 @@ namespace videocore { namespace simpleApi {
     {
         // Add mic source
         m_micSource = std::make_shared<videocore::iOS::MicSource>(self.audioSampleRate, self.audioChannelCount);
-        //m_micSource->setOutput(m_audioMixer);
+        m_micSource->setOutput(m_audioMixer);
 
 
     }
@@ -469,7 +471,7 @@ namespace videocore { namespace simpleApi {
                                                                     self.fps,
                                                                     self.bitrate);
         }
-        //m_audioMixer->setOutput(m_aacEncoder);
+        m_audioMixer->setOutput(m_aacEncoder);
         m_videoSplit->setOutput(m_h264Encoder);
 
     }
