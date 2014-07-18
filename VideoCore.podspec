@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name                = "VideoCore"
-  s.version             = "0.1.8.3"
+  s.version             = "0.1.8.4"
   s.summary             = "An audio and video manipulation pipeline for iOS and Mac OS X."
   s.description      = <<-DESC
                           This is a work-in-progress library with the
