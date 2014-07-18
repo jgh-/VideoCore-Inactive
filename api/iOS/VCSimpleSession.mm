@@ -83,6 +83,9 @@ namespace videocore { namespace simpleApi {
 
 @interface VCSimpleSession()
 {
+    
+    VCPreviewView* _previewView;
+    
     std::shared_ptr<videocore::simpleApi::PixelBufferOutput> m_pbOutput;
     std::shared_ptr<videocore::iOS::MicSource>               m_micSource;
     std::shared_ptr<videocore::iOS::CameraSource>            m_cameraSource;
@@ -116,7 +119,7 @@ namespace videocore { namespace simpleApi {
     BOOL   _torch;
 }
 @property (nonatomic, readwrite) VCSessionState rtmpSessionState;
-@property (nonatomic, retain, readwrite) UIView* previewView;
+
 
 - (void) setupGraph;
 
@@ -134,6 +137,7 @@ static const float kAudioRate = 44100;
 @dynamic videoZoomFactor;
 @dynamic micGain;
 
+@dynamic previewView;
 // -----------------------------------------------------------------------------
 //  Properties Methods
 // -----------------------------------------------------------------------------
@@ -229,6 +233,10 @@ static const float kAudioRate = 44100;
 {
     return _micGain;
 }
+
+- (UIView*) previewView {
+    return _previewView;
+}
 // -----------------------------------------------------------------------------
 //  Public Methods
 // -----------------------------------------------------------------------------
@@ -259,17 +267,18 @@ static const float kAudioRate = 44100;
 
 - (void) dealloc
 {
-
     [self endRtmpSession];
     m_audioMixer.reset();
     m_videoMixer.reset();
     m_videoSplit.reset();
-    m_cameraSource.reset();
     m_aspectTransform.reset();
     m_positionTransform.reset();
     m_micSource.reset();
+    m_cameraSource.reset();
+    m_pbOutput.reset();
     
-    self.previewView = nil;
+    [_previewView release];
+    _previewView = nil;
     
     [super dealloc];
 }
@@ -342,7 +351,6 @@ static const float kAudioRate = 44100;
 {
     const double frameDuration = 1. / static_cast<double>(self.fps);
     
-
     {
         // Add audio mixer
         const double aacPacketTime = 1024. / kAudioRate;
@@ -363,8 +371,8 @@ static const float kAudioRate = 44100;
     {
         // Add video mixer
         m_videoMixer = std::make_shared<videocore::iOS::GLESVideoMixer>(self.videoSize.width,
-                                                                      self.videoSize.height,
-                                                                      frameDuration);
+                                                                        self.videoSize.height,
+                                                                        frameDuration);
         
     }
     
@@ -412,7 +420,7 @@ static const float kAudioRate = 44100;
     {
         // Add mic source
         m_micSource = std::make_shared<videocore::iOS::MicSource>();
-        m_micSource->setOutput(m_audioMixer);
+        //m_micSource->setOutput(m_audioMixer);
         
         
     }
@@ -435,7 +443,7 @@ static const float kAudioRate = 44100;
                                                                     self.fps,
                                                                     self.bitrate);
         }
-        m_audioMixer->setOutput(m_aacEncoder);
+        //m_audioMixer->setOutput(m_aacEncoder);
         m_videoSplit->setOutput(m_h264Encoder);
         
     }

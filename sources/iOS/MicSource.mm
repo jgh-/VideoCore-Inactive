@@ -29,7 +29,12 @@
 
 static std::weak_ptr<videocore::iOS::MicSource> s_micSource;
 
-static OSStatus handleInputBuffer(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData)
+static OSStatus handleInputBuffer(void *inRefCon,
+                                  AudioUnitRenderActionFlags *ioActionFlags,
+                                  const AudioTimeStamp *inTimeStamp,
+                                  UInt32 inBusNumber,
+                                  UInt32 inNumberFrames,
+                                  AudioBufferList *ioData)
 {
     videocore::iOS::MicSource* mc =static_cast<videocore::iOS::MicSource*>(inRefCon);
     
@@ -42,7 +47,12 @@ static OSStatus handleInputBuffer(void *inRefCon, AudioUnitRenderActionFlags *io
     buffers.mNumberBuffers = 1;
     buffers.mBuffers[0] = buffer;
     
-    OSStatus status = AudioUnitRender(mc->audioUnit(), ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, &buffers);
+    OSStatus status = AudioUnitRender(mc->audioUnit(),
+                                      ioActionFlags,
+                                      inTimeStamp,
+                                      inBusNumber,
+                                      inNumberFrames,
+                                      &buffers);
     
     if(!status) {
         mc->inputCallback((uint8_t*)buffers.mBuffers[0].mData, buffers.mBuffers[0].mDataByteSize);

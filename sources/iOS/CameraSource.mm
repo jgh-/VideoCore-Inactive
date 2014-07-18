@@ -43,14 +43,18 @@
 {
     m_source = source;
 }
-- (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
+- (void)captureOutput:(AVCaptureOutput *)captureOutput
+didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
+       fromConnection:(AVCaptureConnection *)connection
 {
     auto source = m_source.lock();
     if(source) {
         source->bufferCaptured(CMSampleBufferGetImageBuffer(sampleBuffer));
     }
 }
-- (void) captureOutput:(AVCaptureOutput *)captureOutput didDropSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
+- (void) captureOutput:(AVCaptureOutput *)captureOutput
+   didDropSampleBuffer:(CMSampleBufferRef)sampleBuffer
+        fromConnection:(AVCaptureConnection *)connection
 {
 }
 - (void) deviceOrientationChanged: (NSNotification*) notification
@@ -101,6 +105,9 @@ namespace videocore { namespace iOS {
         [((AVCaptureSession*)m_captureSession) stopRunning];
         [((AVCaptureSession*)m_captureSession) release];
         [((sbCallback*)m_callbackSession) release];
+        if(m_previewLayer) {
+            [(id)m_previewLayer release];
+        }
     }
     
     void
@@ -108,70 +115,74 @@ namespace videocore { namespace iOS {
     {
         m_fps = fps;
         
-
-        int position = useFront ? AVCaptureDevicePositionFront : AVCaptureDevicePositionBack;
         
-        for(AVCaptureDevice* d in [AVCaptureDevice devices]) {
-            if([d hasMediaType:AVMediaTypeVideo] && [d position] == position)
-            {
-                m_captureDevice = d;
-                NSError* error;
-                [d lockForConfiguration:&error];
-                [d setActiveVideoMinFrameDuration:CMTimeMake(1, fps)];
-                [d setActiveVideoMaxFrameDuration:CMTimeMake(1, fps)];
-                [d unlockForConfiguration];
+        @autoreleasepool {
+            int position = useFront ? AVCaptureDevicePositionFront : AVCaptureDevicePositionBack;
+            
+            NSArray* devices = [AVCaptureDevice devices];
+            for(AVCaptureDevice* d in devices) {
+                if([d hasMediaType:AVMediaTypeVideo] && [d position] == position)
+                {
+                    m_captureDevice = d;
+                    NSError* error;
+                    [d lockForConfiguration:&error];
+                    [d setActiveVideoMinFrameDuration:CMTimeMake(1, fps)];
+                    [d setActiveVideoMaxFrameDuration:CMTimeMake(1, fps)];
+                    [d unlockForConfiguration];
+                }
             }
-        }
-        
-        AVCaptureSession* session = [[AVCaptureSession alloc] init];
-        AVCaptureDeviceInput* input;
-        AVCaptureVideoDataOutput* output;
-        
-        NSString* preset = AVCaptureSessionPresetHigh;
-        if(m_usingDeprecatedMethods) {
-            int mult = ceil(double(m_targetSize.h) / 270.0) * 270 ;
-            switch(mult) {
-                case 270:
-                    preset = AVCaptureSessionPresetLow;
-                    break;
-                case 540:
-                    preset = AVCaptureSessionPresetMedium;
-                    break;
-                default:
-                    preset = AVCaptureSessionPresetHigh;
-                    break;
+            
+            AVCaptureSession* session = [[AVCaptureSession alloc] init];
+            AVCaptureDeviceInput* input;
+            AVCaptureVideoDataOutput* output;
+            
+            NSString* preset = AVCaptureSessionPresetHigh;
+            if(m_usingDeprecatedMethods) {
+                int mult = ceil(double(m_targetSize.h) / 270.0) * 270 ;
+                switch(mult) {
+                    case 270:
+                        preset = AVCaptureSessionPresetLow;
+                        break;
+                    case 540:
+                        preset = AVCaptureSessionPresetMedium;
+                        break;
+                    default:
+                        preset = AVCaptureSessionPresetHigh;
+                        break;
+                }
+                session.sessionPreset = preset;
             }
-            session.sessionPreset = preset;
-        }
-        m_captureSession = session;
-        
-        input = [AVCaptureDeviceInput deviceInputWithDevice:((AVCaptureDevice*)m_captureDevice) error:nil];
-        
-        output = [[AVCaptureVideoDataOutput alloc] init] ;
-        
-        output.videoSettings = @{(NSString*)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA) };
-        if(!m_callbackSession) {
-            m_callbackSession = [[sbCallback alloc] init];
-        }
-        
-        [output setSampleBufferDelegate:((sbCallback*)m_callbackSession) queue:dispatch_get_global_queue(0, 0)];
-        
-        if([session canAddInput:input]) {
-            [session addInput:input];
-        }
-        if([session canAddOutput:output]) {
-            [session addOutput:output];
+            m_captureSession = session;
+            
+            input = [AVCaptureDeviceInput deviceInputWithDevice:((AVCaptureDevice*)m_captureDevice) error:nil];
+            
+            output = [[AVCaptureVideoDataOutput alloc] init] ;
+            
+            output.videoSettings = @{(NSString*)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA) };
+            if(!m_callbackSession) {
+                m_callbackSession = [[sbCallback alloc] init];
+            }
+            
+            [output setSampleBufferDelegate:((sbCallback*)m_callbackSession) queue:dispatch_get_global_queue(0, 0)];
+            
+            if([session canAddInput:input]) {
+                [session addInput:input];
+            }
+            if([session canAddOutput:output]) {
+                [session addOutput:output];
+                
+            }
+            
+            reorientCamera();
+            
+            [session startRunning];
+            [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+            
+            [[NSNotificationCenter defaultCenter] addObserver:((id)m_callbackSession) selector:@selector(deviceOrientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
+            
+            [output release];
             
         }
-        reorientCamera();
-        
-        [session startRunning];
-        [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
-        
-        [[NSNotificationCenter defaultCenter] addObserver:((id)m_callbackSession) selector:@selector(deviceOrientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
-        
-        [output release];
-
     }
     void
     CameraSource::setAspectMode(AspectMode aspectMode)
@@ -204,7 +215,7 @@ namespace videocore { namespace iOS {
             if ([device position] == position) return device;
         }
         return nil;
-    
+        
     }
     bool
     CameraSource::setTorch(bool torchOn)
@@ -263,6 +274,8 @@ namespace videocore { namespace iOS {
         
         [session commitConfiguration];
         
+        [newVideoInput release];
+        
         reorientCamera();
         
     }
@@ -277,11 +290,11 @@ namespace videocore { namespace iOS {
         bool reorient = false;
         
         AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
-       // [session beginConfiguration];
-
+        // [session beginConfiguration];
+        
         for (AVCaptureVideoDataOutput* output in session.outputs) {
             for (AVCaptureConnection * av in output.connections) {
-               
+                
                 switch (orientation) {
                         // NOTE: device orientation and capture orientation for landscape
                         //       left vs. right are swapped
@@ -368,7 +381,7 @@ namespace videocore { namespace iOS {
                 
                 m_matrix = mat;
             }
-
+            
             
             VideoBufferMetadata md(1.f / float(m_fps));
             

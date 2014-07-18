@@ -50,8 +50,6 @@
     CVOpenGLESTextureRef _texture[2];
 
 }
-@property (nonatomic, strong) NSDate* lastDraw;
-
 @property (nonatomic, strong) EAGLContext* context;
 @property (nonatomic) CAEAGLLayer* glLayer;
 @end
@@ -93,9 +91,7 @@
         _shaderProgram = 0;
         _renderBuffer = 0;
         _currentBuffer = 1;
-        
-        self.lastDraw = [NSDate new];
-        
+
         __block VCPreviewView* bSelf = self;
         
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -131,11 +127,13 @@
     if(_fbo) {
         glDeleteFramebuffers(1, &_fbo);
     }
+    if(_renderBuffer) {
+        glDeleteRenderbuffers(1, &_renderBuffer);
+    }
+    CVOpenGLESTextureCacheFlush(_cache,0);
     CFRelease(_cache);
     
     self.context = nil;
-    self.lastDraw = nil;
-    
     [super dealloc];
 }
 - (void) layoutSubviews
@@ -172,8 +170,6 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         EAGLContext* current = [EAGLContext currentContext];
         [EAGLContext setCurrentContext:self.context];
-        
-        self.lastDraw = [NSDate new];
         
         if(updateTexture) {
             // create a new texture
@@ -237,6 +233,7 @@
         glBindRenderbuffer(GL_RENDERBUFFER, bSelf->_renderBuffer);
         [self.context presentRenderbuffer:GL_RENDERBUFFER];
         [EAGLContext setCurrentContext:current];
+        CVOpenGLESTextureCacheFlush(_cache,0);
     });
    
 }

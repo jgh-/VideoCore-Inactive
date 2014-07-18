@@ -134,16 +134,31 @@ namespace videocore { namespace iOS {
             glDeleteFramebuffers(2, m_fbo);
             glDeleteBuffers(1, &m_vbo);
             glDeleteVertexArraysOES(1, &m_vao);
+            GLuint textures[2] ;
+            textures[0] = CVOpenGLESTextureGetName(m_texture[0]);
+            textures[1] = CVOpenGLESTextureGetName(m_texture[1]);
+            glDeleteTextures(2, textures);
+            
+            for (auto it : m_sourceTextures) {
+                CFRelease(it.second);
+            }
+            for ( auto it : m_sourceBuffers )
+            {
+                CVPixelBufferRelease(it.second);
+            }
+            CVPixelBufferRelease(m_pixelBuffer[0]);
+            CVPixelBufferRelease(m_pixelBuffer[1]);
+            CFRelease(m_texture[0]);
+            CFRelease(m_texture[1]);
+            CVOpenGLESTextureCacheFlush(m_textureCache, 0);
+            CFRelease(m_textureCache);
+            
+            printf("Releasing GLESContext..\n");
+            [(id)m_glesCtx release];
         });
         m_mixThread.join();
         
-        for ( auto it : m_sourceBuffers )
-        {
-            CVPixelBufferRelease(it.second);
-        }
-        CVPixelBufferRelease(m_pixelBuffer[0]);
-        CVPixelBufferRelease(m_pixelBuffer[1]);
-        [(id)m_glesCtx release];
+
         [(id)m_callbackSession release];
     }
     void
@@ -180,15 +195,19 @@ namespace videocore { namespace iOS {
         //
         // We may now attach these FBOs as the render target and avoid using the costly glGetPixels.
         
-        NSDictionary* pixelBufferOptions = @{  (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
-                                               (NSString*) kCVPixelBufferWidthKey : @(m_frameW),
-                                               (NSString*) kCVPixelBufferHeightKey : @(m_frameH),
-                                               (NSString*) kCVPixelBufferOpenGLESCompatibilityKey : @YES,
-                                               (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}};
+        @autoreleasepool {
+            
         
-        CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[0]);
-        CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[1]);
-        
+            NSDictionary* pixelBufferOptions = @{ (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
+                                                  (NSString*) kCVPixelBufferWidthKey : @(m_frameW),
+                                                  (NSString*) kCVPixelBufferHeightKey : @(m_frameH),
+                                                  (NSString*) kCVPixelBufferOpenGLESCompatibilityKey : @YES,
+                                                  (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}};
+            
+            CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[0]);
+            CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[1]);
+            
+        }
         CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, (EAGLContext*)this->m_glesCtx, NULL, &this->m_textureCache);
         glGenFramebuffers(2, this->m_fbo);
         for(int i = 0 ; i < 2 ; ++i) {
@@ -205,6 +224,7 @@ namespace videocore { namespace iOS {
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_texture[i]), 0);
             
         }
+        
         
         GL_FRAMEBUFFER_STATUS(__LINE__);
         
@@ -231,7 +251,7 @@ namespace videocore { namespace iOS {
         glDisable(GL_SCISSOR_TEST);
         glViewport(0, 0, m_frameW,m_frameH);
         glClearColor(0.05,0.05,0.07,1.0);
-
+        CVOpenGLESTextureCacheFlush(m_textureCache, 0);
     }
     void
     GLESVideoMixer::registerSource(std::shared_ptr<ISource> source,
@@ -349,6 +369,8 @@ namespace videocore { namespace iOS {
                     
                     auto it = this->m_sourceTextures.find(h);
                     if(it != this->m_sourceTextures.end()) {
+                       // GLuint texture = CVOpenGLESTextureGetName(this->m_sourceTextures[h]);
+                       // glDeleteTextures(1, &texture);
                         CFRelease(this->m_sourceTextures[h]);
                         this->m_sourceTextures.erase(it);
                     }
