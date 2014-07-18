@@ -108,10 +108,10 @@
 - (void) dealloc
 {
     if(_texture[0]) {
-        CFRelease(_texture);
+        CFRelease(_texture[0]);
     }
     if(_texture[1]) {
-        CFRelease(_texture);
+        CFRelease(_texture[1]);
     }
     if(_currentRef[0]) {
         CVPixelBufferRelease(_currentRef[0]);
