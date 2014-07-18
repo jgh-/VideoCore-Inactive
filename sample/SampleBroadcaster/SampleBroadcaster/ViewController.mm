@@ -65,7 +65,7 @@
         case VCSessionStateEnded:
         case VCSessionStateError:
         case VCSessionStateNone:
-            [_session startRtmpSessionWithURL:@"rtmp://192.168.1.151/live" andStreamKey:@"myStream"];
+            [_session startRtmpSessionWithURL:@"rtmp://stream.lax.cine.io/20C45E/cines" andStreamKey:@"lJSncdAB-x?treble10&amp;adbe-live-event=lJSncdAB-x"];
             break;
         default:
             [_session endRtmpSession];
