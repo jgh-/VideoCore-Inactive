@@ -483,7 +483,7 @@ namespace videocore { namespace simpleApi {
     }
     {
         m_h264Packetizer = std::make_shared<videocore::rtmp::H264Packetizer>();
-        m_aacPacketizer = std::make_shared<videocore::rtmp::AACPacketizer>();
+        m_aacPacketizer = std::make_shared<videocore::rtmp::AACPacketizer>(self.audioSampleRate, self.audioChannelCount);
 
         m_h264Split->setOutput(m_h264Packetizer);
         m_aacSplit->setOutput(m_aacPacketizer);
