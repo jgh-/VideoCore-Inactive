@@ -443,7 +443,7 @@ static const float kAudioRate = 44100;
                                                                     self.fps,
                                                                     self.bitrate);
         }
-        //m_audioMixer->setOutput(m_aacEncoder);
+        m_audioMixer->setOutput(m_aacEncoder);
         m_videoSplit->setOutput(m_h264Encoder);
         
     }
