@@ -57,7 +57,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
         fromConnection:(AVCaptureConnection *)connection
 {
 }
-- (void) deviceOrientationChanged: (NSNotification*) notification
+- (void) statusBarOrientationChanged: (NSNotification*) notification
 {
     auto source = m_source.lock();
     if(source) {
@@ -176,9 +176,8 @@ namespace videocore { namespace iOS {
             reorientCamera();
             
             [session startRunning];
-            [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
             
-            [[NSNotificationCenter defaultCenter] addObserver:((id)m_callbackSession) selector:@selector(deviceOrientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
+            [[NSNotificationCenter defaultCenter] addObserver:((id)m_callbackSession) selector:@selector(statusBarOrientationChanged:) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
             
             [output release];
             
@@ -285,7 +284,7 @@ namespace videocore { namespace iOS {
     {
         if(!m_captureSession) return;
         
-        const auto orientation = [[UIDevice currentDevice] orientation];
+        const auto orientation = [[UIApplication sharedApplication] statusBarOrientation];
         
         bool reorient = false;
         
@@ -296,37 +295,32 @@ namespace videocore { namespace iOS {
             for (AVCaptureConnection * av in output.connections) {
                 
                 switch (orientation) {
-                        // NOTE: device orientation and capture orientation for landscape
-                        //       left vs. right are swapped
-                    case UIDeviceOrientationPortraitUpsideDown:
+                    case UIInterfaceOrientationPortraitUpsideDown:
                         if(av.videoOrientation != AVCaptureVideoOrientationPortraitUpsideDown) {
                             av.videoOrientation = AVCaptureVideoOrientationPortraitUpsideDown;
                             reorient = true;
                         }
                         break;
-                    case UIDeviceOrientationLandscapeLeft:
+                    case UIInterfaceOrientationLandscapeRight:
                         if(av.videoOrientation != AVCaptureVideoOrientationLandscapeRight) {
                             av.videoOrientation = AVCaptureVideoOrientationLandscapeRight;
                             reorient = true;
                         }
                         break;
-                    case UIDeviceOrientationLandscapeRight:
+                    case UIInterfaceOrientationLandscapeLeft:
                         if(av.videoOrientation != AVCaptureVideoOrientationLandscapeLeft) {
                             av.videoOrientation = AVCaptureVideoOrientationLandscapeLeft;
                             reorient = true;
                         }
                         break;
-                    case UIDeviceOrientationPortrait:
+                    case UIInterfaceOrientationPortrait:
+                    default:
                         if(av.videoOrientation != AVCaptureVideoOrientationPortrait) {
                             av.videoOrientation = AVCaptureVideoOrientationPortrait;
                             reorient = true;
                         }
                         break;
-                    default:    // Don't do anything for faceup/facedown
-                        break;
                 }
-                
-                
             }
         }
         if(reorient) {
