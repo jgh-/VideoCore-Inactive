@@ -406,7 +406,7 @@ static const float kAudioRate = 44100;
         auto aspectTransform = std::make_shared<videocore::AspectTransform>(self.videoSize.width,self.videoSize.height,videocore::AspectTransform::kAspectFit);
         
         auto positionTransform = std::make_shared<videocore::PositionTransform>(self.videoSize.width/2, self.videoSize.height/2,
-                                                                                self.videoSize.width, self.videoSize.height,
+                                                                                self.videoSize.width * self.videoZoomFactor, self.videoSize.height * self.videoZoomFactor,
                                                                                 self.videoSize.width, self.videoSize.height
                                                                                 );
         
