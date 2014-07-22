@@ -214,7 +214,7 @@
 				ORGANIZATIONNAME = videocore;
 				TargetAttributes = {
 					7265D5DB191994B80042DC3B = {
-						DevelopmentTeam = 486S5TJL4J;
+						DevelopmentTeam = G5RU2HL4SN;
 					};
 					7265D5FF191994B80042DC3B = {
 						TestTargetID = 7265D5DB191994B80042DC3B;

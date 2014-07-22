@@ -62,9 +62,10 @@
 - (IBAction)btnConnectTouch:(id)sender {
     
     switch(_session.rtmpSessionState) {
+        case VCSessionStateNone:
+        case VCSessionStatePreviewStarted:
         case VCSessionStateEnded:
         case VCSessionStateError:
-        case VCSessionStateNone:
             [_session startRtmpSessionWithURL:@"rtmp://192.168.1.151/live" andStreamKey:@"myStream"];
             break;
         default:
