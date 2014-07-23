@@ -71,7 +71,7 @@ namespace videocore { namespace iOS {
                      float videoh,
                      float aspect) __attribute__ ((deprecated));
         
-        /*! Constructor. */
+        /*! Constructor */
         CameraSource();
         
         /*! Destructor */
@@ -92,8 +92,9 @@ namespace videocore { namespace iOS {
          *
          *  \param fps      Optional parameter to set the output frames per second.
          *  \param useFront Start with the front-facing camera
+         *  \param useInterfaceOrientation whether to use interface or device orientation as reference for video capture orientation
          */
-        void setupCamera(int fps = 15, bool useFront = true);
+        void setupCamera(int fps = 15, bool useFront = true, bool useInterfaceOrientation = false);
         /*!
          * Set the aspect mode. The default is kAspectFit. Deprecated. Use the AspectTransform instead.
          *
@@ -120,7 +121,7 @@ namespace videocore { namespace iOS {
         /*! Used by Objective-C Capture Session */
         void bufferCaptured(CVPixelBufferRef pixelBufferRef);
         
-        /*! Used by Objective-C Application Status Bar Orientation Notifications */
+        /*! Used by Objective-C Application Device/Inteface Orientation Notifications */
         void reorientCamera();
         
     private:
@@ -151,6 +152,7 @@ namespace videocore { namespace iOS {
         bool m_isFirst;
         bool m_usingDeprecatedMethods;
         bool m_torchOn;
+        bool m_useInterfaceOrientation;
     };
     
 }

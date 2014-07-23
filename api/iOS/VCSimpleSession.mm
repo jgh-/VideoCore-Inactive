@@ -111,6 +111,7 @@ namespace videocore { namespace simpleApi {
     CGSize _videoSize;
     int    _bitrate;
     int    _fps;
+    BOOL   _useInterfaceOrientation;
     float  _videoZoomFactor;
     float  _micGain;
     
@@ -131,6 +132,7 @@ static const float kAudioRate = 44100;
 @dynamic videoSize;
 @dynamic bitrate;
 @dynamic fps;
+@dynamic useInterfaceOrientation;
 @dynamic torch;
 @dynamic cameraState;
 @dynamic rtmpSessionState;
@@ -172,6 +174,10 @@ static const float kAudioRate = 44100;
 - (void) setFps:(int)fps
 {
     _fps = fps;
+}
+- (BOOL) useInterfaceOrientation
+{
+    return _useInterfaceOrientation;
 }
 - (BOOL) torch
 {
@@ -244,12 +250,14 @@ static const float kAudioRate = 44100;
 - (instancetype) initWithVideoSize:(CGSize)videoSize
                          frameRate:(int)fps
                            bitrate:(int)bps
+           useInterfaceOrientation:(BOOL)useInterfaceOrientation
 {
     if (( self = [super init] ))
     {
         self.bitrate = bps;
         self.videoSize = videoSize;
         self.fps = fps;
+        _useInterfaceOrientation = useInterfaceOrientation;
         self.micGain = 1.f;
         
         _previewView = [[VCPreviewView alloc] init];
@@ -409,8 +417,7 @@ static const float kAudioRate = 44100;
                                                                                 self.videoSize.width * self.videoZoomFactor, self.videoSize.height * self.videoZoomFactor,
                                                                                 self.videoSize.width, self.videoSize.height
                                                                                 );
-        
-        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,false);
+        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,false,self.useInterfaceOrientation);
         m_cameraSource->setOutput(aspectTransform);
         aspectTransform->setOutput(positionTransform);
         positionTransform->setOutput(m_videoMixer);
