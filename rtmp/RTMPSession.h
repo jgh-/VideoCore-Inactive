@@ -139,6 +139,8 @@ namespace videocore
         double          m_audioSampleRate;
         
         ClientState_t  m_state;
+        
+        bool            m_ending;
     };
 }
 

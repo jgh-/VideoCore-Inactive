@@ -37,7 +37,7 @@
 namespace videocore
 {
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback_t callback)
-    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback),  m_previousTimestamp(0), m_currentChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone)
+    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback),  m_previousTimestamp(0), m_currentChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false)
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
@@ -81,6 +81,7 @@ namespace videocore
         if(m_state == kClientStateConnected) {
             sendDeleteStream();
         }
+        m_ending = true;
         m_jobQueue.enqueue_sync([]() {});
     }
     void
@@ -98,10 +99,15 @@ namespace videocore
     RTMPSession::pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata)
     {
         
+        if(m_ending) {
+            return ;
+        }
+        
         std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(size);
         buf->put(const_cast<uint8_t*>(data), size);
         
         const RTMPMetadata_t inMetadata = static_cast<const RTMPMetadata_t&>(metadata);
+        
         
         m_jobQueue.enqueue([&,buf,inMetadata]() {
             
@@ -293,7 +299,7 @@ namespace videocore
         if(status & kStreamStatusWriteBufferHasSpace) {
             if(m_state < kClientStateHandshakeComplete) {
                 handshake();
-            } else {
+            } else if (!m_ending) {
                 m_jobQueue.enqueue([this]() {
                     this->write(nullptr, 0);
                 });
