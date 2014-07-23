@@ -293,8 +293,8 @@ namespace videocore { namespace iOS {
         
         auto orientation = m_useInterfaceOrientation ? [[UIApplication sharedApplication] statusBarOrientation] : [[UIDevice currentDevice] orientation];
         
-        // use interface orientation as fallback if device orientation is facedown or faceup
-        if(orientation==UIDeviceOrientationFaceDown || orientation==UIDeviceOrientationFaceUp) {
+        // use interface orientation as fallback if device orientation is facedown, faceup or unknown
+        if(orientation==UIDeviceOrientationFaceDown || orientation==UIDeviceOrientationFaceUp || orientation==UIDeviceOrientationUnknown) {
             orientation =[[UIApplication sharedApplication] statusBarOrientation];
         }
         
