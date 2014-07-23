@@ -291,7 +291,12 @@ namespace videocore { namespace iOS {
     {
         if(!m_captureSession) return;
         
-        const auto orientation = m_useInterfaceOrientation ? [[UIApplication sharedApplication] statusBarOrientation] : [[UIDevice currentDevice] orientation];
+        auto orientation = m_useInterfaceOrientation ? [[UIApplication sharedApplication] statusBarOrientation] : [[UIDevice currentDevice] orientation];
+        
+        // use interface orientation as fallback if device orientation is facedown or faceup
+        if(orientation==UIDeviceOrientationFaceDown || orientation==UIDeviceOrientationFaceUp) {
+            orientation =[[UIApplication sharedApplication] statusBarOrientation];
+        }
         
         bool reorient = false;
         
@@ -330,8 +335,6 @@ namespace videocore { namespace iOS {
                             reorient = true;
                         }
                         break;
-                    case UIDeviceOrientationFaceDown:
-                    case UIDeviceOrientationFaceUp:
                     default:
                         break;
                 }
