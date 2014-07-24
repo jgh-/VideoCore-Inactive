@@ -64,7 +64,7 @@ typedef NS_ENUM(NSInteger, VCCameraState)
 @property (nonatomic, assign) CGSize            videoSize;      // Change will not take place until the next RTMP Session
 @property (nonatomic, assign) int               bitrate;        // Change will not take place until the next RTMP Session
 @property (nonatomic, assign) int               fps;            // Change will not take place until the next RTMP Session
-@property (nonatomic, assign, readonly) bool    useInterfaceOrientation;
+@property (nonatomic, assign, readonly) BOOL    useInterfaceOrientation;
 @property (nonatomic, assign) VCCameraState cameraState;
 @property (nonatomic, assign) BOOL          torch;
 @property (nonatomic, assign) float         videoZoomFactor;
@@ -76,7 +76,7 @@ typedef NS_ENUM(NSInteger, VCCameraState)
 - (instancetype) initWithVideoSize:(CGSize)videoSize
                          frameRate:(int)fps
                            bitrate:(int)bps
-           useInterfaceOrientation:(bool)useInterfaceOrientation;
+           useInterfaceOrientation:(BOOL)useInterfaceOrientation;
 
 // -----------------------------------------------------------------------------
 - (void) startRtmpSessionWithURL:(NSString*) rtmpUrl
