@@ -30,11 +30,22 @@
 
 namespace videocore {
 
+    /*!
+     *  Called when the graph should make an adjustment to outgoing data rates
+     *
+     *  \param rateVector   A unit vector representing the direction for change. (-1 for reduce bitrate, 0 for no change, 1 for increase bitrate)
+     *  \param estimatedAvailableBandwidth  An estimate of the available bandwidth. This may not be accurate.
+     *
+     */
+    using BandwidthCallback = std::function<void(int rateVector, int estimatedAvailableBandwidth)>;
     
     class IOutputSession : public IOutput
     {
     public:
+        
         virtual void setSessionParameters(IMetadata & parameters) = 0 ;
+        virtual void setBandwidthCallback(BandwidthCallback callback) = 0;
+        
         virtual ~IOutputSession() {};
         
     };

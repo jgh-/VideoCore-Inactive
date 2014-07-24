@@ -36,8 +36,8 @@
 
 namespace videocore
 {
-    RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback_t callback)
-    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback),  m_previousTimestamp(0), m_currentChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false)
+    RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback callback)
+    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback), m_bandwidthCallback(nullptr), m_previousTimestamp(0), m_currentChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false)
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
@@ -94,6 +94,11 @@ namespace videocore
         m_frameHeight = parms.getData<kRTMPSessionParameterHeight>();
         m_frameWidth = parms.getData<kRTMPSessionParameterWidth>();
         m_audioSampleRate = parms.getData<kRTMPSessionParameterAudioFrequency>();
+    }
+    void
+    RTMPSession::setBandwidthCallback(BandwidthCallback callback)
+    {
+        m_bandwidthCallback = callback;
     }
     void
     RTMPSession::pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata)

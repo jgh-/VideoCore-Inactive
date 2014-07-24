@@ -61,12 +61,12 @@ namespace videocore
     
     typedef MetaData<'rtmp', int32_t, int32_t, uint8_t, int32_t> RTMPMetadata_t;
 
-    typedef std::function<void(RTMPSession& session, ClientState_t state)> RTMPSessionStateCallback_t;
+    using RTMPSessionStateCallback = std::function<void(RTMPSession& session, ClientState_t state)>;
       
     class RTMPSession : public IOutputSession
     {
     public:
-        RTMPSession(std::string uri, RTMPSessionStateCallback_t callback);
+        RTMPSession(std::string uri, RTMPSessionStateCallback callback);
         ~RTMPSession();
         
     public:
@@ -75,7 +75,7 @@ namespace videocore
         void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
         
         void setSessionParameters(IMetadata& parameters);
-
+        void setBandwidthCallback(BandwidthCallback callback);
         
     private:
         
@@ -122,7 +122,9 @@ namespace videocore
         std::vector<uint8_t> m_outBuffer;
         http::url                       m_uri;
         
-        RTMPSessionStateCallback_t      m_callback;
+        RTMPSessionStateCallback        m_callback;
+        BandwidthCallback               m_bandwidthCallback;
+        
         std::string                     m_playPath;
         std::string                     m_app;
         std::map<int32_t, std::string>  m_trackedCommands;
