@@ -62,23 +62,7 @@ static inline int16_t b24_to_b16(void* v) {
 extern std::string g_tmpFolder;
 
 namespace videocore {
-    static inline int cubicInterp(int y0,
-                                  int y1,
-                                  int y2,
-                                  int y3,
-                                  double mu)
-    {
-        double a[4], mu2;
 
-        mu2 = mu*mu;
-        a[0] = y3 - y2 - y0 + y1;
-        a[1] = y0 - y1 - a[0];
-        a[2] = y2 - y0;
-        a[3] = y1;
-
-        return (a[0]*mu*mu2+a[1]*mu2+a[2]*mu+a[3]);
-
-    }
     GenericAudioMixer::GenericAudioMixer(int outChannelCount,
                                          int outFrequencyInHz,
                                          int outBitsPerChannel,
