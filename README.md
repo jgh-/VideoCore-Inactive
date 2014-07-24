@@ -98,6 +98,9 @@ _If you would like to be included in this list, either make a pull request or co
 
 ##Version History
 
+* 0.1.9
+	* Bugfixes, memory leak fixes
+	* Introduces the ability to choose whether to use interface orientation or device orientation for Camera orientation.
 * 0.1.8
     * Introduces VideoToolbox encoding for iOS 8+ and OS X 10.9+
     * Adds -lc++ for compatibility with Xcode 6
