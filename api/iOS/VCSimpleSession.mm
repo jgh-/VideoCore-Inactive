@@ -232,7 +232,8 @@ namespace videocore { namespace simpleApi {
 }
 - (void) setAudioChannelCount:(int)channelCount
 {
-    _audioChannelCount = channelCount;
+    _audioChannelCount = MIN(2, MAX(channelCount,2)); // We can only support a channel count of 2 with AAC
+    
     if(m_audioMixer) {
         m_audioMixer->setChannelCount(channelCount);
     }
@@ -243,7 +244,8 @@ namespace videocore { namespace simpleApi {
 }
 - (void) setAudioSampleRate:(float)sampleRate
 {
-    _audioSampleRate = sampleRate;
+    
+    _audioSampleRate = (sampleRate > 33075 ? 44100 : 22050); // We can only support 44100 / 22050 with AAC + RTMP
     if(m_audioMixer) {
         m_audioMixer->setFrequencyInHz(sampleRate);
     }
