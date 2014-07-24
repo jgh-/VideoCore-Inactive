@@ -121,7 +121,7 @@ namespace videocore { namespace iOS {
         /*! Used by Objective-C Capture Session */
         void bufferCaptured(CVPixelBufferRef pixelBufferRef);
         
-        /*! Used by Objective-C Application Device/Inteface Orientation Notifications */
+        /*! Used by Objective-C Device/Interface Orientation Notifications */
         void reorientCamera();
         
     private:
