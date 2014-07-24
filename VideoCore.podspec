@@ -1,11 +1,11 @@
 Pod::Spec.new do |s|
   s.name                = "VideoCore"
-  s.version             = "0.1.9"
-  s.summary             = "An audio and video manipulation pipeline for iOS and Mac OS X."
+  s.version             = "0.1.9.1"
+  s.summary             = "An audio and video manipulation and streaming pipeline with support for RTMP."
   s.description      = <<-DESC
                           This is a work-in-progress library with the
                           intention of being an audio and video manipulation
-                          pipeline for iOS and Mac OS X.
+                          and streaming pipeline for iOS.
                           DESC
   s.homepage            = "https://github.com/jgh-/VideoCore"
   s.license             = 'MIT'
