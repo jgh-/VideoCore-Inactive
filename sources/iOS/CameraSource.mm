@@ -181,7 +181,7 @@ namespace videocore { namespace iOS {
             [session startRunning];
             
             if(m_useInterfaceOrientation) {
-            [[NSNotificationCenter defaultCenter] addObserver:((id)m_callbackSession) selector:@selector(orientationChanged:) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
+                [[NSNotificationCenter defaultCenter] addObserver:((id)m_callbackSession) selector:@selector(orientationChanged:) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
             } else {
                 [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
                 [[NSNotificationCenter defaultCenter] addObserver:((id)m_callbackSession) selector:@selector(orientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
