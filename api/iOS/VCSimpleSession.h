@@ -77,6 +77,11 @@ typedef NS_ENUM(NSInteger, VCCameraState)
 // -----------------------------------------------------------------------------
 - (instancetype) initWithVideoSize:(CGSize)videoSize
                          frameRate:(int)fps
+                           bitrate:(int)bps;
+
+// -----------------------------------------------------------------------------
+- (instancetype) initWithVideoSize:(CGSize)videoSize
+                         frameRate:(int)fps
                            bitrate:(int)bps
            useInterfaceOrientation:(BOOL)useInterfaceOrientation;
 

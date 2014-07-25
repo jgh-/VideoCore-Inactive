@@ -108,6 +108,8 @@ namespace videocore { namespace simpleApi {
 
     // properties
 
+    dispatch_queue_t _graphManagementQueue;
+    
     CGSize _videoSize;
     int    _bitrate;
     int    _fps;
@@ -122,7 +124,6 @@ namespace videocore { namespace simpleApi {
     BOOL   _torch;
 }
 @property (nonatomic, readwrite) VCSessionState rtmpSessionState;
-
 
 - (void) setupGraph;
 
@@ -274,6 +275,21 @@ namespace videocore { namespace simpleApi {
 // -----------------------------------------------------------------------------
 #pragma mark - Public Methods
 // -----------------------------------------------------------------------------
+
+- (instancetype) initWithVideoSize:(CGSize)videoSize
+                         frameRate:(int)fps
+                           bitrate:(int)bps
+{
+    if((self = [super init])) {
+        [self initInternalWithVideoSize:videoSize
+                              frameRate:fps
+                                bitrate:bps
+                useInterfaceOrientation:NO];
+        
+    }
+    return self;
+}
+
 - (instancetype) initWithVideoSize:(CGSize)videoSize
                          frameRate:(int)fps
                            bitrate:(int)bps
@@ -281,25 +297,41 @@ namespace videocore { namespace simpleApi {
 {
     if (( self = [super init] ))
     {
-        self.bitrate = bps;
-        self.videoSize = videoSize;
-        self.fps = fps;
-        _useInterfaceOrientation = useInterfaceOrientation;
-        self.micGain = 1.f;
-        self.audioChannelCount = 2;
-        self.audioSampleRate = 44100.;
-
-        _previewView = [[VCPreviewView alloc] init];
-        self.videoZoomFactor = 1.f;
-
-        _cameraState = VCCameraStateBack;
-
-        dispatch_async(dispatch_get_global_queue(0, 0), ^{
-            [self setupGraph];
-        });
-
+        [self initInternalWithVideoSize:videoSize
+                              frameRate:fps
+                                bitrate:bps
+                useInterfaceOrientation:useInterfaceOrientation];
     }
     return self;
+}
+
+- (void) initInternalWithVideoSize:(CGSize)videoSize
+                         frameRate:(int)fps
+                           bitrate:(int)bps
+           useInterfaceOrientation:(BOOL)useInterfaceOrientation
+{
+    self.bitrate = bps;
+    self.videoSize = videoSize;
+    self.fps = fps;
+    _useInterfaceOrientation = useInterfaceOrientation;
+    self.micGain = 1.f;
+    self.audioChannelCount = 2;
+    self.audioSampleRate = 44100.;
+    
+    _previewView = [[VCPreviewView alloc] init];
+    self.videoZoomFactor = 1.f;
+    
+    _cameraState = VCCameraStateBack;
+    
+    _graphManagementQueue = dispatch_queue_create("com.videocore.session.graph", 0);
+
+    __block VCSimpleSession* bSelf = self;
+    
+    dispatch_async(_graphManagementQueue, ^{
+        [bSelf setupGraph];
+    });
+    
+
 }
 
 - (void) dealloc
@@ -317,6 +349,8 @@ namespace videocore { namespace simpleApi {
     [_previewView release];
     _previewView = nil;
 
+    dispatch_release(_graphManagementQueue);
+    
     [super dealloc];
 }
 
@@ -339,7 +373,12 @@ namespace videocore { namespace simpleApi {
             case kClientStateSessionStarted:
             {
                 self.rtmpSessionState = VCSessionStateStarted;
-                [self addEncodersAndPacketizers];
+                
+                __block VCSimpleSession* bSelf = self;
+                dispatch_async(_graphManagementQueue, ^{
+                    [bSelf addEncodersAndPacketizers];
+                });
+                
             }
                 break;
             case kClientStateError:
@@ -419,7 +458,7 @@ namespace videocore { namespace simpleApi {
 
         m_videoSplit = videoSplit;
         VCPreviewView* preview = (VCPreviewView*)self.previewView;
-
+        
         m_pbOutput = std::make_shared<videocore::simpleApi::PixelBufferOutput>([=](const void* const data, size_t size){
             CVPixelBufferRef ref = (CVPixelBufferRef)data;
             [preview drawFrame:ref];
@@ -427,8 +466,9 @@ namespace videocore { namespace simpleApi {
                 self.rtmpSessionState = VCSessionStatePreviewStarted;
             }
         });
-
+        
         videoSplit->setOutput(m_pbOutput);
+
         m_videoMixer->setOutput(videoSplit);
 
     }
