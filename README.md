@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/jgh-/VideoCore.png?label=ready&title=Ready)](https://waffle.io/jgh-/VideoCore)
 
 #VideoCore
 _&copy; 2013-2014 James G Hurley_
