@@ -1,11 +1,11 @@
 Pod::Spec.new do |s|
   s.name                = "VideoCore"
-  s.version             = "0.1.9"
-  s.summary             = "An audio and video manipulation pipeline for iOS and Mac OS X."
+  s.version             = "0.1.9.2"
+  s.summary             = "An audio and video manipulation and streaming pipeline with support for RTMP."
   s.description      = <<-DESC
                           This is a work-in-progress library with the
                           intention of being an audio and video manipulation
-                          pipeline for iOS and Mac OS X.
+                          and streaming pipeline for iOS.
                           DESC
   s.homepage            = "https://github.com/jgh-/VideoCore"
   s.license             = 'MIT'
@@ -22,12 +22,12 @@ Pod::Spec.new do |s|
                             'sources/**/*.h*', 'sources/**/*.cpp', 'sources/**/*.m*',
                             'stream/**/*.h*', 'stream/**/*.cpp', 'stream/**/*.m*',
                             'system/**/*.h*', 'system/**/*.cpp', 'system/**/*.m*',
-                            'transforms/**/*.h*', 'transforms/**/*.cpp', 'transforms/**/*.m*', 
+                            'transforms/**/*.h*', 'transforms/**/*.cpp', 'transforms/**/*.m*',
                             'api/**/*.h*', 'api/**/*.m*' ]
 
   s.frameworks          = [ 'VideoToolbox', 'AudioToolbox', 'AVFoundation', 'CFNetwork', 'CoreMedia',
                             'CoreVideo', 'OpenGLES', 'Foundation', 'CoreGraphics' ]
-                            
+
   s.libraries           = 'c++'
 
   s.dependency          'boost', '~> 1.51.0'

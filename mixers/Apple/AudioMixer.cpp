@@ -71,7 +71,7 @@ namespace videocore { namespace Apple {
         AudioStreamBasicDescription out = {0};
         
         in.mFormatID = kAudioFormatLinearPCM;
-        in.mFormatFlags = kAudioFormatFlagsCanonical;
+        in.mFormatFlags =  kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
         in.mChannelsPerFrame = inChannelCount;
         in.mSampleRate = inFrequncyInHz;
         in.mBitsPerChannel = inBitsPerChannel;
@@ -80,7 +80,7 @@ namespace videocore { namespace Apple {
         in.mBytesPerPacket = in.mBytesPerFrame * in.mFramesPerPacket;
         
         out.mFormatID = kAudioFormatLinearPCM;
-        out.mFormatFlags = kAudioFormatFlagsCanonical;
+        out.mFormatFlags =  kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
         out.mChannelsPerFrame = m_outChannelCount;
         out.mSampleRate = m_outFrequencyInHz;
         out.mBitsPerChannel = m_outBitsPerChannel;

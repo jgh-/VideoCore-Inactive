@@ -1,18 +1,18 @@
 /*
- 
+
  Video Core
  Copyright (c) 2014 James G. Hurley
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in
  all copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,7 +20,7 @@
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  THE SOFTWARE.
- 
+
  */
 #include <videocore/rtmp/RTMPSession.h>
 
@@ -44,7 +44,7 @@ namespace videocore
 #endif
         boost::char_separator<char> sep("/");
         boost::tokenizer<boost::char_separator<char> > tokens(m_uri.path, sep );
-        
+
         auto itr = tokens.begin();
         std::stringstream pp;
         {
@@ -68,13 +68,13 @@ namespace videocore
             m_playPath = pp.str();
         }
         long port = (m_uri.port > 0) ? m_uri.port : 1935;
-        
+
         m_jobQueue.set_name("com.videocore.rtmp");
-        
+
         m_streamSession->connect(m_uri.host, static_cast<int>(port), [&](IStreamSession& session, StreamStatus_t status) {
             streamStatusChanged(status);
         });
-        
+
     }
     RTMPSession::~RTMPSession()
     {
@@ -87,13 +87,14 @@ namespace videocore
     void
     RTMPSession::setSessionParameters(videocore::IMetadata &parameters)
     {
-        
+
         RTMPSessionParameters_t& parms = dynamic_cast<RTMPSessionParameters_t&>(parameters);
         m_bitrate = parms.getData<kRTMPSessionParameterVideoBitrate>();
         m_frameDuration = parms.getData<kRTMPSessionParameterFrameDuration>();
         m_frameHeight = parms.getData<kRTMPSessionParameterHeight>();
         m_frameWidth = parms.getData<kRTMPSessionParameterWidth>();
         m_audioSampleRate = parms.getData<kRTMPSessionParameterAudioFrequency>();
+        m_audioStereo = parms.getData<kRTMPSessionParameterStereo>();
     }
     void
     RTMPSession::setBandwidthCallback(BandwidthCallback callback)
@@ -103,19 +104,17 @@ namespace videocore
     void
     RTMPSession::pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata)
     {
-        
         if(m_ending) {
             return ;
         }
         
         std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(size);
         buf->put(const_cast<uint8_t*>(data), size);
-        
+
         const RTMPMetadata_t inMetadata = static_cast<const RTMPMetadata_t&>(metadata);
-        
-        
+
         m_jobQueue.enqueue([&,buf,inMetadata]() {
-            
+
             std::vector<uint8_t> chunk;
             std::vector<uint8_t> & outb = this->m_outBuffer;
             size_t len = buf->size();
@@ -142,17 +141,17 @@ namespace videocore
             }
             m_previousChunkData[streamId] = ts;
             put_buff(chunk, p, tosend);
-            
+
             outb.insert(outb.end(), chunk.begin(), chunk.end());
-            
-            
+
+
             len -= tosend;
             p += tosend;
-            
+
             while(len > 0) {
                 tosend = std::min(len, m_currentChunkSize);
                 p[-1] = RTMP_CHUNK_TYPE_3 | (streamId & 0x1F);
-                
+
                 outb.insert(outb.end(), p-1, p+tosend);
                 p+=tosend;
                 len-=tosend;
@@ -160,23 +159,23 @@ namespace videocore
                     this->write(&outb[0], outb.size());
                     outb.clear();
                 }
-                
+
             }
             if(this->m_state != kClientStateConnected || outb.size() > 3072) {
                 this->write(&outb[0], outb.size());
                 outb.clear();
             }
-            
+
         });
-        
+
     }
     void
     RTMPSession::sendPacket(uint8_t* data, size_t size, RTMPChunk_0 metadata)
     {
         RTMPMetadata_t md(0.);
-        
+
         md.setData(metadata.timestamp.data, metadata.msg_length.data, metadata.msg_type_id, metadata.msg_stream_id);
-        
+
         pushBuffer(data, size, md);
     }
     void
@@ -190,17 +189,17 @@ namespace videocore
             count++;
         }
         if((m_streamSession->status() & kStreamStatusWriteBufferHasSpace) && m_streamOutRemainder.size()) {
-            
+
             uint8_t* buffer;
             size_t size = m_streamOutRemainder.size();
-            
+
             m_streamOutRemainder.read(&buffer, size, false); // Read the entire buffer, but do not advance the read pointer.
             //printf("Remain %8zu\n ", size);
             size_t sent = m_streamSession->write(buffer, size);
-            
+
             m_streamOutRemainder.read(&buffer, sent, true); // Advance the read pointer as far as we were able to send.
         }
-        
+
         while((m_streamSession->status() & kStreamStatusWriteBufferHasSpace) && m_streamOutQueue.size() > 0) {
             //printf("StreamQueue: %zu\n", m_streamOutQueue.size());
             std::shared_ptr<Buffer> front = m_streamOutQueue.front();
@@ -209,7 +208,7 @@ namespace videocore
             size_t size = front->size();
             front->read(&buf, size);
             size_t sent = m_streamSession->write(buf, size);
-            
+
             if(sent < size) {
                 m_streamOutRemainder.put(buf+sent, size-sent);
                 break;
@@ -219,35 +218,35 @@ namespace videocore
     void
     RTMPSession::dataReceived()
     {
-        
+
         static uint8_t buffer[4096] = {0};
         bool stop1 = false;
         bool stop2 = false;
         do {
-            
+
             size_t maxlen = m_streamInBuffer->total() - m_streamInBuffer->size();
             size_t len = m_streamSession->read(buffer, maxlen);
-            
+
             m_streamInBuffer->put(&buffer[0], len);
-            
+
             while(m_streamInBuffer->size() > 0 && !stop1) {
-                
+
                 switch(m_state) {
                     case kClientStateHandshake1s0:
                     {
                         uint8_t s0 ;
                         m_streamInBuffer->get(&s0, 1);
-                        
+
                         if(s0 == 0x03) {
                             setClientState(kClientStateHandshake1s1);
                         }
                     }
                         break;
-                        
+
                     case kClientStateHandshake1s1:
                     {
                         if(m_streamInBuffer->size() >= kRTMPSignatureSize) {
-                            
+
                             uint8_t* buf;
                             size_t size = m_streamInBuffer->read(&buf, kRTMPSignatureSize);
                             m_s1.resize(size);
@@ -263,7 +262,7 @@ namespace videocore
                         if(m_streamInBuffer->size() >= kRTMPSignatureSize) {
                             uint8_t* buf;
                             m_streamInBuffer->read(&buf, kRTMPSignatureSize);
-                            
+
                             setClientState(kClientStateHandshakeComplete);
                             handshake();
                             sendConnectPacket();
@@ -281,14 +280,14 @@ namespace videocore
                     }
                 }
             }
-            
+
         } while((m_streamSession->status() & kStreamStatusReadBufferHasBytes) && !stop2);
     }
     void
     RTMPSession::setClientState(ClientState_t state)
     {
         printf("RTMPStatus: %d\n", state);
-        
+
         m_state = state;
         m_callback(*this, state);
     }
@@ -318,9 +317,9 @@ namespace videocore
             setClientState(kClientStateError);
         }
     }
-    
+
     // RTMP
-    
+
     void
     RTMPSession::handshake()
     {
@@ -344,26 +343,26 @@ namespace videocore
     RTMPSession::handshake0()
     {
         char c0 = 0x03;
-        
+
         setClientState(kClientStateHandshake0);
-        
+
         write((uint8_t*)&c0, 1);
-        
+
         handshake();
     }
     void
     RTMPSession::handshake1()
     {
         setClientState(kClientStateHandshake1s0);
-        
+
         m_c1.resize(kRTMPSignatureSize);
         uint8_t* p;
         m_c1.read(&p, kRTMPSignatureSize);
         uint64_t zero = 0;
         m_c1.put((uint8_t*)&zero, sizeof(uint64_t));
-        
+
         write(p, kRTMPSignatureSize);
-        
+
     }
     void
     RTMPSession::handshake2()
@@ -374,10 +373,10 @@ namespace videocore
         p += 4;
         uint32_t zero = 0;
         memcpy(p, &zero, sizeof(uint32_t));
-        
+
         write(m_s1(), m_s1.size());
     }
-    
+
     void
     RTMPSession::sendConnectPacket()
     {
@@ -405,7 +404,7 @@ namespace videocore
         put_named_double(buff, "videoFunction", 1.);
         put_be16(buff, 0);
         put_byte(buff, kAMFObjectEnd);
-        
+
         metadata.msg_length.data = static_cast<int>( buff.size() );
         sendPacket(&buff[0], buff.size(), metadata);
     }
@@ -422,7 +421,7 @@ namespace videocore
         put_byte(buff, kAMFNull);
         put_string(buff, m_playPath);
         metadata.msg_length.data = static_cast<int> (buff.size());
-        
+
         sendPacket(&buff[0], buff.size(), metadata);
     }
     void
@@ -438,7 +437,7 @@ namespace videocore
         put_byte(buff, kAMFNull);
         put_string(buff, m_playPath);
         metadata.msg_length.data = static_cast<int>( buff.size() );
-        
+
         sendPacket(&buff[0], buff.size(), metadata);
     }
     void
@@ -454,7 +453,7 @@ namespace videocore
         put_double(buff, m_createStreamInvoke);
         put_byte(buff, kAMFNull);
         metadata.msg_length.data = static_cast<int>( buff.size() );
-        
+
         sendPacket(&buff[0], buff.size(), metadata);
     }
     void
@@ -465,7 +464,7 @@ namespace videocore
         metadata.msg_type_id = FLV_TAG_TYPE_INVOKE;
         std::vector<uint8_t> buff;
         std::vector<uint8_t> chunk;
-        
+
         put_string(buff, "publish");
         put_double(buff, ++m_numberOfInvokes);
         m_trackedCommands[m_numberOfInvokes] = "publish";
@@ -473,53 +472,53 @@ namespace videocore
         put_string(buff, m_playPath);
         put_string(buff, "live");
         metadata.msg_length.data = static_cast<int>( buff.size() );
-        
+
         sendPacket(&buff[0], buff.size(), metadata);
     }
     void
     RTMPSession::sendHeaderPacket()
     {
         std::vector<uint8_t> outBuffer;
-        
+
         std::vector<uint8_t> enc;
         RTMPChunk_0 metadata = {{0}};
-        
+
         put_string(enc, "@setDataFrame");
         put_string(enc, "onMetaData");
         put_byte(enc, kAMFEMCAArray);
         put_be32(enc, 5+5+2); // videoEnabled + audioEnabled + 2
-        
+
         put_named_double(enc, "duration", 0.0);
         put_named_double(enc, "width", m_frameWidth);
         put_named_double(enc, "height", m_frameHeight);
         put_named_double(enc, "videodatarate", static_cast<double>(m_bitrate) / 1024.);
         put_named_double(enc, "framerate", m_frameDuration);
         put_named_double(enc, "videocodecid", 7.);
-        
-        
+
+
         put_named_double(enc, "audiodatarate", 131152. / 1024.);
         put_named_double(enc, "audiosamplerate", m_audioSampleRate);
         put_named_double(enc, "audiosamplesize", 16);
-        put_named_bool(enc, "stereo", true);
+        put_named_bool(enc, "stereo", m_audioStereo);
         put_named_double(enc, "audiocodecid", 10.);
-        
-        
+
+
         put_named_double(enc, "filesize", 0.);
         put_be16(enc, 0);
         put_byte(enc, kAMFObjectEnd);
         size_t len = enc.size();
-        
-        
+
+
         put_buff(outBuffer, (uint8_t*)&enc[0], static_cast<size_t>(len));
-        
-        
+
+
         metadata.msg_type_id = FLV_TAG_TYPE_META;
         metadata.msg_stream_id = kAudioChannelStreamId;
         metadata.msg_length.data = static_cast<int>( outBuffer.size() );
         metadata.timestamp.data = 0;
-        
+
         sendPacket(&outBuffer[0], outBuffer.size(), metadata);
-        
+
     }
     void
     RTMPSession::sendDeleteStream()
@@ -533,11 +532,11 @@ namespace videocore
         m_trackedCommands[m_numberOfInvokes] = "deleteStream";
         put_byte(buff, kAMFNull);
         put_double(buff, m_streamId);
-        
+
         metadata.msg_length.data = static_cast<int>( buff.size() );
-        
+
         sendPacket(&buff[0], buff.size(), metadata);
-        
+
     }
     bool
     RTMPSession::parseCurrentData()
@@ -545,9 +544,9 @@ namespace videocore
         uint8_t* p, *start ;
         m_streamInBuffer->read(&p, m_streamInBuffer->size(), false);
         start = p;
-        
+
         if(!p) return false;
-        
+
         int header_type = (p[0] & 0xC0) >> 6;
         p++;
         switch(header_type) {
@@ -556,16 +555,16 @@ namespace videocore
                 RTMPChunk_0 chunk;
                 memcpy(&chunk, p, sizeof(RTMPChunk_0));
                 chunk.msg_length.data = get_be24((uint8_t*)&chunk.msg_length);
-                
+
                 p+=sizeof(chunk);
-                
+
                 switch(chunk.msg_type_id) {
                     case RTMP_PT_BYTES_READ:
                     {
                         printf("received bytes read\n");
                     }
                         break;
-                        
+
                     case RTMP_PT_CHUNK_SIZE:
                     {
                         //unsigned long newChunkSize = get_be32(p);
@@ -585,7 +584,7 @@ namespace videocore
                         printf("received client bandwidth\n");
                     }
                         break;
-                        
+
                     case RTMP_PT_SERVER_BW:
                     {
                         printf("received server bandwidth\n");
@@ -602,32 +601,32 @@ namespace videocore
                         printf("received video\n");
                     }
                         break;
-                        
+
                     case RTMP_PT_AUDIO:
                     {
                         printf("received audio\n");
                     }
                         break;
-                        
+
                     case RTMP_PT_METADATA:
                     {
                         printf("received metadata\n");
                     }
                         break;
-                        
+
                     case RTMP_PT_NOTIFY:
                     {
                         printf("received notify\n");
                     }
                         break;
-                        
+
                     default:
                     {
                         printf("received unknown packet type: 0x%02X\n", chunk.msg_type_id);
                     }
                         break;
                 }
-                
+
                 p+=chunk.msg_length.data;
             }
                 break;
@@ -662,7 +661,7 @@ namespace videocore
 
         return true;
     }
-    
+
     void
     RTMPSession::handleInvoke(uint8_t* p)
     {
@@ -700,17 +699,17 @@ namespace videocore
                 setClientState(kClientStateSessionStarted);
             }
         }
-        
+
     }
-    
+
     std::string RTMPSession::parseStatusCode(uint8_t *p) {
         uint8_t *start = p;
         std::map<std::string, std::string> props;
-        
+
         // skip over the packet id
         double num = get_double(p+1); // num
         p += sizeof(num) + 1;
-        
+
         // keep reading until we find an AMF Object
         bool foundObject = false;
         while (!foundObject) {
@@ -722,7 +721,7 @@ namespace videocore
                 p += amfPrimitiveObjectSize(p);
             }
         }
-        
+
         // read the properties of the object
         uint16_t nameLen, valLen;
         char propName[128], propVal[128];
@@ -745,11 +744,11 @@ namespace videocore
                 props[propName] = "";
             }
         } while (get_be24(p) != AMF_DATA_TYPE_OBJECT_END);
-        
+
         p = start;
         return props["code"];
     }
-    
+
     int32_t RTMPSession::amfPrimitiveObjectSize(uint8_t* p) {
         switch(p[0]) {
             case AMF_DATA_TYPE_NUMBER:       return 9;

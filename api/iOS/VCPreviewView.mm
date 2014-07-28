@@ -169,7 +169,7 @@
     
     dispatch_async(dispatch_get_main_queue(), ^{
         EAGLContext* current = [EAGLContext currentContext];
-        [EAGLContext setCurrentContext:self.context];
+        [EAGLContext setCurrentContext:bSelf.context];
         
         if(updateTexture) {
             // create a new texture
