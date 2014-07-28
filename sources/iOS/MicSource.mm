@@ -64,50 +64,60 @@ static OSStatus handleInputBuffer(void *inRefCon,
 namespace videocore { namespace iOS {
 
     MicSource::MicSource(double sampleRate, int channelCount, std::function<void(AudioUnit&)> excludeAudioUnit)
-    : m_sampleRate(sampleRate), m_channelCount(channelCount)
+    : m_sampleRate(sampleRate), m_channelCount(channelCount), m_audioUnit(nullptr), m_component(nullptr)
     {
+        
 
         AVAudioSession *session = [AVAudioSession sharedInstance];
 
-        [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionMixWithOthers | AVAudioSessionCategoryOptionDefaultToSpeaker error:nil];
-        [session setActive:YES error:nil];
+        __block MicSource* bThis = this;
+        
 
-        AudioComponentDescription acd;
-        acd.componentType = kAudioUnitType_Output;
-        acd.componentSubType = kAudioUnitSubType_VoiceProcessingIO;
-        acd.componentManufacturer = kAudioUnitManufacturer_Apple;
-        acd.componentFlags = 0;
-        acd.componentFlagsMask = 0;
+        [session requestRecordPermission:^(BOOL granted) {
+            if(granted) {
 
-        m_component = AudioComponentFindNext(NULL, &acd);
+                [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionMixWithOthers | AVAudioSessionCategoryOptionDefaultToSpeaker error:nil];
+                [session setActive:YES error:nil];
+                
+                AudioComponentDescription acd;
+                acd.componentType = kAudioUnitType_Output;
+                acd.componentSubType = kAudioUnitSubType_VoiceProcessingIO;
+                acd.componentManufacturer = kAudioUnitManufacturer_Apple;
+                acd.componentFlags = 0;
+                acd.componentFlagsMask = 0;
+                
+                bThis->m_component = AudioComponentFindNext(NULL, &acd);
+                
+                AudioComponentInstanceNew(bThis->m_component, &bThis->m_audioUnit);
+                
+                if(excludeAudioUnit) {
+                    excludeAudioUnit(bThis->m_audioUnit);
+                }
+                UInt32 flagOne = 1;
+                
+                AudioUnitSetProperty(bThis->m_audioUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input, 1, &flagOne, sizeof(flagOne));
+                
+                AudioStreamBasicDescription desc = {0};
+                desc.mSampleRate = bThis->m_sampleRate;
+                desc.mFormatID = kAudioFormatLinearPCM;
+                desc.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+                desc.mChannelsPerFrame = bThis->m_channelCount;
+                desc.mFramesPerPacket = 1;
+                desc.mBitsPerChannel = 16;
+                desc.mBytesPerFrame = desc.mBitsPerChannel / 8 * desc.mChannelsPerFrame;
+                desc.mBytesPerPacket = desc.mBytesPerFrame * desc.mFramesPerPacket;
+                
+                AURenderCallbackStruct cb;
+                cb.inputProcRefCon = this;
+                cb.inputProc = handleInputBuffer;
+                AudioUnitSetProperty(bThis->m_audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &desc, sizeof(desc));
+                AudioUnitSetProperty(bThis->m_audioUnit, kAudioOutputUnitProperty_SetInputCallback, kAudioUnitScope_Global, 1, &cb, sizeof(cb));
+                
+                AudioUnitInitialize(bThis->m_audioUnit);
+                AudioOutputUnitStart(bThis->m_audioUnit);
+            }
+        }];
 
-        AudioComponentInstanceNew(m_component, &m_audioUnit);
-
-        if(excludeAudioUnit) {
-            excludeAudioUnit(m_audioUnit);
-        }
-        UInt32 flagOne = 1;
-
-        AudioUnitSetProperty(m_audioUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input, 1, &flagOne, sizeof(flagOne));
-
-        AudioStreamBasicDescription desc = {0};
-        desc.mSampleRate = m_sampleRate;
-        desc.mFormatID = kAudioFormatLinearPCM;
-        desc.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
-        desc.mChannelsPerFrame = m_channelCount;
-        desc.mFramesPerPacket = 1;
-        desc.mBitsPerChannel = 16;
-        desc.mBytesPerFrame = desc.mBitsPerChannel / 8 * desc.mChannelsPerFrame;
-        desc.mBytesPerPacket = desc.mBytesPerFrame * desc.mFramesPerPacket;
-
-        AURenderCallbackStruct cb;
-        cb.inputProcRefCon = this;
-        cb.inputProc = handleInputBuffer;
-        AudioUnitSetProperty(m_audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &desc, sizeof(desc));
-        AudioUnitSetProperty(m_audioUnit, kAudioOutputUnitProperty_SetInputCallback, kAudioUnitScope_Global, 1, &cb, sizeof(cb));
-
-        AudioUnitInitialize(m_audioUnit);
-        AudioOutputUnitStart(m_audioUnit);
 
     }
     MicSource::~MicSource() {
@@ -116,8 +126,11 @@ namespace videocore { namespace iOS {
             auto mixer = std::dynamic_pointer_cast<IAudioMixer>(output);
             mixer->unregisterSource(shared_from_this());
         }
-        AudioOutputUnitStop(m_audioUnit);
-        AudioComponentInstanceDispose(m_audioUnit);
+        if(m_audioUnit) {
+            AudioOutputUnitStop(m_audioUnit);
+            AudioComponentInstanceDispose(m_audioUnit);
+        }
+        
     }
     void
     MicSource::inputCallback(uint8_t *data, size_t data_size)

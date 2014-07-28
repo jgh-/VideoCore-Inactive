@@ -518,9 +518,9 @@ namespace videocore { namespace simpleApi {
                                                                            self.bitrate);
         } else {
             m_h264Encoder =std::make_shared<videocore::iOS::H264Encode>(self.videoSize.width,
-                                                                    self.videoSize.height,
-                                                                    self.fps,
-                                                                    self.bitrate);
+                                                                        self.videoSize.height,
+                                                                        self.fps,
+                                                                        self.bitrate);
         }
         m_audioMixer->setOutput(m_aacEncoder);
         m_videoSplit->setOutput(m_h264Encoder);
