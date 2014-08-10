@@ -89,7 +89,7 @@ namespace videocore { namespace iOS {
             {
                 kAudioEncoderComponentType,
                 kAudioFormatMPEG4AAC,
-                kAppleSoftwareAudioCodecManufacturer
+                kAppleHardwareAudioCodecManufacturer
             }
         };
 
