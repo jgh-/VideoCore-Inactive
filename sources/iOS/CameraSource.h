@@ -117,6 +117,21 @@ namespace videocore { namespace iOS {
          */
         bool setTorch(bool torchOn);
         
+        /*!
+         *  Attempt to set the POI for focus.
+         *  (0,0) represents top left, (1,1) represents bottom right.
+         *
+         *  \return Success. `false` is returned if the device doesn't support a POI.
+         */
+        bool setFocusPointOfInterest(float x, float y);
+        
+        void setContinuousAutofocus(bool wantsContinuous);
+        
+        bool setExposurePointOfInterest(float x, float y);
+        
+        void setContinuousExposure(bool wantsContinuous);
+        
+        
     public:
         /*! Used by Objective-C Capture Session */
         void bufferCaptured(CVPixelBufferRef pixelBufferRef);
@@ -153,6 +168,7 @@ namespace videocore { namespace iOS {
         bool m_usingDeprecatedMethods;
         bool m_torchOn;
         bool m_useInterfaceOrientation;
+
     };
     
 }

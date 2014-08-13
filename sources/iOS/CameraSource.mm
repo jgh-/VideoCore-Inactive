@@ -153,6 +153,7 @@ namespace videocore { namespace iOS {
                     AVCaptureVideoDataOutput* output;
                     
                     NSString* preset = AVCaptureSessionPresetHigh;
+                    /**! TO BE REMOVED 0.2.0 **/
                     if(bThis->m_usingDeprecatedMethods) {
                         int mult = ceil(double(bThis->m_targetSize.h) / 270.0) * 270 ;
                         switch(mult) {
@@ -168,6 +169,8 @@ namespace videocore { namespace iOS {
                         }
                         session.sessionPreset = preset;
                     }
+                    /**! END TO BE REMOVED SECTION **/
+                    
                     bThis->m_captureSession = session;
                     
                     input = [AVCaptureDeviceInput deviceInputWithDevice:((AVCaptureDevice*)m_captureDevice) error:nil];
@@ -387,6 +390,7 @@ namespace videocore { namespace iOS {
         auto output = m_output.lock();
         if(output) {
             
+            /**! TO BE REMOVED FOR 0.2.0 **/
             if(m_usingDeprecatedMethods && m_isFirst) {
                 
                 m_isFirst = false;
@@ -416,7 +420,7 @@ namespace videocore { namespace iOS {
                 
                 m_matrix = mat;
             }
-            
+            /**! END SECTION TO BE REMOVED **/
             
             VideoBufferMetadata md(1.f / float(m_fps));
             
@@ -426,6 +430,79 @@ namespace videocore { namespace iOS {
             output->pushBuffer((uint8_t*)pixelBufferRef, sizeof(pixelBufferRef), md);
             CVPixelBufferRelease(pixelBufferRef);
         }
+    }
+    
+    void
+    CameraSource::setContinuousAutofocus(bool wantsContinuous)
+    {
+        AVCaptureDevice* device = (AVCaptureDevice*)m_captureDevice;
+        
+        NSError* err;
+        [device lockForConfiguration:&err];
+        
+        if(!err) {
+            device.focusMode = wantsContinuous ? AVCaptureFocusModeContinuousAutoFocus : AVCaptureFocusModeAutoFocus;
+            [device unlockForConfiguration];
+        }
+        
+    }
+    void
+    CameraSource::setContinuousExposure(bool wantsContinuous)
+    {
+        AVCaptureDevice* device = (AVCaptureDevice*)m_captureDevice;
+        
+        NSError* err;
+        [device lockForConfiguration:&err];
+        
+        if(!err) {
+            device.exposureMode = wantsContinuous ? AVCaptureExposureModeContinuousAutoExposure : AVCaptureExposureModeAutoExpose;
+            [device unlockForConfiguration];
+        }
+    }
+    
+    bool
+    CameraSource::setFocusPointOfInterest(float x, float y)
+    {
+        AVCaptureDevice* device = (AVCaptureDevice*)m_captureDevice;
+        bool ret = device.focusPointOfInterestSupported;
+        
+        if(ret) {
+            NSError* err;
+            [device lockForConfiguration:&err];
+            if(!err) {
+                [device setFocusPointOfInterest:CGPointMake(x, y)];
+                
+                device.focusMode = device.focusMode;
+                
+                [device unlockForConfiguration];
+                
+            } else {
+                ret = false;
+            }
+        }
+        
+        return ret;
+    }
+    
+    bool
+    CameraSource::setExposurePointOfInterest(float x, float y)
+    {
+        AVCaptureDevice* device = (AVCaptureDevice*)m_captureDevice;
+        bool ret = device.exposurePointOfInterestSupported;
+        
+        if(ret) {
+            NSError* err;
+            [device lockForConfiguration:&err];
+            if(!err) {
+                [device setExposurePointOfInterest:CGPointMake(x, y)];
+                device.exposureMode = device.exposureMode;
+                [device unlockForConfiguration];
+            } else {
+                ret = false;
+            }
+        }
+        
+        return ret;
     }
     
 }

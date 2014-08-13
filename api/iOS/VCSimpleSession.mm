@@ -122,6 +122,12 @@ namespace videocore { namespace simpleApi {
     VCCameraState _cameraState;
     VCSessionState _rtmpSessionState;
     BOOL   _torch;
+    
+    BOOL _continuousAutofocus;
+    BOOL _continuousExposure;
+    CGPoint _focusPOI;
+    CGPoint _exposurePOI;
+    
 }
 @property (nonatomic, readwrite) VCSessionState rtmpSessionState;
 
@@ -141,6 +147,10 @@ namespace videocore { namespace simpleApi {
 @dynamic audioChannelCount;
 @dynamic audioSampleRate;
 @dynamic micGain;
+@dynamic continuousAutofocus;
+@dynamic continuousExposure;
+@dynamic focusPointOfInterest;
+@dynamic exposurePointOfInterest;
 
 @dynamic previewView;
 // -----------------------------------------------------------------------------
@@ -270,6 +280,46 @@ namespace videocore { namespace simpleApi {
 - (UIView*) previewView {
     return _previewView;
 }
+
+- (void) setContinuousAutofocus:(BOOL)continuousAutofocus
+{
+    _continuousAutofocus = continuousAutofocus;
+    if( m_cameraSource ) {
+        m_cameraSource->setContinuousAutofocus(continuousAutofocus);
+    }
+}
+- (BOOL) continuousAutofocus {
+    return _continuousAutofocus;
+}
+- (void) setContinuousExposure:(BOOL)continuousExposure
+{
+    _continuousExposure = continuousExposure;
+    if(m_cameraSource) {
+        m_cameraSource->setContinuousExposure(continuousExposure);
+    }
+}
+
+- (void) setFocusPointOfInterest:(CGPoint)focusPointOfInterest {
+    _focusPOI = focusPointOfInterest;
+    
+    if(m_cameraSource) {
+        m_cameraSource->setFocusPointOfInterest(focusPointOfInterest.x, focusPointOfInterest.y);
+    }
+}
+- (CGPoint) focusPointOfInterest {
+    return _focusPOI;
+}
+- (void) setExposurePointOfInterest:(CGPoint)exposurePointOfInterest
+{
+    _exposurePOI = exposurePointOfInterest;
+    if(m_cameraSource) {
+        m_cameraSource->setExposurePointOfInterest(exposurePointOfInterest.x, exposurePointOfInterest.y);
+    }
+}
+- (CGPoint) exposurePointOfInterest {
+    return _exposurePOI;
+}
+
 // -----------------------------------------------------------------------------
 //  Public Methods
 // -----------------------------------------------------------------------------
@@ -322,6 +372,8 @@ namespace videocore { namespace simpleApi {
     self.videoZoomFactor = 1.f;
     
     _cameraState = VCCameraStateBack;
+    _exposurePOI = _focusPOI = CGPointMake(0.5f, 0.5f);
+    _continuousExposure = _continuousAutofocus = YES;
     
     _graphManagementQueue = dispatch_queue_create("com.videocore.session.graph", 0);
 
@@ -490,6 +542,9 @@ namespace videocore { namespace simpleApi {
 
         std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,false,self.useInterfaceOrientation);
 
+        m_cameraSource->setContinuousAutofocus(true);
+        m_cameraSource->setContinuousExposure(true);
+        
         m_cameraSource->setOutput(aspectTransform);
         aspectTransform->setOutput(positionTransform);
         positionTransform->setOutput(m_videoMixer);
