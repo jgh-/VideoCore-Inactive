@@ -37,7 +37,7 @@
 namespace videocore
 {
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback callback)
-    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback), m_bandwidthCallback(nullptr), m_previousTimestamp(0), m_currentChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false)
+    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback), m_bandwidthCallback(nullptr), m_currentChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false)
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
@@ -184,7 +184,7 @@ namespace videocore
         if(size > 0) {
             std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(size);
             buf->put(data, size);
-            m_streamOutQueue.push(buf);
+            m_streamOutQueue.push_back(buf);
             static size_t count = 0;
             count++;
         }
@@ -203,7 +203,7 @@ namespace videocore
         while((m_streamSession->status() & kStreamStatusWriteBufferHasSpace) && m_streamOutQueue.size() > 0) {
             //printf("StreamQueue: %zu\n", m_streamOutQueue.size());
             std::shared_ptr<Buffer> front = m_streamOutQueue.front();
-            m_streamOutQueue.pop();
+            m_streamOutQueue.pop_front();
             uint8_t* buf;
             size_t size = front->size();
             front->read(&buf, size);
@@ -214,6 +214,37 @@ namespace videocore
                 break;
             }
         }
+        
+        auto now = std::chrono::steady_clock::now();
+        
+        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>( now - m_bpsEpoch );
+        
+        if ( diff.count() > 1000 )
+        {
+            size_t size = m_streamOutRemainder.size();
+            for (auto & it : m_streamOutQueue) {
+                size += it->size();
+            }
+            m_bpsSamples.push_back(size);
+
+            if(m_bpsSamples.size() == kBitrateAdaptationSampleCount) {
+                
+                int vector = 0;
+                int lastSample = 0;
+                for ( auto & it : m_bpsSamples ) {
+                    vector += (it == lastSample ? 0 : (it > lastSample ? -1 : 1));
+                    lastSample = it;
+                }
+                printf("vector: %d\n", vector);
+                vector = std::max(-1, std::min(1, vector));
+                if(m_bandwidthCallback) {
+                    m_bandwidthCallback(vector, 0);
+                }
+                m_bpsSamples.clear();
+            }
+            m_bpsEpoch = now;
+        }
+        
     }
     void
     RTMPSession::dataReceived()

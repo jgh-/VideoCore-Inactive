@@ -30,6 +30,7 @@
 #include <UriParser/UriParser.hpp>
 
 #include <functional>
+#include <deque>
 #include <queue>
 #include <map>
 
@@ -44,6 +45,8 @@ namespace videocore
 {
     class RTMPSession;
 
+    static const int32_t kBitrateAdaptationSampleCount = 5;
+    
     enum {
         kRTMPSessionParameterWidth=0,
         kRTMPSessionParameterHeight,
@@ -115,9 +118,9 @@ namespace videocore
         RingBuffer          m_streamOutRemainder;
         Buffer              m_s1, m_c1;
 
-        std::queue<std::shared_ptr<Buffer> > m_streamOutQueue;
+        std::deque<std::shared_ptr<Buffer> > m_streamOutQueue;
 
-        std::map<int, uint64_t>                  m_previousChunkData;
+        std::map<int, uint64_t>             m_previousChunkData;
         std::unique_ptr<RingBuffer>         m_streamInBuffer;
         std::unique_ptr<IStreamSession>     m_streamSession;
         std::vector<uint8_t> m_outBuffer;
@@ -130,7 +133,9 @@ namespace videocore
         std::string                     m_app;
         std::map<int32_t, std::string>  m_trackedCommands;
 
-        int64_t         m_previousTimestamp;
+        std::chrono::steady_clock::time_point m_bpsEpoch;
+        std::deque<size_t>                    m_bpsSamples;
+        
         size_t          m_currentChunkSize;
         int32_t         m_streamId;
         int32_t         m_createStreamInvoke;
