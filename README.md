@@ -102,6 +102,9 @@ videocore::Apple::StreamSession : videocore::IStreamSession
 
 ##Version History
 
+* 0.1.10
+	* Bugfixes
+	* Adaptive Bitrate introduced
 * 0.1.9
 	* Bugfixes, memory leak fixes
 	* Introduces the ability to choose whether to use interface orientation or device orientation for Camera orientation.
