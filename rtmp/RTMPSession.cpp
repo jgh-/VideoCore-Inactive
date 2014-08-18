@@ -219,13 +219,13 @@ namespace videocore
         
         auto diff = std::chrono::duration_cast<std::chrono::milliseconds>( now - m_bpsEpoch );
         
-        if ( diff.count() > 1000 )
+        if ( diff.count() > 500 && m_state == kClientStateSessionStarted)
         {
-            size_t size = m_streamOutRemainder.size();
+            size_t bufferSize = m_streamOutRemainder.size();
             for (auto & it : m_streamOutQueue) {
-                size += it->size();
+                bufferSize += it->size();
             }
-            m_bpsSamples.push_back(size);
+            m_bpsSamples.push_back(bufferSize);
 
             if(m_bpsSamples.size() == kBitrateAdaptationSampleCount) {
                 
@@ -235,8 +235,15 @@ namespace videocore
                     vector += (it == lastSample ? 0 : (it > lastSample ? -1 : 1));
                     lastSample = it;
                 }
-                printf("vector: %d\n", vector);
+                printf("bufferSize: %zu\n", bufferSize);
                 vector = std::max(-1, std::min(1, vector));
+                if( bufferSize == 0 && vector == 0 )
+                {
+                    // If all buffers have been empty, we can try bumping up the
+                    // bitrate a bit
+                    vector = 1;
+                }
+       
                 if(m_bandwidthCallback) {
                     m_bandwidthCallback(vector, 0);
                 }

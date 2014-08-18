@@ -37,6 +37,10 @@ namespace videocore { namespace Apple {
         // Input is expecting a CVPixelBufferRef
         void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
         
+        void setBitrate(int bitrate) ;
+        
+        const int bitrate() const { return m_bitrate; };
+        
     public:
         void compressionSessionOutput(const uint8_t* data, size_t size, uint64_t ts);
         

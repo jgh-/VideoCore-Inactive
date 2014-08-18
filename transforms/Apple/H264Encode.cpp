@@ -231,5 +231,31 @@ namespace videocore { namespace Apple {
 #endif
 
     }
+    
+    void
+    H264Encode::setBitrate(int bitrate)
+    {
+        m_bitrate = bitrate;
+        if(m_compressionSession) {
+            const int v = m_bitrate;
+            CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
+            CVReturn err = VTSessionSetProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_AverageBitRate, ref);
+            
+            CFTypeRef setbr;
+            
+            VTSessionCopyProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_AverageBitRate, kCFAllocatorDefault, &setbr);
+            
+            if(CFGetTypeID(setbr) == CFNumberGetTypeID()) {
+                CFNumberRef num = (CFNumberRef)setbr;
+                int32_t val;
+                CFNumberGetValue(num, kCFNumberSInt32Type, &val);
+                printf("Bitrate out: %d\n", val);
+            }
+            CFRelease(setbr);
+            
+            printf("Err: %d\n", err);
+            CFRelease(ref);
+        }
+    }
 }
 }

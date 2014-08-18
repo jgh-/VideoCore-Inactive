@@ -113,6 +113,7 @@ namespace videocore { namespace simpleApi {
     CGSize _videoSize;
     int    _bitrate;
     int    _fps;
+    int    _bpsCeiling;
     BOOL   _useInterfaceOrientation;
     float  _videoZoomFactor;
     int    _audioChannelCount;
@@ -219,6 +220,9 @@ namespace videocore { namespace simpleApi {
 {
     _rtmpSessionState = rtmpSessionState;
     [self.delegate connectionStatusChanged:rtmpSessionState];
+    if(rtmpSessionState == VCSessionStateEnded || rtmpSessionState == VCSessionStateError) {
+        m_outputSession.reset();
+    }
 }
 - (VCSessionState) rtmpSessionState
 {
@@ -445,6 +449,38 @@ namespace videocore { namespace simpleApi {
         }
 
     }) );
+    VCSimpleSession* bSelf = self;
+    
+    _bpsCeiling = 0;
+    
+    m_outputSession->setBandwidthCallback([=](int vector, int predicted)
+                                          {
+                                              if(bSelf->m_h264Encoder) {
+                                                  auto enc = std::dynamic_pointer_cast<videocore::Apple::H264Encode>(bSelf->m_h264Encoder);
+                                                  
+                                                  if(vector < 0) {
+                                                      int ceiling = enc->bitrate();
+                                                      float mult = 0.5;
+                                                      if(self->_bpsCeiling > 0) {
+                                                          mult = 0.75;
+                                                      }
+                                                      enc->setBitrate(enc->bitrate() * mult);
+                                                      self->_bpsCeiling = ceiling;
+                                                  } else if (vector > 0) {
+                                                      int target = enc->bitrate() * 1.1;
+                                                      
+                                                      if(self->_bpsCeiling > 0) {
+                                                          target = MIN(target, self->_bpsCeiling);
+                                                      }
+                                                      if(target != self->_bpsCeiling) {
+                                                          enc->setBitrate(target);
+                                                      }
+                                                  }
+                                                  printf("[%d] Set bitrate to %d\n",vector, enc->bitrate());
+                                              }
+                                              
+                                          });
+    
     videocore::RTMPSessionParameters_t sp ( 0. );
 
     sp.setData(self.videoSize.width,
@@ -586,6 +622,7 @@ namespace videocore { namespace simpleApi {
         m_h264Split = std::make_shared<videocore::Split>();
         m_aacEncoder->setOutput(m_aacSplit);
         m_h264Encoder->setOutput(m_h264Split);
+        
     }
     {
         m_h264Packetizer = std::make_shared<videocore::rtmp::H264Packetizer>();
