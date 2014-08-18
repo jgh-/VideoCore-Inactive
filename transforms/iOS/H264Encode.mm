@@ -367,5 +367,14 @@ namespace videocore { namespace iOS {
         }
         
     }
+    
+    void
+    H264Encode::setBitrate(int bitrate)
+    {
+        m_bitrate = bitrate;
+        teardownWriter(!m_currentWriter);
+        setupWriter(!m_currentWriter);
+        swapWriters(true);
+    }
 }
 }

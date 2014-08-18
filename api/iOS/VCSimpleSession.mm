@@ -456,7 +456,7 @@ namespace videocore { namespace simpleApi {
     m_outputSession->setBandwidthCallback([=](int vector, int predicted)
                                           {
                                               if(bSelf->m_h264Encoder) {
-                                                  auto enc = std::dynamic_pointer_cast<videocore::Apple::H264Encode>(bSelf->m_h264Encoder);
+                                                  auto enc = std::dynamic_pointer_cast<videocore::IEncoder>(bSelf->m_h264Encoder);
                                                   
                                                   if(vector < 0) {
                                                       int ceiling = enc->bitrate();
@@ -474,9 +474,11 @@ namespace videocore { namespace simpleApi {
                                                       }
                                                       if(target != self->_bpsCeiling) {
                                                           enc->setBitrate(target);
+                                                          
                                                       }
                                                   }
                                                   printf("[%d] Set bitrate to %d\n",vector, enc->bitrate());
+                                                  
                                               }
                                               
                                           });
