@@ -21,6 +21,7 @@
  */
 #include <Availability.h>
 #include <TargetConditionals.h>
+#include <CoreFoundation/CoreFoundation.h>
 
 #if TARGET_OS_IPHONE
 #if defined(__IPHONE_8_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_8_0
@@ -235,6 +236,7 @@ namespace videocore { namespace Apple {
     void
     H264Encode::setBitrate(int bitrate)
     {
+#if VERSION_OK
         m_bitrate = bitrate;
         if(m_compressionSession) {
             const int v = m_bitrate;
@@ -242,6 +244,7 @@ namespace videocore { namespace Apple {
             VTSessionSetProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_AverageBitRate, ref);
             CFRelease(ref);
         }
+#endif
     }
 }
 }
