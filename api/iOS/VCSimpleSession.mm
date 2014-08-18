@@ -415,7 +415,7 @@ namespace videocore { namespace simpleApi {
                     andStreamKey:(NSString *)streamKey
 {
     std::stringstream uri ;
-    uri << [rtmpUrl UTF8String] << "/" << [streamKey UTF8String];
+    uri << (rtmpUrl ? [rtmpUrl UTF8String] : "") << "/" << (streamKey ? [streamKey UTF8String] : "");
 
     m_outputSession.reset(
             new videocore::RTMPSession ( uri.str(),
