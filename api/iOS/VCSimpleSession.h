@@ -75,7 +75,7 @@ typedef NS_ENUM(NSInteger, VCCameraState)
 @property (nonatomic, assign) CGPoint       exposurePointOfInterest;
 @property (nonatomic, assign) BOOL          continuousAutofocus;
 @property (nonatomic, assign) BOOL          continuousExposure;
-
+@property (nonatomic, assign) BOOL          useAdaptiveBitrate;
 
 @property (nonatomic, assign) id<VCSessionDelegate> delegate;
 

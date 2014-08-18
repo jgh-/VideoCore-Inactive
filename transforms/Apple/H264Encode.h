@@ -19,23 +19,31 @@
  USA
  
  */
-#include <videocore/transforms/ITransform.hpp>
+#include <videocore/transforms/IEncoder.hpp>
 #include <videocore/system/JobQueue.hpp>
 #include <videocore/system/Buffer.hpp>
 #include <deque>
 
 namespace videocore { namespace Apple {
  
-    class H264Encode : public ITransform
+    class H264Encode : public IEncoder
     {
     public:
         H264Encode( int frame_w, int frame_h, int fps, int bitrate );
         ~H264Encode();
         
+    public:
+        /*! ITransform */
         void setOutput(std::shared_ptr<IOutput> output) { m_output = output; };
         
         // Input is expecting a CVPixelBufferRef
         void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
+        
+    public:
+        /*! IEncoder */
+        void setBitrate(int bitrate) ;
+        
+        const int bitrate() const { return m_bitrate; };
         
     public:
         void compressionSessionOutput(const uint8_t* data, size_t size, uint64_t ts);

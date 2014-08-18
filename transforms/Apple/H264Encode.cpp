@@ -231,5 +231,17 @@ namespace videocore { namespace Apple {
 #endif
 
     }
+    
+    void
+    H264Encode::setBitrate(int bitrate)
+    {
+        m_bitrate = bitrate;
+        if(m_compressionSession) {
+            const int v = m_bitrate;
+            CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
+            VTSessionSetProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_AverageBitRate, ref);
+            CFRelease(ref);
+        }
+    }
 }
 }

@@ -23,33 +23,22 @@
  
  */
 
-#ifndef videocore_IOutputSession_hpp
-#define videocore_IOutputSession_hpp
+#ifndef __videocore_IEncoder_h
+#define __videocore_IEncoder_h
 
-#include <videocore/transforms/IOutput.hpp>
+#include <videocore/transforms/ITransform.hpp>
 
 namespace videocore {
-
-    /*!
-     *  Called when the graph should make an adjustment to outgoing data rates
-     *
-     *  \param rateVector   A unit vector representing the direction for change. (-1 for reduce bitrate, 0 for no change, 1 for increase bitrate)
-     *  \param estimatedAvailableBandwidth  An estimate of the available bandwidth. This may not be accurate.
-     *
-     */
-    using BandwidthCallback = std::function<void(int rateVector, int estimatedAvailableBandwidth)>;
     
-    class IOutputSession : public IOutput
+    class IEncoder : public ITransform
     {
     public:
+        virtual ~IEncoder() {};
         
-        virtual void setSessionParameters(IMetadata & parameters) = 0 ;
-        virtual void setBandwidthCallback(BandwidthCallback callback) = 0;
-        
-        virtual ~IOutputSession() {};
+        virtual void setBitrate(int bitrate) = 0;
+        virtual const int bitrate() const = 0;
         
     };
+    
 }
-
-
 #endif

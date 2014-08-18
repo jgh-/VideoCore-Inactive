@@ -30,6 +30,7 @@
 #include <UriParser/UriParser.hpp>
 
 #include <functional>
+#include <deque>
 #include <queue>
 #include <map>
 
@@ -44,6 +45,8 @@ namespace videocore
 {
     class RTMPSession;
 
+    static const int32_t kBitrateAdaptationSampleCount = 5;
+    
     enum {
         kRTMPSessionParameterWidth=0,
         kRTMPSessionParameterHeight,
@@ -62,12 +65,12 @@ namespace videocore
 
     typedef MetaData<'rtmp', int32_t, int32_t, uint8_t, int32_t> RTMPMetadata_t;
 
-    typedef std::function<void(RTMPSession& session, ClientState_t state)> RTMPSessionStateCallback_t;
-
+    using RTMPSessionStateCallback = std::function<void(RTMPSession& session, ClientState_t state)>;
+      
     class RTMPSession : public IOutputSession
     {
     public:
-        RTMPSession(std::string uri, RTMPSessionStateCallback_t callback);
+        RTMPSession(std::string uri, RTMPSessionStateCallback callback);
         ~RTMPSession();
 
     public:
@@ -76,8 +79,8 @@ namespace videocore
         void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
 
         void setSessionParameters(IMetadata& parameters);
-
-
+        void setBandwidthCallback(BandwidthCallback callback);
+        
     private:
 
         // Deprecate sendPacket
@@ -115,20 +118,24 @@ namespace videocore
         RingBuffer          m_streamOutRemainder;
         Buffer              m_s1, m_c1;
 
-        std::queue<std::shared_ptr<Buffer> > m_streamOutQueue;
+        std::deque<std::shared_ptr<Buffer> > m_streamOutQueue;
 
-        std::map<int, uint64_t>                  m_previousChunkData;
+        std::map<int, uint64_t>             m_previousChunkData;
         std::unique_ptr<RingBuffer>         m_streamInBuffer;
         std::unique_ptr<IStreamSession>     m_streamSession;
         std::vector<uint8_t> m_outBuffer;
         http::url                       m_uri;
-
-        RTMPSessionStateCallback_t      m_callback;
+        
+        RTMPSessionStateCallback        m_callback;
+        BandwidthCallback               m_bandwidthCallback;
+        
         std::string                     m_playPath;
         std::string                     m_app;
         std::map<int32_t, std::string>  m_trackedCommands;
 
-        int64_t         m_previousTimestamp;
+        std::chrono::steady_clock::time_point m_bpsEpoch;
+        std::deque<size_t>                    m_bpsSamples;
+        
         size_t          m_currentChunkSize;
         int32_t         m_streamId;
         int32_t         m_createStreamInvoke;
