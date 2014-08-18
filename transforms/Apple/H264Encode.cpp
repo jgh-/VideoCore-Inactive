@@ -116,8 +116,10 @@ namespace videocore { namespace Apple {
             
             CMTime pts = CMTimeMake(metadata.timestampDelta, 1000.); // timestamp is in ms.
             CMTime dur = CMTimeMake(1, m_fps);
+            VTEncodeInfoFlags flags;
             
-            VTCompressionSessionEncodeFrame(session, (CVPixelBufferRef)data, pts, dur, NULL, NULL, NULL);
+            VTCompressionSessionEncodeFrame(session, (CVPixelBufferRef)data, pts, dur, NULL, NULL, &flags);
+            
         }
 #endif
     }

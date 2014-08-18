@@ -71,6 +71,11 @@ typedef NS_ENUM(NSInteger, VCCameraState)
 @property (nonatomic, assign) int           audioChannelCount;
 @property (nonatomic, assign) float         audioSampleRate;
 @property (nonatomic, assign) float         micGain;        // [0..1]
+@property (nonatomic, assign) CGPoint       focusPointOfInterest;   // (0,0) is top-left, (1,1) is bottom-right
+@property (nonatomic, assign) CGPoint       exposurePointOfInterest;
+@property (nonatomic, assign) BOOL          continuousAutofocus;
+@property (nonatomic, assign) BOOL          continuousExposure;
+
 
 @property (nonatomic, assign) id<VCSessionDelegate> delegate;
 
