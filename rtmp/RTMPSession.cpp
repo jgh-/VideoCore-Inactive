@@ -235,7 +235,6 @@ namespace videocore
                     vector += (it == lastSample ? 0 : (it > lastSample ? -1 : 1));
                     lastSample = it;
                 }
-                printf("bufferSize: %zu\n", bufferSize);
                 vector = std::max(-1, std::min(1, vector));
                 if( bufferSize == 0 && vector == 0 )
                 {

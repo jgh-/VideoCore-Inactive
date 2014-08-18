@@ -371,6 +371,7 @@ namespace videocore { namespace simpleApi {
     self.micGain = 1.f;
     self.audioChannelCount = 2;
     self.audioSampleRate = 44100.;
+    self.useAdaptiveBitrate = NO;
     
     _previewView = [[VCPreviewView alloc] init];
     self.videoZoomFactor = 1.f;
@@ -455,7 +456,8 @@ namespace videocore { namespace simpleApi {
     
     m_outputSession->setBandwidthCallback([=](int vector, int predicted)
                                           {
-                                              if(bSelf->m_h264Encoder) {
+                                              
+                                              if(bSelf.useAdaptiveBitrate && bSelf->m_h264Encoder) {
                                                   auto enc = std::dynamic_pointer_cast<videocore::IEncoder>(bSelf->m_h264Encoder);
                                                   
                                                   if(vector < 0) {
@@ -477,7 +479,6 @@ namespace videocore { namespace simpleApi {
                                                           
                                                       }
                                                   }
-                                                  printf("[%d] Set bitrate to %d\n",vector, enc->bitrate());
                                                   
                                               }
                                               
