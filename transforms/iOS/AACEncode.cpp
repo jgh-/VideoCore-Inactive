@@ -118,7 +118,12 @@ namespace videocore { namespace iOS {
         bool hardwareAvailable = IsAACHardwareEncoderAvailable();
         
 
-        AudioClassDescription requestedCodecs[1] = {
+        AudioClassDescription requestedCodecs[2] = {
+            {
+                kAudioEncoderComponentType,
+                kAudioFormatMPEG4AAC,
+                kAppleSoftwareAudioCodecManufacturer
+            },
             {
                 kAudioEncoderComponentType,
                 kAudioFormatMPEG4AAC,
@@ -126,11 +131,11 @@ namespace videocore { namespace iOS {
             }
         };
         
-        if(!hardwareAvailable) {
-            requestedCodecs[0].mManufacturer = kAppleSoftwareAudioCodecManufacturer;
-        }
+        //if(!hardwareAvailable) {
+        //    requestedCodecs[0].mManufacturer = kAppleSoftwareAudioCodecManufacturer;
+        //}
         
-        result = AudioConverterNewSpecific(&in, &out, 1, requestedCodecs, &m_audioConverter);
+        result = AudioConverterNewSpecific(&in, &out, 2, requestedCodecs, &m_audioConverter);
         if (result) FormatError(err, result);
         
         result = AudioConverterSetProperty(m_audioConverter, kAudioConverterEncodeBitRate, propSize, &outputBitrate);
