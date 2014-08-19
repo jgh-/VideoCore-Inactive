@@ -125,14 +125,12 @@ namespace videocore { namespace iOS {
         m_fps = fps;
         m_useInterfaceOrientation = useInterfaceOrientation;
         
+        __block CameraSource* bThis = this;
         
-        @autoreleasepool {
-            
-            __block CameraSource* bThis = this;
-            
-            void (^permissions)(BOOL) = ^(BOOL granted) {
+        void (^permissions)(BOOL) = ^(BOOL granted) {
+            @autoreleasepool {
                 if(granted) {
-
+                    
                     int position = useFront ? AVCaptureDevicePositionFront : AVCaptureDevicePositionBack;
                     
                     NSArray* devices = [AVCaptureDevice devices];
@@ -205,8 +203,9 @@ namespace videocore { namespace iOS {
                     }
                     [output release];
                 }
-            };
-            
+            }
+        };
+        @autoreleasepool {
             AVAuthorizationStatus auth = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
             
             if(auth == AVAuthorizationStatusAuthorized || !SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {

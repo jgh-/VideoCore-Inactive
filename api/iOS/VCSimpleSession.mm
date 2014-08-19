@@ -124,6 +124,7 @@ namespace videocore { namespace simpleApi {
     VCSessionState _rtmpSessionState;
     BOOL   _torch;
     
+    BOOL _useAdaptiveBitrate;
     BOOL _continuousAutofocus;
     BOOL _continuousExposure;
     CGPoint _focusPOI;
@@ -152,6 +153,7 @@ namespace videocore { namespace simpleApi {
 @dynamic continuousExposure;
 @dynamic focusPointOfInterest;
 @dynamic exposurePointOfInterest;
+@dynamic useAdaptiveBitrate;
 
 @dynamic previewView;
 // -----------------------------------------------------------------------------
@@ -220,9 +222,6 @@ namespace videocore { namespace simpleApi {
 {
     _rtmpSessionState = rtmpSessionState;
     [self.delegate connectionStatusChanged:rtmpSessionState];
-    if(rtmpSessionState == VCSessionStateEnded || rtmpSessionState == VCSessionStateError) {
-        m_outputSession.reset();
-    }
 }
 - (VCSessionState) rtmpSessionState
 {
@@ -324,6 +323,13 @@ namespace videocore { namespace simpleApi {
     return _exposurePOI;
 }
 
+- (BOOL) useAdaptiveBitrate {
+    return _useAdaptiveBitrate;
+}
+- (void) setUseAdaptiveBitrate:(BOOL)useAdaptiveBitrate {
+    _useAdaptiveBitrate = useAdaptiveBitrate;
+    _bpsCeiling = _bitrate;
+}
 // -----------------------------------------------------------------------------
 //  Public Methods
 // -----------------------------------------------------------------------------
@@ -452,7 +458,7 @@ namespace videocore { namespace simpleApi {
     }) );
     VCSimpleSession* bSelf = self;
     
-    _bpsCeiling = 0;
+    _bpsCeiling = _bitrate;
     
     m_outputSession->setBandwidthCallback([=](int vector, int predicted)
                                           {
@@ -466,8 +472,9 @@ namespace videocore { namespace simpleApi {
                                                       if(self->_bpsCeiling > 0) {
                                                           mult = 0.75;
                                                       }
+                                                      printf("Setting bitrate to %f\n", enc->bitrate() * mult);
                                                       enc->setBitrate(enc->bitrate() * mult);
-                                                      self->_bpsCeiling = ceiling;
+                                                      //self->_bpsCeiling = ceiling;
                                                   } else if (vector > 0) {
                                                       int target = enc->bitrate() * 1.1;
                                                       
@@ -475,6 +482,7 @@ namespace videocore { namespace simpleApi {
                                                           target = MIN(target, self->_bpsCeiling);
                                                       }
                                                       if(target != self->_bpsCeiling) {
+                                                          printf("Setting bitrate to %d\n", target);
                                                           enc->setBitrate(target);
                                                           
                                                       }
