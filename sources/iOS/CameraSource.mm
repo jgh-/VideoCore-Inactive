@@ -263,15 +263,16 @@ namespace videocore { namespace iOS {
         
         if(currentCameraInput.device.torchAvailable) {
             NSError* err = nil;
-            [currentCameraInput.device lockForConfiguration:&err];
-            if(!err) {
+            if([currentCameraInput.device lockForConfiguration:&err]) {
                 [currentCameraInput.device setTorchMode:( torchOn ? AVCaptureTorchModeOn : AVCaptureTorchModeOff ) ];
                 [currentCameraInput.device unlockForConfiguration];
                 ret = (currentCameraInput.device.torchMode == AVCaptureTorchModeOn);
-                
             } else {
+                NSLog(@"Error while locking device for torch: %@", err);
                 ret = false;
             }
+        } else {
+            NSLog(@"Torch not available in current camera input");
         }
         [session commitConfiguration];
         m_torchOn = ret;
@@ -431,32 +432,49 @@ namespace videocore { namespace iOS {
         }
     }
     
-    void
+    bool
     CameraSource::setContinuousAutofocus(bool wantsContinuous)
     {
         AVCaptureDevice* device = (AVCaptureDevice*)m_captureDevice;
-        
-        NSError* err;
-        [device lockForConfiguration:&err];
-        
-        if(!err) {
-            device.focusMode = wantsContinuous ? AVCaptureFocusModeContinuousAutoFocus : AVCaptureFocusModeAutoFocus;
-            [device unlockForConfiguration];
+        AVCaptureFocusMode newMode = wantsContinuous ?  AVCaptureFocusModeContinuousAutoFocus : AVCaptureFocusModeAutoFocus;
+        bool ret = [device isFocusModeSupported:newMode];
+
+        if(ret) {
+            NSError *err = nil;
+            if ([device lockForConfiguration:&err]) {
+                device.focusMode = newMode;
+                [device unlockForConfiguration];
+            } else {
+                NSLog(@"Error while locking device for autofocus: %@", err);
+                ret = false;
+            }
+        } else {
+            NSLog(@"Focus mode not supported: %@", wantsContinuous ? @"AVCaptureFocusModeContinuousAutoFocus" : @"AVCaptureFocusModeAutoFocus");
         }
-        
+
+        return ret;
     }
-    void
-    CameraSource::setContinuousExposure(bool wantsContinuous)
-    {
-        AVCaptureDevice* device = (AVCaptureDevice*)m_captureDevice;
-        
-        NSError* err;
-        [device lockForConfiguration:&err];
-        
-        if(!err) {
-            device.exposureMode = wantsContinuous ? AVCaptureExposureModeContinuousAutoExposure : AVCaptureExposureModeAutoExpose;
-            [device unlockForConfiguration];
+
+    bool
+    CameraSource::setContinuousExposure(bool wantsContinuous) {
+        AVCaptureDevice *device = (AVCaptureDevice *) m_captureDevice;
+        AVCaptureExposureMode newMode = wantsContinuous ? AVCaptureExposureModeContinuousAutoExposure : AVCaptureExposureModeAutoExpose;
+        bool ret = [device isExposureModeSupported:newMode];
+
+        if(ret) {
+            NSError *err = nil;
+            if ([device lockForConfiguration:&err]) {
+                device.exposureMode = newMode;
+                [device unlockForConfiguration];
+            } else {
+                NSLog(@"Error while locking device for exposure: %@", err);
+                ret = false;
+            }
+        } else {
+            NSLog(@"Exposure mode not supported: %@", wantsContinuous ? @"AVCaptureExposureModeContinuousAutoExposure" : @"AVCaptureExposureModeAutoExpose");
         }
+
+        return ret;
     }
     
     bool
@@ -466,18 +484,17 @@ namespace videocore { namespace iOS {
         bool ret = device.focusPointOfInterestSupported;
         
         if(ret) {
-            NSError* err;
-            [device lockForConfiguration:&err];
-            if(!err) {
+            NSError* err = nil;
+            if([device lockForConfiguration:&err]) {
                 [device setFocusPointOfInterest:CGPointMake(x, y)];
-                
                 device.focusMode = device.focusMode;
-                
                 [device unlockForConfiguration];
-                
             } else {
+                NSLog(@"Error while locking device for focus POI: %@", err);
                 ret = false;
             }
+        } else {
+            NSLog(@"Focus POI not supported");
         }
         
         return ret;
@@ -490,15 +507,17 @@ namespace videocore { namespace iOS {
         bool ret = device.exposurePointOfInterestSupported;
         
         if(ret) {
-            NSError* err;
-            [device lockForConfiguration:&err];
-            if(!err) {
+            NSError* err = nil;
+            if([device lockForConfiguration:&err]) {
                 [device setExposurePointOfInterest:CGPointMake(x, y)];
                 device.exposureMode = device.exposureMode;
                 [device unlockForConfiguration];
             } else {
+                NSLog(@"Error while locking device for exposure POI: %@", err);
                 ret = false;
             }
+        } else {
+            NSLog(@"Exposure POI not supported");
         }
         
         return ret;
