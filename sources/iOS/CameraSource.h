@@ -125,11 +125,11 @@ namespace videocore { namespace iOS {
          */
         bool setFocusPointOfInterest(float x, float y);
         
-        void setContinuousAutofocus(bool wantsContinuous);
+        bool setContinuousAutofocus(bool wantsContinuous);
         
         bool setExposurePointOfInterest(float x, float y);
         
-        void setContinuousExposure(bool wantsContinuous);
+        bool setContinuousExposure(bool wantsContinuous);
         
         
     public:
