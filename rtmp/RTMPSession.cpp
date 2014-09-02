@@ -37,7 +37,7 @@
 namespace videocore
 {
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback callback)
-    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback), m_bandwidthCallback(nullptr), m_currentChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false)
+    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback), m_bandwidthCallback(nullptr), m_currentChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false), m_bytesSent(0)
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
@@ -194,13 +194,15 @@ namespace videocore
             size_t size = m_streamOutRemainder.size();
 
             m_streamOutRemainder.read(&buffer, size, false); // Read the entire buffer, but do not advance the read pointer.
-            //printf("Remain %8zu\n ", size);
-            size_t sent = m_streamSession->write(buffer, size);
 
+            size_t sent = m_streamSession->write(buffer, size);
+            
+            m_bytesSent += sent;
+            
             m_streamOutRemainder.read(&buffer, sent, true); // Advance the read pointer as far as we were able to send.
         }
 
-        while((m_streamSession->status() & kStreamStatusWriteBufferHasSpace) && m_streamOutQueue.size() > 0) {
+        while((m_streamSession->status() & kStreamStatusWriteBufferHasSpace) && m_streamOutQueue.size() > 0 && !m_streamOutRemainder.size()) {
             //printf("StreamQueue: %zu\n", m_streamOutQueue.size());
             std::shared_ptr<Buffer> front = m_streamOutQueue.front();
             m_streamOutQueue.pop_front();
@@ -208,7 +210,8 @@ namespace videocore
             size_t size = front->size();
             front->read(&buf, size);
             size_t sent = m_streamSession->write(buf, size);
-
+            m_bytesSent += sent;
+            
             if(sent < size) {
                 m_streamOutRemainder.put(buf+sent, size-sent);
                 break;
@@ -219,7 +222,7 @@ namespace videocore
         
         auto diff = std::chrono::duration_cast<std::chrono::milliseconds>( now - m_bpsEpoch );
         
-        if ( diff.count() > 500 && m_state == kClientStateSessionStarted)
+        if ( diff.count() > kBitrateAdaptationSampleDuration && m_state == kClientStateSessionStarted)
         {
             size_t bufferSize = m_streamOutRemainder.size();
             for (auto & it : m_streamOutQueue) {
@@ -228,6 +231,9 @@ namespace videocore
             m_bpsSamples.push_back(bufferSize);
 
             if(m_bpsSamples.size() == kBitrateAdaptationSampleCount) {
+                
+                double prediction = m_bytesSent / (double(kBitrateAdaptationSampleDuration * kBitrateAdaptationSampleCount) / 1000.0);
+                m_bytesSent = 0;
                 
                 int vector = 0;
                 int lastSample = 0;
@@ -244,7 +250,7 @@ namespace videocore
                 }
        
                 if(m_bandwidthCallback) {
-                    m_bandwidthCallback(vector, 0);
+                    m_bandwidthCallback(vector, prediction);
                 }
                 m_bpsSamples.clear();
             }

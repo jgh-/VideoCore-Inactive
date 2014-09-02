@@ -45,6 +45,7 @@ namespace videocore
 {
     class RTMPSession;
 
+    static const int32_t kBitrateAdaptationSampleDuration = 500; /* Milliseconds */
     static const int32_t kBitrateAdaptationSampleCount = 5;
     
     enum {
@@ -135,6 +136,7 @@ namespace videocore
 
         std::chrono::steady_clock::time_point m_bpsEpoch;
         std::deque<size_t>                    m_bpsSamples;
+        double                                m_bytesSent;
         
         size_t          m_currentChunkSize;
         int32_t         m_streamId;
