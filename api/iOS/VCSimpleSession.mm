@@ -114,6 +114,8 @@ namespace videocore { namespace simpleApi {
     int    _bitrate;
     int    _fps;
     int    _bpsCeiling;
+    int    _estimatedThroughput;
+    
     BOOL   _useInterfaceOrientation;
     float  _videoZoomFactor;
     int    _audioChannelCount;
@@ -154,6 +156,7 @@ namespace videocore { namespace simpleApi {
 @dynamic focusPointOfInterest;
 @dynamic exposurePointOfInterest;
 @dynamic useAdaptiveBitrate;
+@dynamic estimatedThroughput;
 
 @dynamic previewView;
 // -----------------------------------------------------------------------------
@@ -330,6 +333,9 @@ namespace videocore { namespace simpleApi {
     _useAdaptiveBitrate = useAdaptiveBitrate;
     _bpsCeiling = _bitrate;
 }
+- (int) estimatedThroughput {
+    return _estimatedThroughput;
+}
 // -----------------------------------------------------------------------------
 //  Public Methods
 // -----------------------------------------------------------------------------
@@ -427,6 +433,8 @@ namespace videocore { namespace simpleApi {
             new videocore::RTMPSession ( uri.str(),
                                         [=](videocore::RTMPSession& session,
                                             ClientState_t state) {
+                                            
+                                            printf("ClientState: %d\n", state);
 
         switch(state) {
 
@@ -466,7 +474,7 @@ namespace videocore { namespace simpleApi {
     
     m_outputSession->setBandwidthCallback([=](int vector, int predicted)
                                           {
-                                              
+                                              bSelf->_estimatedThroughput = predicted;
                                               if(bSelf.useAdaptiveBitrate && bSelf->m_h264Encoder) {
                                                   auto enc = std::dynamic_pointer_cast<videocore::IEncoder>(bSelf->m_h264Encoder);
                                                   
