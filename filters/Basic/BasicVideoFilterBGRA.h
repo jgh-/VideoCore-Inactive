@@ -24,7 +24,6 @@
  */
 #ifndef videocore_BasicVideoFilterBGRA_h
 #define videocore_BasicVideoFilterBGRA_h
-
 #include <videocore/filters/IVideoFilter.hpp>
 
 namespace videocore {
@@ -41,18 +40,12 @@ namespace videocore {
             
             virtual void apply();
         
-            
         public:
-            virtual void incomingMatrix(float matrix[16]);
-            virtual void imageDimensions(float w, float h);
-            
-        protected:
-            /*! IVideoFilter */
             
             const char * const vertexKernel() const ;
             const char * const pixelKernel() const ;
             
-        public:
+        private:
             
         };
     }

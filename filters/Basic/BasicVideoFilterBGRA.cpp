@@ -1,20 +1,21 @@
-//
-//  BasicVideoFilterBGRA.cpp
-//  VideoCoreDevelopment
-//
-//  Created by James Hurley on 9/3/14.
-//  Copyright (c) 2014 VideoCore. All rights reserved.
-//
 
-#include "BasicVideoFilterBGRA.h"
+#include <videocore/filters/Basic/BasicVideoFilterBGRA.h>
 
-#if TARGET_IPHONE
+#include <TargetConditionals.h>
+
+
+#ifdef TARGET_OS_IPHONE
+
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES3/gl.h>
+#include <videocore/sources/iOS/GLESUtil.h>
+
 #endif
+
 namespace videocore { namespace filters {
  
     BasicVideoFilterBGRA::BasicVideoFilterBGRA()
+    : IVideoFilter()
     {
         
     }
@@ -27,7 +28,7 @@ namespace videocore { namespace filters {
     BasicVideoFilterBGRA::vertexKernel() const
     {
         
-        KERNEL(
+        KERNEL(GL_ES2_3, m_language,
                attribute vec2 aPos;
                attribute vec2 aCoord;
                varying vec2 vCoord;
@@ -37,12 +38,15 @@ namespace videocore { namespace filters {
                 vCoord = aCoord;
                }
         )
+        
+        return nullptr;
     }
     
     const char * const
     BasicVideoFilterBGRA::pixelKernel() const
     {
-        KERNEL(
+        
+         KERNEL(GL_ES2_3, m_language,
                precision mediump float;
                varying vec2 vCoord;
                uniform sampler2D uTex0;
@@ -50,6 +54,33 @@ namespace videocore { namespace filters {
                    gl_FragData[0] = texture2D(uTex0, vCoord);
                };
         )
+        
+        return nullptr;
+    }
+    void
+    BasicVideoFilterBGRA::initialize()
+    {
+        switch(m_language) {
+            case GL_ES2_3:
+            case GL_2:
+                setProgram(build_program(vertexKernel(), pixelKernel()));
+                
+                break;
+            case GL_3:
+                break;
+        }
+    }
+    void
+    BasicVideoFilterBGRA::apply()
+    {
+        switch(m_language) {
+            case GL_ES2_3:
+            case GL_2:
+                
+                break;
+            case GL_3:
+                break;
+        }
     }
 }
 }

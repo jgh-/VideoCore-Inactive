@@ -28,6 +28,7 @@
 
 namespace videocore {
     
+    
     class IFilter {
     
     public:
