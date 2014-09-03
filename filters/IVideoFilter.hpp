@@ -23,47 +23,33 @@
  
  */
 
-#ifndef videocore_ISource_hpp
-#define videocore_ISource_hpp
+//
+//  and whatever you do, dont forget to smile, because if you don't smile,
+//  then the execution would smell like funky drawers
+//
 
-#include <videocore/transforms/IOutput.hpp>
+#ifndef videocore_IVideoFilter_hpp
+#define videocore_IVideoFilter_hpp
+
 #include <videocore/filters/IFilter.hpp>
 
-namespace videocore
-{
-    /*!
-     *  ISource interface.  Defines the interface for sources of data into a graph.
-     */
-    class ISource
-    {
+#define KERNEL(kernelstr) return # kernelstr ;
+
+namespace videocore {
+    
+    class IVideoFilter : public IFilter {
+        
     public:
-        /*!
-         *  Set the output for the source.
-         *
-         *  \param output a component that conforms to the videocore::IOutput interface and is compatible with the
-         *                data being vended by the source.
-         */
-        virtual void setOutput(std::shared_ptr<IOutput> output) = 0;
+        virtual ~IVideoFilter() {} ;
+
+        virtual void incomingMatrix(float matrix[16]) = 0;
+        virtual void imageDimensions(float w, float h) = 0;
         
-        virtual void setFilter(std::shared_ptr<IFilter>) {} ;
-        virtual IFilter* const filter() { return nullptr; };
+    protected:
+        virtual const char * const vertexKernel() const = 0;
+        virtual const char * const pixelKernel() const = 0;
         
-        /*! Virtual destructor */
-        virtual ~ISource() {};
     };
-    
-    
-    // TODO: Remove and replace with std::enable_shared_from_this on any legacy sources
-    /*! CRTP used to provide a weak_ptr to the class upon instantiation. */
-    template <typename Derived>
-    class StaticSource : public ISource
-    {
-    public:
-        static std::shared_ptr<Derived> createInstance()
-        {
-            return Derived::staticCreateInstance();
-        }
-    } __attribute__ ((deprecated)) ;
 }
 
 #endif

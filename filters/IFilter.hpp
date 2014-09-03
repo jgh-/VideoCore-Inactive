@@ -22,41 +22,21 @@
  THE SOFTWARE.
  
  */
-#ifndef videocore_IMixer_hpp
-#define videocore_IMixer_hpp
+#ifndef videocore_IFilter_hpp
+#define videocore_IFilter_hpp
 
-#include <videocore/transforms/ITransform.hpp>
 
-namespace videocore
-{
-    class ISource;
+namespace videocore {
     
-    /*!
-     *  IMixer interface.  Defines the interface for registering and unregistering sources with mixers.
-     */
-    class IMixer : public ITransform
-    {
+    class IFilter {
+    
     public:
-        /*!
-         *  Register a source with the mixer.  There may be intermediate transforms between the source and
-         *  the mixer.
-         *
-         *  \param source A smart pointer to the source being registered.
-         *  \param inBufferSize an optional parameter to specify the expected buffer size from the source. Only useful if
-         *         the buffer size is always the same.
-         */
-        virtual void registerSource(std::shared_ptr<ISource> source,
-                                    size_t inBufferSize = 0) = 0;
-        /*!
-         *  Unregister a source with the mixer.
-         *
-         *  \param source  A smart pointer to the source being unregistered.
-         */
-        virtual void unregisterSource(std::shared_ptr<ISource> source) = 0;
+        virtual ~IFilter() {} ;
         
+        virtual void initialize() = 0;
+        virtual bool initialized() = 0;
         
-        /*! Virtual destructor */
-        virtual ~IMixer() {};
+        virtual void apply() = 0;
         
     };
 }
