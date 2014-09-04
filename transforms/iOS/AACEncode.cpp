@@ -136,9 +136,6 @@ namespace videocore { namespace iOS {
 
         }
         if(result == noErr) {
-            result = AudioConverterSetProperty(m_audioConverter, kAudioConverterPropertyCanResumeFromInterruption, sizeof(canResume), &canResume);
-        }
-        if(result == noErr) {
             result = AudioConverterGetProperty(m_audioConverter, kAudioConverterPropertyMaximumOutputPacketSize, &propSize, &outputPacketSize);
         }
         
