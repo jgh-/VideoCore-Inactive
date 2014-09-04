@@ -114,9 +114,6 @@ namespace videocore { namespace iOS {
         UInt32 outputBitrate = 128000; // 128 kbps
         UInt32 propSize = sizeof(outputBitrate);
         UInt32 outputPacketSize = 0;
-        
-        bool hardwareAvailable = IsAACHardwareEncoderAvailable();
-        
 
         AudioClassDescription requestedCodecs[2] = {
             {
@@ -131,49 +128,49 @@ namespace videocore { namespace iOS {
             }
         };
         
-        //if(!hardwareAvailable) {
-        //    requestedCodecs[0].mManufacturer = kAppleSoftwareAudioCodecManufacturer;
-        //}
-        
         result = AudioConverterNewSpecific(&in, &out, 2, requestedCodecs, &m_audioConverter);
-        if (result) FormatError(err, result);
+
+        if(result == noErr) {
         
-        result = AudioConverterSetProperty(m_audioConverter, kAudioConverterEncodeBitRate, propSize, &outputBitrate);
-        if (result) FormatError(err, result);
-        
-        result = AudioConverterSetProperty(m_audioConverter, kAudioConverterPropertyCanResumeFromInterruption, sizeof(canResume), &canResume);
-        if (result) FormatError(err, result);
-        
-        result = AudioConverterGetProperty(m_audioConverter, kAudioConverterPropertyMaximumOutputPacketSize, &propSize, &outputPacketSize);
-        if (result) FormatError(err, result);
-        
-        
-        m_outputPacketMaxSize = outputPacketSize;
-        
-        m_bytesPerSample = 2 * channelCount;
-        
-        uint8_t sampleRateIndex = 0;
-        switch(frequencyInHz) {
-            case 48000:
-                sampleRateIndex = 3;
-                break;
-            case 44100:
-                sampleRateIndex = 4;
-                break;
-            case 22050:
-                sampleRateIndex = 7;
-                break;
-            case 11025:
-                sampleRateIndex = 10;
-                break;
-            case 8000:
-                sampleRateIndex = 11;
-                break;
-            default:
-                sampleRateIndex = 15;
+            result = AudioConverterSetProperty(m_audioConverter, kAudioConverterEncodeBitRate, propSize, &outputBitrate);
+
         }
-        makeAsc(sampleRateIndex, uint8_t(channelCount));
+        if(result == noErr) {
+            result = AudioConverterSetProperty(m_audioConverter, kAudioConverterPropertyCanResumeFromInterruption, sizeof(canResume), &canResume);
+        }
+        if(result == noErr) {
+            result = AudioConverterGetProperty(m_audioConverter, kAudioConverterPropertyMaximumOutputPacketSize, &propSize, &outputPacketSize);
+        }
         
+        if(result == noErr) {
+            m_outputPacketMaxSize = outputPacketSize;
+            
+            m_bytesPerSample = 2 * channelCount;
+            
+            uint8_t sampleRateIndex = 0;
+            switch(frequencyInHz) {
+                case 48000:
+                    sampleRateIndex = 3;
+                    break;
+                case 44100:
+                    sampleRateIndex = 4;
+                    break;
+                case 22050:
+                    sampleRateIndex = 7;
+                    break;
+                case 11025:
+                    sampleRateIndex = 10;
+                    break;
+                case 8000:
+                    sampleRateIndex = 11;
+                    break;
+                default:
+                    sampleRateIndex = 15;
+            }
+            makeAsc(sampleRateIndex, uint8_t(channelCount));
+        } else {
+            std::cerr << "Error setting up audio encoder " << result << std::endl ;
+        }
     }
     AACEncode::~AACEncode() {
         AudioConverterDispose(m_audioConverter);

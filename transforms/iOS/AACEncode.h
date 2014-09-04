@@ -60,8 +60,8 @@ namespace videocore { namespace iOS {
 
         Buffer                  m_outputBuffer;
 
-        char m_asc[2];
-        bool m_sentConfig;
+        uint8_t m_asc[2];
+        bool    m_sentConfig;
 
     };
 
