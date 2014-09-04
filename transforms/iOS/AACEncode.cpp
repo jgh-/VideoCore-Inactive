@@ -152,7 +152,7 @@ namespace videocore { namespace iOS {
         
         m_bytesPerSample = 2 * channelCount;
         
-        int sampleRateIndex;
+        uint8_t sampleRateIndex = 0;
         switch(frequencyInHz) {
             case 48000:
                 sampleRateIndex = 3;
@@ -172,14 +172,14 @@ namespace videocore { namespace iOS {
             default:
                 sampleRateIndex = 15;
         }
-        makeAsc(sampleRateIndex, channelCount);
+        makeAsc(sampleRateIndex, uint8_t(channelCount));
         
     }
     AACEncode::~AACEncode() {
         AudioConverterDispose(m_audioConverter);
     }
     void
-    AACEncode::makeAsc(char sampleRateIndex, char channelCount)
+    AACEncode::makeAsc(uint8_t sampleRateIndex, uint8_t channelCount)
     {
         // http://wiki.multimedia.cx/index.php?title=MPEG-4_Audio#Audio_Specific_Config
         m_asc[0] = 0x10 | ((sampleRateIndex>>1) & 0x3);

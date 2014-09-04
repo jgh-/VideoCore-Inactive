@@ -50,7 +50,7 @@ namespace videocore { namespace iOS {
         void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
     private:
         static OSStatus ioProc(AudioConverterRef audioConverter, UInt32 *ioNumDataPackets, AudioBufferList* ioData, AudioStreamPacketDescription** ioPacketDesc, void* inUserData );
-        void makeAsc(char sampleRateIndex, char channelCount);
+        void makeAsc(uint8_t sampleRateIndex, uint8_t channelCount);
     private:
 
         AudioConverterRef       m_audioConverter;
