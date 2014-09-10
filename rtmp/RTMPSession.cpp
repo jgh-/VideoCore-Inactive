@@ -45,6 +45,8 @@ namespace videocore
         boost::char_separator<char> sep("/");
         boost::tokenizer<boost::char_separator<char> > tokens(m_uri.path, sep );
 
+        m_bpsEpoch = std::chrono::steady_clock::now();
+        
         auto itr = tokens.begin();
         std::stringstream pp;
         {

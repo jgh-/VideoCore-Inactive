@@ -329,8 +329,10 @@ namespace videocore {
 
                 memset(samples.get(), 0, outBufferSize);
             }
-            m_mixThreadCond.wait_until(l, m_nextMixTime);
+            if(!m_exiting.load()) {
+                m_mixThreadCond.wait_until(l, m_nextMixTime);
+            }
         }
-
+        printf("Exiting audio mixer...\n");
     }
 }
