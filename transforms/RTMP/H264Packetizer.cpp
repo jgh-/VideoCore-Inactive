@@ -123,7 +123,7 @@ namespace videocore { namespace rtmp {
             count++;
             
             prev_time = now;
-            outMeta.setData(ts, static_cast<int>(outBuffer.size()), FLV_TAG_TYPE_VIDEO, kVideoChannelStreamId);
+            outMeta.setData(ts, static_cast<int>(outBuffer.size()), RTMP_PT_VIDEO, kVideoChannelStreamId);
             
             output->pushBuffer(&outBuffer[0], outBuffer.size(), outMeta);
         }

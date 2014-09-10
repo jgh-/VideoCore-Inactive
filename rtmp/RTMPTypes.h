@@ -99,13 +99,13 @@ enum {
     FLV_HEADER_FLAG_HASVIDEO = 1,
     FLV_HEADER_FLAG_HASAUDIO = 4,
 };
-
+/*
 enum {
     FLV_TAG_TYPE_AUDIO  = 0x08,
     FLV_TAG_TYPE_VIDEO  = 0x09,
     FLV_TAG_TYPE_META   = 0x12,
     FLV_TAG_TYPE_INVOKE = 0x14
-};
+};*/
 
 // RTMP header type is 1 byte
 enum {
@@ -119,8 +119,8 @@ enum {
     RTMP_PT_CHUNK_SIZE   = 0x1,
     RTMP_PT_BYTES_READ   = 0x3,
     RTMP_PT_PING         = 0x4,
-    RTMP_PT_SERVER_BW    = 0x5,
-    RTMP_PT_CLIENT_BW    = 0x6,
+    RTMP_PT_SERVER_WINDOW= 0x5,
+    RTMP_PT_PEER_BW      = 0x6,
     RTMP_PT_AUDIO        = 0x8,
     RTMP_PT_VIDEO        = 0x9,
     RTMP_PT_FLEX_STREAM  = 0xF,

@@ -83,7 +83,7 @@ namespace videocore { namespace rtmp {
 
             }
 
-            outMeta.setData(ts, static_cast<int>(outBuffer.size()), FLV_TAG_TYPE_AUDIO, kAudioChannelStreamId);
+            outMeta.setData(ts, static_cast<int>(outBuffer.size()), RTMP_PT_AUDIO, kAudioChannelStreamId);
 
             output->pushBuffer(&outBuffer[0], outBuffer.size(), outMeta);
         }

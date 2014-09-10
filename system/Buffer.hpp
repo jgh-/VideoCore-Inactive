@@ -294,9 +294,16 @@ namespace videocore {
             m_mutex.lock();
             if(size>m_size) size = m_size;
             if(size>0) {
+                size_t start = m_read;
+                size_t end = std::min(start+size, m_total);
+                size = (end-start);
+                
                 *buf = &m_buffer[m_read];
                 if( advance )  {
                     m_read+=size;
+                    if(m_read == end) {
+                        m_read = 0;
+                    }
                     m_size-=size;
                 }
             } else {

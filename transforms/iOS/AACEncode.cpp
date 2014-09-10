@@ -110,7 +110,6 @@ namespace videocore { namespace iOS {
         out.mSampleRate = frequencyInHz;
         out.mChannelsPerFrame = channelCount;
         
-        bool canResume = true;
         UInt32 outputBitrate = 128000; // 128 kbps
         UInt32 propSize = sizeof(outputBitrate);
         UInt32 outputPacketSize = 0;

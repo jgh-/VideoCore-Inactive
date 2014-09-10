@@ -97,11 +97,20 @@ namespace videocore {
         StreamSession::write(uint8_t *buffer, size_t size)
         {
             NSInteger ret = 0;
-            ret = [NSOS(m_outputStream) write:buffer maxLength:size];
           
-            if(ret >= 0 &&ret < size && (m_status & kStreamStatusWriteBufferHasSpace)) {
-                m_status ^= kStreamStatusWriteBufferHasSpace;
-            }
+          /*  if(NSOS(m_outputStream).hasSpaceAvailable) { */
+                ret = [NSOS(m_outputStream) write:buffer maxLength:size];
+                
+                if(ret >= 0 && ret < size && (m_status & kStreamStatusWriteBufferHasSpace)) {
+                    // Remove the Has Space Available flag
+                    m_status ^= kStreamStatusWriteBufferHasSpace;
+                }
+                else if (ret < 0) {
+                    printf("ERROR! [%d] buffer: %p [ 0x%02x ], size: %zu\n", NSOS(m_outputStream).streamError.code, buffer, buffer[0], size);
+                }
+            /*} else {
+                printf("-> I don't have any space :(");
+            }*/
 
             return ret;
         }
@@ -152,7 +161,9 @@ namespace videocore {
                 setStatus(kStreamStatusEndStream, true);
             }
             if(event & NSStreamEventErrorOccurred) {
-                setStatus(kStreamStatusErrorEncountered);
+                setStatus(kStreamStatusErrorEncountered, true);
+                NSLog(@"Status: %d\n", ((NSStream*)stream).streamStatus);
+                NSLog(@"Error: %@", ((NSStream*)stream).streamError);
             }
         }
         

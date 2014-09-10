@@ -112,6 +112,7 @@ namespace videocore { namespace simpleApi {
     
     CGSize _videoSize;
     int    _bitrate;
+    int    _previousBitrate;
     int    _fps;
     int    _bpsCeiling;
     int    _estimatedThroughput;
@@ -454,9 +455,12 @@ namespace videocore { namespace simpleApi {
                 break;
             case kClientStateError:
                 self.rtmpSessionState = VCSessionStateError;
+                //[self endRtmpSession];
+                self->m_outputSession.reset();
                 break;
             case kClientStateNotConnected:
                 self.rtmpSessionState = VCSessionStateEnded;
+                //[self endRtmpSession];
                 break;
             default:
                 break;
@@ -469,36 +473,27 @@ namespace videocore { namespace simpleApi {
     _bpsCeiling = _bitrate;
     
     if ( self.useAdaptiveBitrate ) {
-        _bitrate = 100000;
+        _bitrate = 1000000;
     }
+    _previousBitrate = _bitrate;
     
-    m_outputSession->setBandwidthCallback([=](int vector, int predicted)
+    m_outputSession->setBandwidthCallback([=](float vector, int predicted)
                                           {
+                                              
                                               bSelf->_estimatedThroughput = predicted;
                                               if(bSelf.useAdaptiveBitrate && bSelf->m_h264Encoder) {
                                                   auto enc = std::dynamic_pointer_cast<videocore::IEncoder>(bSelf->m_h264Encoder);
                                                   
-                                                  if(vector < 0) {
-                                                      int ceiling = enc->bitrate();
-                                                      float mult = 0.5;
-                                                      if(self->_bpsCeiling > 0) {
-                                                          mult = 0.75;
-                                                      }
-                                                      printf("Setting bitrate to %f\n", enc->bitrate() * mult);
-                                                      enc->setBitrate(enc->bitrate() * mult);
-                                                      //self->_bpsCeiling = ceiling;
-                                                  } else if (vector > 0) {
-                                                      int target = enc->bitrate() * 1.1;
-                                                      
-                                                      if(self->_bpsCeiling > 0) {
-                                                          target = MIN(target, self->_bpsCeiling);
-                                                      }
-                                                      if(target != self->_bpsCeiling) {
-                                                          printf("Setting bitrate to %d\n", target);
-                                                          enc->setBitrate(target);
-                                                          
-                                                      }
+                                                  int br = enc->bitrate() * (vector * 0.25f + 1.0f);
+                                                  
+                                                  if(vector < 0 && _previousBitrate < br) {
+                                                      br = _previousBitrate;
                                                   }
+                                                  
+                                                  _previousBitrate = br;
+                                                  
+                                                  enc->setBitrate(br);
+                                                  printf("Vector: %lf setting bitrate to %d\n", vector,br);
                                                   
                                               }
                                               

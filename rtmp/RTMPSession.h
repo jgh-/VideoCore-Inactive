@@ -45,8 +45,8 @@ namespace videocore
 {
     class RTMPSession;
 
-    static const int32_t kBitrateAdaptationSampleDuration = 500; /* Milliseconds */
-    static const int32_t kBitrateAdaptationSampleCount = 5;
+    static const int32_t kBitrateAdaptationSampleDuration = 150; /* Milliseconds */
+    static const int32_t kBitrateAdaptationSampleCount = 10;
     
     enum {
         kRTMPSessionParameterWidth=0,
@@ -104,7 +104,7 @@ namespace videocore
         void sendCreateStream();
         void sendPublish();
         void sendHeaderPacket();
-
+        void sendSetChunkSize(int32_t chunkSize);
         void sendDeleteStream();
 
         bool parseCurrentData();
@@ -136,9 +136,14 @@ namespace videocore
 
         std::chrono::steady_clock::time_point m_bpsEpoch;
         std::deque<size_t>                    m_bpsSamples;
-        double                                m_bytesSent;
+        float                                 m_bytesSent;
         
-        size_t          m_currentChunkSize;
+        size_t          m_bytesIn;
+        size_t          m_bytesOut;
+        
+        size_t          m_outChunkSize;
+        size_t          m_inChunkSize;
+        
         int32_t         m_streamId;
         int32_t         m_createStreamInvoke;
         int32_t         m_numberOfInvokes;
