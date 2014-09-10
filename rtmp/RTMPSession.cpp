@@ -679,7 +679,7 @@ namespace videocore
 
         if(!p) return false;
 
-        while (ret) {
+        while (ret>0) {
             int header_type = (p[0] & 0xC0) >> 6;
             p++;
             ret--;
@@ -760,6 +760,7 @@ namespace videocore
                         default:
                         {
                             printf("received unknown packet type: 0x%02X\n", chunk.msg_type_id);
+                            ret = 0;
                         }
                             break;
                     }
