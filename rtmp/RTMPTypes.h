@@ -99,13 +99,13 @@ enum {
     FLV_HEADER_FLAG_HASVIDEO = 1,
     FLV_HEADER_FLAG_HASAUDIO = 4,
 };
-/*
+
 enum {
     FLV_TAG_TYPE_AUDIO  = 0x08,
     FLV_TAG_TYPE_VIDEO  = 0x09,
     FLV_TAG_TYPE_META   = 0x12,
     FLV_TAG_TYPE_INVOKE = 0x14
-};*/
+};
 
 // RTMP header type is 1 byte
 enum {
