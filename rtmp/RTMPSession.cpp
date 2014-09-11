@@ -230,25 +230,25 @@ namespace videocore
        // }
         while((m_streamSession->status() & kStreamStatusWriteBufferHasSpace) && m_streamOutQueue.size() > 0 && m_streamOutRemainder.size() == 0) {
             
-            //printf("StreamQueue: %zu\n", m_streamOutQueue.size());
-            
+            //printf("StreamOutQueue: %zu\n", m_streamOutQueue.size());
             std::shared_ptr<Buffer> front = m_streamOutQueue.front();
             m_streamOutQueue.pop_front();
             uint8_t* buf;
-            
-            size_t size = front->size();
-            front->read(&buf, size);
-            //printf("Sending primary: %zu [%p] ", size, buf);
-            size_t sent = m_streamSession->write(buf, size);
-            //printf(" -> sent %zu\n", sent);
-            
-            m_bytesSent += sent;
-            m_bytesOut += sent;
-            
-            if(sent < size) {
-                //printf("Putting remainder %zu [0x%02x]\n", size-sent, buf[sent]);
-                m_streamOutRemainder.put(buf+sent, size-sent);
-                break;
+            if(front) {
+                size_t size = front->size();
+                front->read(&buf, size);
+                //printf("Sending primary: %zu [%p] ", size, buf);
+                size_t sent = m_streamSession->write(buf, size);
+                //printf(" -> sent %zu\n", sent);
+                
+                m_bytesSent += sent;
+                m_bytesOut += sent;
+                
+                if(sent < size) {
+                    //printf("Putting remainder %zu [0x%02x]\n", size-sent, buf[sent]);
+                    m_streamOutRemainder.put(buf+sent, size-sent);
+                    break;
+                }
             }
         }
         
@@ -641,27 +641,30 @@ namespace videocore
     {
         RTMPChunk_0 metadata = {{0}};
         
-        int streamId = 0;
+        m_jobQueue.enqueue([&, chunkSize] {
+            
+            int streamId = 0;
+            
+            metadata.msg_stream_id = 2;
+            metadata.msg_type_id = RTMP_PT_CHUNK_SIZE;
+            std::vector<uint8_t> buff;
         
-        metadata.msg_stream_id = 2;
-        metadata.msg_type_id = RTMP_PT_CHUNK_SIZE;
-        std::vector<uint8_t> buff;
+            put_byte(buff, 2); // chunk stream ID 2
+            put_be24(buff, 0); // ts
+            put_be24(buff, 4); // size (4 bytes)
+            put_byte(buff, RTMP_PT_CHUNK_SIZE); // chunk type
         
-        put_byte(buff, 2); // chunk stream ID 2
-        put_be24(buff, 0); // ts
-        put_be24(buff, 4); // size (4 bytes)
-        put_byte(buff, RTMP_PT_CHUNK_SIZE); // chunk type
+            put_buff(buff, (uint8_t*)&streamId, sizeof(int32_t)); // msg stream id is little-endian
         
-        put_buff(buff, (uint8_t*)&streamId, sizeof(int32_t)); // msg stream id is little-endian
-        
-        put_be32(buff, chunkSize);
+            put_be32(buff, chunkSize);
         
         //metadata.msg_length.data = static_cast<int>(buff.size());
         
-        write(&buff[0], buff.size());
+            write(&buff[0], buff.size());
         //sendPacket(&buff[0], buff.size(), metadata);
         
-        m_outChunkSize = chunkSize;
+            m_outChunkSize = chunkSize;
+        });
         
     }
     bool
@@ -673,7 +676,7 @@ namespace videocore
         
         p = &buf[0];
         
-        size_t ret = m_streamInBuffer->get(p, size, false);
+        long ret = m_streamInBuffer->get(p, size, false);
         
         start = p;
 
@@ -837,8 +840,8 @@ namespace videocore
             std::string code = parseStatusCode(p + 3 + command.length());
             printf("code : %s\n", code.c_str());
             if (code == "NetStream.Publish.Start") {
+                sendSetChunkSize(4096);
                 sendHeaderPacket();
-                sendSetChunkSize(1536);
                 setClientState(kClientStateSessionStarted);
             }
         }
