@@ -112,7 +112,7 @@ namespace videocore { namespace simpleApi {
     
     CGSize _videoSize;
     int    _bitrate;
-    int    _previousBitrate;
+    
     int    _fps;
     int    _bpsCeiling;
     int    _estimatedThroughput;
@@ -225,7 +225,9 @@ namespace videocore { namespace simpleApi {
 - (void) setRtmpSessionState:(VCSessionState)rtmpSessionState
 {
     _rtmpSessionState = rtmpSessionState;
-    [self.delegate connectionStatusChanged:rtmpSessionState];
+    if(self.delegate) {
+        [self.delegate connectionStatusChanged:rtmpSessionState];
+    }
 }
 - (VCSessionState) rtmpSessionState
 {
@@ -430,6 +432,7 @@ namespace videocore { namespace simpleApi {
     std::stringstream uri ;
     uri << (rtmpUrl ? [rtmpUrl UTF8String] : "") << "/" << (streamKey ? [streamKey UTF8String] : "");
 
+    
     m_outputSession.reset(
             new videocore::RTMPSession ( uri.str(),
                                         [=](videocore::RTMPSession& session,
@@ -455,12 +458,12 @@ namespace videocore { namespace simpleApi {
                 break;
             case kClientStateError:
                 self.rtmpSessionState = VCSessionStateError;
-                //[self endRtmpSession];
+                [self endRtmpSession];
                 self->m_outputSession.reset();
                 break;
             case kClientStateNotConnected:
                 self.rtmpSessionState = VCSessionStateEnded;
-                //[self endRtmpSession];
+                [self endRtmpSession];
                 break;
             default:
                 break;
@@ -473,27 +476,44 @@ namespace videocore { namespace simpleApi {
     _bpsCeiling = _bitrate;
     
     if ( self.useAdaptiveBitrate ) {
-        _bitrate = 1000000;
+        _bitrate = 500000;
     }
-    _previousBitrate = _bitrate;
     
-    m_outputSession->setBandwidthCallback([=](float vector, int predicted)
+    m_outputSession->setBandwidthCallback([=](float vector, float predicted)
                                           {
                                               
                                               bSelf->_estimatedThroughput = predicted;
                                               if(bSelf.useAdaptiveBitrate && bSelf->m_h264Encoder) {
                                                   auto enc = std::dynamic_pointer_cast<videocore::IEncoder>(bSelf->m_h264Encoder);
                                                   
-                                                  int br = enc->bitrate() * (vector * 0.25f + 1.0f);
-                                                  
-                                                  if(vector < 0 && _previousBitrate < br) {
-                                                      br = _previousBitrate;
+                                                  if(vector != 0) {
+                                                      int br = enc->bitrate();
+                                                      
+                                                      if(vector < 0) {
+                                                          if(vector == -1.f) {
+                                                              br *= 0.8;
+                                                          } else {
+                                                              //if(vector < -0.1f) {
+                                                                  br *= (1.f + (vector * 0.5f));
+                                                              //}
+                                                          }
+                                                          
+                                                      } else {
+                                                          
+                                                          if(vector == 1.f) {
+                                                              br *= 1.2;
+                                                          } else {
+                                                              //if(vector > 0.1f) {
+                                                                  br *= (1.f + (vector * 0.5f));
+                                                              //}
+                                                          }
+                                                      }
+                                                      
+                                                      enc->setBitrate(std::max(std::min(br, _bpsCeiling), 100000));
+
+                                                      printf("Vector: %lf setting bitrate to \t\t\t\t\t\t%d\n", vector,br);
                                                   }
-                                                  
-                                                  _previousBitrate = br;
-                                                  
-                                                  enc->setBitrate(br);
-                                                  printf("Vector: %lf setting bitrate to %d\n", vector,br);
+
                                                   
                                               }
                                               
@@ -521,6 +541,8 @@ namespace videocore { namespace simpleApi {
 
     m_outputSession.reset();
 
+    _bitrate = _bpsCeiling;
+    
     self.rtmpSessionState = VCSessionStateEnded;
 }
 

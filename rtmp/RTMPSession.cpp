@@ -37,15 +37,13 @@
 namespace videocore
 {
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback callback)
-    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback), m_bandwidthCallback(nullptr), m_outChunkSize(128), m_inChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false), m_bytesSent(0), m_bytesIn(0), m_bytesOut(0)
+    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback), m_bandwidthCallback(nullptr), m_outChunkSize(128), m_inChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false)
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
 #endif
         boost::char_separator<char> sep("/");
         boost::tokenizer<boost::char_separator<char> > tokens(m_uri.path, sep );
-        
-        m_bpsEpoch = std::chrono::steady_clock::now();
         
         auto itr = tokens.begin();
         std::stringstream pp;
@@ -102,6 +100,7 @@ namespace videocore
     RTMPSession::setBandwidthCallback(BandwidthCallback callback)
     {
         m_bandwidthCallback = callback;
+        m_throughputSession.setThroughputCallback(callback);
     }
     void
     RTMPSession::pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata)
@@ -116,6 +115,8 @@ namespace videocore
         const RTMPMetadata_t inMetadata = static_cast<const RTMPMetadata_t&>(metadata);
         
         m_jobQueue.enqueue([&,buf,inMetadata]() {
+            static int c_count = 0;
+            c_count ++;
             
             std::vector<uint8_t> chunk;
             std::vector<uint8_t> & outb = this->m_outBuffer;
@@ -158,8 +159,8 @@ namespace videocore
                 p+=tosend;
                 len-=tosend;
                 //if(outb.size() > 3072) {
-                this->write(&outb[0], outb.size());
-                outb.clear();
+                    this->write(&outb[0], outb.size());
+                    outb.clear();
                 //}
                 
             }
@@ -167,7 +168,9 @@ namespace videocore
                 this->write(&outb[0], outb.size());
                 outb.clear();
             }
-            
+            if(--c_count > 0) {
+                printf("error multiple chunks!\n");
+            }
         });
         
     }
@@ -183,9 +186,6 @@ namespace videocore
     void
     RTMPSession::write(uint8_t* data, size_t size)
     {
-        m_bytesIn += size;
-        
-        
         if(size > 0) {
             std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(size);
             buf->put(data, size);
@@ -210,106 +210,42 @@ namespace videocore
                 
                 m_streamOutRemainder.read(&buffer, ret);
                 ret = m_streamOutRemainder.read(&buffer, size - ret, false);
-                m_bytesSent += sent;
-                m_bytesOut += sent;
+
+                m_throughputSession.addSentBytesSample(sent);
                 
                 sent = m_streamSession->write(buffer, ret);
             }
             
-            //printf(" -> sent %zu\n", sent);
-            
-            m_bytesSent += sent;
-            
-            m_bytesOut += sent;
+            m_throughputSession.addSentBytesSample(sent);
             
             m_streamOutRemainder.read(&buffer, sent);
         }
         
-        //if(!(m_streamSession->status() & kStreamStatusWriteBufferHasSpace)) {
-        //    printf("[2] stream does not have space\n");
-        // }
         while((m_streamSession->status() & kStreamStatusWriteBufferHasSpace) && m_streamOutQueue.size() > 0 && m_streamOutRemainder.size() == 0) {
             
-            //printf("StreamOutQueue: %zu\n", m_streamOutQueue.size());
             std::shared_ptr<Buffer> front = m_streamOutQueue.front();
             m_streamOutQueue.pop_front();
             uint8_t* buf;
             if(front) {
                 size_t size = front->size();
                 front->read(&buf, size);
-                //printf("Sending primary: %zu [%p] ", size, buf);
                 size_t sent = m_streamSession->write(buf, size);
-                //printf(" -> sent %zu\n", sent);
                 
-                m_bytesSent += sent;
-                m_bytesOut += sent;
+                m_throughputSession.addSentBytesSample(sent);
                 
                 if(sent < size) {
-                    //printf("Putting remainder %zu [0x%02x]\n", size-sent, buf[sent]);
                     m_streamOutRemainder.put(buf+sent, size-sent);
                     break;
                 }
             }
         }
         
-        auto now = std::chrono::steady_clock::now();
-        
-        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>( now - m_bpsEpoch );
-        
-        if ( diff.count() > kBitrateAdaptationSampleDuration && m_state == kClientStateSessionStarted)
-        {
-            const float vectorStep = 1.f / float(kBitrateAdaptationSampleCount);
-            
-            size_t bufferSize = m_streamOutRemainder.size();
-            for (auto & it : m_streamOutQueue) {
-                bufferSize += it->size();
-            }
-            m_bpsSamples.push_back(bufferSize);
-            
-            if(m_bpsSamples.size() == kBitrateAdaptationSampleCount) {
-                
-                const float t = (float(kBitrateAdaptationSampleDuration * kBitrateAdaptationSampleCount) / 1000.f);
-                const float t_step = float(kBitrateAdaptationSampleDuration) / 1000.f;
-                
-                float prediction = m_bytesSent / t;
-                
-                //  printf("----------\n");
-                //  printf("BYTES IN: %zu OUT: %zu SIZE: %zu PRED: %d\n", m_bytesIn, m_bytesOut, bufferSize, int(prediction) * 8);
-                
-                float ratio = float(m_bytesOut) / float(m_bytesIn);
-                
-                float vector = ratio - 1.f;
-                
-                m_bytesSent = 0;
-                m_bytesOut = 0;
-                m_bytesIn = 0;
-                float lastSample = 0;
-                float avg = 0;
-                
-                bool increase = true;
-                for ( auto & it : m_bpsSamples ) {
-                    if(it > 0) {
-                        increase = false;
-                    }
-                }
-                avg /= kBitrateAdaptationSampleCount;
-                
-                
-                if ( bufferSize > 0 ) {
-                    vector = -1;
-                } else if ( bufferSize == 0 && increase ) {
-                    vector = 0.5;
-                }
-                float velocity = float(long(m_bpsSamples.back()) - long(m_bpsSamples[0])) / t;
-                
-                //printf("Velocity: %lf\n", velocity);
-                if(m_bandwidthCallback) {
-                    m_bandwidthCallback(vector, prediction);
-                }
-                m_bpsSamples.clear();
-            }
-            m_bpsEpoch = now;
+        size_t bufferSize = m_streamOutRemainder.size();
+        for (auto & it : m_streamOutQueue) {
+            bufferSize += it->size();
         }
+        
+        m_throughputSession.addBufferSizeSample(bufferSize);
         
     }
     void
@@ -840,7 +776,7 @@ namespace videocore
             std::string code = parseStatusCode(p + 3 + command.length());
             printf("code : %s\n", code.c_str());
             if (code == "NetStream.Publish.Start") {
-                sendSetChunkSize(4096);
+                sendSetChunkSize(1536);
                 sendHeaderPacket();
                 setClientState(kClientStateSessionStarted);
             }

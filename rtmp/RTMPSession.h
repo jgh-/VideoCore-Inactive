@@ -27,6 +27,8 @@
 
 #include <iostream>
 #include <videocore/stream/IStreamSession.hpp>
+#include <videocore/stream/TCPThroughputAdaptation.h>
+
 #include <UriParser/UriParser.hpp>
 
 #include <functional>
@@ -45,8 +47,9 @@ namespace videocore
 {
     class RTMPSession;
     
-    static const int32_t kBitrateAdaptationSampleDuration = 150; /* Milliseconds */
-    static const int32_t kBitrateAdaptationSampleCount = 10;
+    static const int32_t kBitrateAdaptationSampleDuration    = 300; /* Milliseconds */
+    static const int32_t kBitrateAdaptationSampleCount       = 10;
+    static const int32_t kBitrateAdaptationCeilingRetryTime  = 30;  /* Seconds */
     
     enum {
         kRTMPSessionParameterWidth=0,
@@ -119,6 +122,8 @@ namespace videocore
         RingBuffer          m_streamOutRemainder;
         Buffer              m_s1, m_c1;
         
+        TCPThroughputAdaptation m_throughputSession;
+        
         std::deque<std::shared_ptr<Buffer> > m_streamOutQueue;
         
         std::map<int, uint64_t>             m_previousChunkData;
@@ -133,13 +138,6 @@ namespace videocore
         std::string                     m_playPath;
         std::string                     m_app;
         std::map<int32_t, std::string>  m_trackedCommands;
-        
-        std::chrono::steady_clock::time_point m_bpsEpoch;
-        std::deque<size_t>                    m_bpsSamples;
-        float                                 m_bytesSent;
-        
-        size_t          m_bytesIn;
-        size_t          m_bytesOut;
         
         size_t          m_outChunkSize;
         size_t          m_inChunkSize;

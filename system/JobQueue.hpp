@@ -38,20 +38,22 @@
 namespace videocore {
     
     struct Job {
-        Job(std::function<void()> job) : m_isSynchronous(false) , m_job(job), m_dispatchDate(std::chrono::steady_clock::now()) {} ;
+        Job(std::function<void()> job) : m_isSynchronous(false) , m_job(job), m_dispatchDate(std::chrono::steady_clock::now()), m_done(false) {} ;
         
-        Job(std::function<void()> job, std::chrono::steady_clock::time_point dispatch_date) : m_isSynchronous(false), m_job(job), m_dispatchDate(dispatch_date)  {};
+        Job(std::function<void()> job, std::chrono::steady_clock::time_point dispatch_date) : m_isSynchronous(false), m_job(job), m_dispatchDate(dispatch_date), m_done(false)  {};
     
         void operator ()() const { m_job(); };
         
         const std::chrono::steady_clock::time_point dispatchDate() const { return m_dispatchDate; };
+        bool done() const { return m_done; }
+        void setDone() { m_done = true; }
         
         bool m_isSynchronous;
         
     private:
         std::function<void()> m_job;
         std::chrono::steady_clock::time_point m_dispatchDate;
-        
+        bool m_done;
 
     };
     class JobQueue
@@ -84,7 +86,9 @@ namespace videocore {
             job.m_isSynchronous = true;
             enqueue(job);
             std::unique_lock<std::mutex> lk(m_doneMutex);
-            m_jobDoneCond.wait(lk);
+            if(!job.done()) {
+                m_jobDoneCond.wait(lk);
+            }
         }
         void set_name(std::string name) {
             enqueue([=]() { pthread_setname_np(name.c_str()); });
@@ -101,6 +105,7 @@ namespace videocore {
                     m_jobs.pop();
                     m_jobMutex.unlock();
                     j();
+                    j.setDone();
                     if(j.m_isSynchronous) {
                         m_jobDoneCond.notify_one();
                     }
