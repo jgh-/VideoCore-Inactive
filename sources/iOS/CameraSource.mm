@@ -140,8 +140,10 @@ namespace videocore { namespace iOS {
                             bThis->m_captureDevice = d;
                             NSError* error;
                             [d lockForConfiguration:&error];
-                            [d setActiveVideoMinFrameDuration:CMTimeMake(1, fps)];
-                            [d setActiveVideoMaxFrameDuration:CMTimeMake(1, fps)];
+                            if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
+                                [d setActiveVideoMinFrameDuration:CMTimeMake(1, fps)];
+                                [d setActiveVideoMaxFrameDuration:CMTimeMake(1, fps)];
+                            }
                             [d unlockForConfiguration];
                         }
                     }
@@ -176,12 +178,23 @@ namespace videocore { namespace iOS {
                     output = [[AVCaptureVideoDataOutput alloc] init] ;
                     
                     output.videoSettings = @{(NSString*)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA) };
+                    
+                    if(!SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
+                        AVCaptureConnection* conn = [output connectionWithMediaType:AVMediaTypeVideo];
+                        if([conn isVideoMinFrameDurationSupported]) {
+                            [conn setVideoMinFrameDuration:CMTimeMake(1, fps)];
+                        }
+                        if([conn isVideoMaxFrameDurationSupported]) {
+                            [conn setVideoMaxFrameDuration:CMTimeMake(1, fps)];
+                        }
+                    }
                     if(!bThis->m_callbackSession) {
                         bThis->m_callbackSession = [[sbCallback alloc] init];
                         [((sbCallback*)bThis->m_callbackSession) setSource:shared_from_this()];
                     }
                     
                     [output setSampleBufferDelegate:((sbCallback*)bThis->m_callbackSession) queue:dispatch_get_global_queue(0, 0)];
+                    
                     
                     if([session canAddInput:input]) {
                         [session addInput:input];
@@ -206,13 +219,17 @@ namespace videocore { namespace iOS {
             }
         };
         @autoreleasepool {
-            AVAuthorizationStatus auth = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
-            
-            if(auth == AVAuthorizationStatusAuthorized || !SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
+            if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
+                AVAuthorizationStatus auth = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
+                
+                if(auth == AVAuthorizationStatusAuthorized || !SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
+                    permissions(true);
+                }
+                else if(auth == AVAuthorizationStatusNotDetermined) {
+                    [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:permissions];
+                }
+            } else {
                 permissions(true);
-            }
-            else if(auth == AVAuthorizationStatusNotDetermined) {
-                [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:permissions];
             }
             
         }

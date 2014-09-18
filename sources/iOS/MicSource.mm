@@ -26,6 +26,9 @@
 #include <dlfcn.h>
 #include <videocore/mixers/IAudioMixer.hpp>
 #import <AVFoundation/AVFoundation.h>
+#import <UIKit/UIKit.h>
+
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
 static std::weak_ptr<videocore::iOS::MicSource> s_micSource;
 
@@ -71,9 +74,8 @@ namespace videocore { namespace iOS {
         AVAudioSession *session = [AVAudioSession sharedInstance];
 
         __block MicSource* bThis = this;
-        
 
-        [session requestRecordPermission:^(BOOL granted) {
+        PermissionBlock permission = ^(BOOL granted) {
             if(granted) {
 
                 [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionMixWithOthers | AVAudioSessionCategoryOptionDefaultToSpeaker error:nil];
@@ -116,8 +118,13 @@ namespace videocore { namespace iOS {
                 AudioUnitInitialize(bThis->m_audioUnit);
                 AudioOutputUnitStart(bThis->m_audioUnit);
             }
-        }];
-
+        };
+        
+        if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
+            [session requestRecordPermission:permission];
+        } else {
+            permission(true);
+        }
 
     }
     MicSource::~MicSource() {
