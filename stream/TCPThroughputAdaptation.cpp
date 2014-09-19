@@ -1,11 +1,36 @@
-
+/*
+ 
+ Video Core
+ Copyright (c) 2014 James G. Hurley
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ 
+ */
 #include <videocore/stream/TCPThroughputAdaptation.h>
 #include <chrono>
 #include <cmath>
 
 namespace videocore {
     
+    static const float kPI_2 = M_PI_2;
     static const float kWeight = 0.75f;
+    static const int   kPivotSamples = 5;
     
     TCPThroughputAdaptation::TCPThroughputAdaptation()
     : m_callback(nullptr), m_exiting(false), m_hasFirstTurndown(false), m_bwSampleCount(30), m_previousVector(0.f)
@@ -86,31 +111,34 @@ namespace videocore {
 
                 if(m_previousVector < 0 && vec >= 0) {
                     m_turnSamples.push_front(m_bwSamples.front());
-                    if(m_turnSamples.size() > m_bwSampleCount) {
+                    if(m_turnSamples.size() > kPivotSamples) {
                         m_turnSamples.pop_back();
                     }
                 }
                 
                 if(bufferDelta < 0 && m_bufferSizeSamples.back() > 0) {
                     m_turnSamples.push_front(detectedBytesPerSec);
-                    if(m_turnSamples.size() > m_bwSampleCount) {
+                    if(m_turnSamples.size() > kPivotSamples) {
                         m_turnSamples.pop_back();
                     }
                 }
                 
                 if(m_turnSamples.size() > 0) {
                     
+                    
                     for ( int i = 0 ; i < m_turnSamples.size() ; ++i ) {
-                        turnAvg += m_turnSamples[i] * m_bwWeights[i];
+                        turnAvg += m_turnSamples[i];
                     }
+                    turnAvg /= m_turnSamples.size();
+                    
                     float a = (detectedBytesPerSec - avg) / turnAvg ;
-                    float slope = 3.f * powf(a,2.f) /*- 2.f*a + 1.f*/;
+                    float slope = 3.f * powf(a,2.f);
                     
-                    vec *= atanf(slope) / M_PI_2;
-                    
+                    vec *= std::min(1.f,std::max(atanf(slope) / kPI_2, 0.1f));
+                    //printf("--------------------\n");
                     //printf("a: %f slope: %f (%f)\n", a, slope, vec);
                     //printf("S:%zu Δt:%f AVG:%fB/s Δ:%ld TAVG:%f DET:%f\n", totalSent, timeDelta, avg, bufferDelta, turnAvg, detectedBytesPerSec);
-                    
+                    //printf("--------------------\n");
                 }
                 
                 m_previousVector = vec;
@@ -122,6 +150,7 @@ namespace videocore {
             m_buffMutex.unlock();
             
             if(m_callback) {
+                
                 m_callback(vec, turnAvg);
             }
             

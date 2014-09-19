@@ -302,33 +302,33 @@ namespace videocore { namespace iOS {
         if(!m_captureSession) return;
         
         AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
-        
-        [session beginConfiguration];
-        
-        AVCaptureInput* currentCameraInput = [session.inputs objectAtIndex:0];
-        
-        [session removeInput:currentCameraInput];
-        
-        AVCaptureDevice *newCamera = nil;
-        if(((AVCaptureDeviceInput*)currentCameraInput).device.position == AVCaptureDevicePositionBack)
-        {
-            newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionFront);
+        if(session) {
+            [session beginConfiguration];
+            
+            AVCaptureInput* currentCameraInput = [session.inputs objectAtIndex:0];
+            
+            [session removeInput:currentCameraInput];
+            
+            AVCaptureDevice *newCamera = nil;
+            if(((AVCaptureDeviceInput*)currentCameraInput).device.position == AVCaptureDevicePositionBack)
+            {
+                newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionFront);
+            }
+            else
+            {
+                newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionBack);
+            }
+            
+            AVCaptureDeviceInput *newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:newCamera error:nil];
+            
+            [session addInput:newVideoInput];
+            
+            [session commitConfiguration];
+            
+            [newVideoInput release];
+            
+            reorientCamera();
         }
-        else
-        {
-            newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionBack);
-        }
-        
-        AVCaptureDeviceInput *newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:newCamera error:nil];
-        
-        [session addInput:newVideoInput];
-        
-        [session commitConfiguration];
-        
-        [newVideoInput release];
-        
-        reorientCamera();
-        
     }
     
     void

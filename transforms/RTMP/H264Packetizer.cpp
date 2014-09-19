@@ -39,10 +39,6 @@ namespace videocore { namespace rtmp {
     }
     void H264Packetizer::pushBuffer(const uint8_t* const inBuffer, size_t inSize, IMetadata& inMetadata)
     {
-        
-      
-      
-        
         std::vector<uint8_t>& outBuffer = m_outbuffer;
         
         outBuffer.clear();

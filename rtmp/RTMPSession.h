@@ -108,6 +108,7 @@ namespace videocore
         void sendPublish();
         void sendHeaderPacket();
         void sendSetChunkSize(int32_t chunkSize);
+        void sendPong();
         void sendDeleteStream();
         
         bool parseCurrentData();

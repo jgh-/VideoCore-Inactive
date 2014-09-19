@@ -429,48 +429,57 @@ namespace videocore { namespace simpleApi {
 - (void) startRtmpSessionWithURL:(NSString *)rtmpUrl
                     andStreamKey:(NSString *)streamKey
 {
+
+    __block VCSimpleSession* bSelf = self;
+    
+    dispatch_async(_graphManagementQueue, ^{
+        [bSelf startSessionInternal:rtmpUrl streamKey:streamKey];
+    });
+}
+- (void) startSessionInternal: (NSString*) rtmpUrl
+                    streamKey: (NSString*) streamKey
+{
     std::stringstream uri ;
     uri << (rtmpUrl ? [rtmpUrl UTF8String] : "") << "/" << (streamKey ? [streamKey UTF8String] : "");
-
     
     m_outputSession.reset(
-            new videocore::RTMPSession ( uri.str(),
-                                        [=](videocore::RTMPSession& session,
-                                            ClientState_t state) {
-                                            
-                                            printf("ClientState: %d\n", state);
-
-        switch(state) {
-
-            case kClientStateConnected:
-                self.rtmpSessionState = VCSessionStateStarting;
-                break;
-            case kClientStateSessionStarted:
-            {
-                self.rtmpSessionState = VCSessionStateStarted;
-                
-                __block VCSimpleSession* bSelf = self;
-                dispatch_async(_graphManagementQueue, ^{
-                    [bSelf addEncodersAndPacketizers];
-                });
-                
-            }
-                break;
-            case kClientStateError:
-                self.rtmpSessionState = VCSessionStateError;
-                [self endRtmpSession];
-                self->m_outputSession.reset();
-                break;
-            case kClientStateNotConnected:
-                self.rtmpSessionState = VCSessionStateEnded;
-                [self endRtmpSession];
-                break;
-            default:
-                break;
-
-        }
-
-    }) );
+                          new videocore::RTMPSession ( uri.str(),
+                                                      [=](videocore::RTMPSession& session,
+                                                          ClientState_t state) {
+                                                          
+                                                          printf("ClientState: %d\n", state);
+                                                          
+                                                          switch(state) {
+                                                                  
+                                                              case kClientStateConnected:
+                                                                  self.rtmpSessionState = VCSessionStateStarting;
+                                                                  break;
+                                                              case kClientStateSessionStarted:
+                                                              {
+                                                                  
+                                                                  __block VCSimpleSession* bSelf = self;
+                                                                  dispatch_async(_graphManagementQueue, ^{
+                                                                      [bSelf addEncodersAndPacketizers];
+                                                                  });
+                                                              }
+                                                                  self.rtmpSessionState = VCSessionStateStarted;
+                                                                  
+                                                                  break;
+                                                              case kClientStateError:
+                                                                  self.rtmpSessionState = VCSessionStateError;
+                                                                  [self endRtmpSession];
+                                                                  self->m_outputSession.reset();
+                                                                  break;
+                                                              case kClientStateNotConnected:
+                                                                  self.rtmpSessionState = VCSessionStateEnded;
+                                                                  [self endRtmpSession];
+                                                                  break;
+                                                              default:
+                                                                  break;
+                                                                  
+                                                          }
+                                                          
+                                                      }) );
     VCSimpleSession* bSelf = self;
     
     _bpsCeiling = _bitrate;
@@ -494,7 +503,7 @@ namespace videocore { namespace simpleApi {
                                                               br *= 0.8;
                                                           } else {
                                                               //if(vector < -0.1f) {
-                                                                  br *= (1.f + (vector * 0.5f));
+                                                              br *= (1.f + (vector * 0.5f));
                                                               //}
                                                           }
                                                           
@@ -504,30 +513,30 @@ namespace videocore { namespace simpleApi {
                                                               br *= 1.2;
                                                           } else {
                                                               //if(vector > 0.1f) {
-                                                                  br *= (1.f + (vector * 0.5f));
+                                                              br *= (1.f + (vector * 0.5f));
                                                               //}
                                                           }
                                                       }
+                                                      br = std::max(std::min(br, _bpsCeiling), 100000);
+                                                      enc->setBitrate(br);
                                                       
-                                                      enc->setBitrate(std::max(std::min(br, _bpsCeiling), 100000));
-
                                                       printf("Vector: %lf setting bitrate to \t\t\t\t\t\t%d\n", vector,br);
                                                   }
-
+                                                  
                                                   
                                               }
                                               
                                           });
     
     videocore::RTMPSessionParameters_t sp ( 0. );
-
+    
     sp.setData(self.videoSize.width,
                self.videoSize.height,
                1. / static_cast<double>(self.fps),
                self.bitrate,
                self.audioSampleRate,
                (self.audioChannelCount == 2));
-
+    
     m_outputSession->setSessionParameters(sp);
 }
 - (void) endRtmpSession

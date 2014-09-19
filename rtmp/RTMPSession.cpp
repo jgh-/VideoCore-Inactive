@@ -575,14 +575,11 @@ namespace videocore
     void
     RTMPSession::sendSetChunkSize(int32_t chunkSize)
     {
-        RTMPChunk_0 metadata = {{0}};
         
         m_jobQueue.enqueue([&, chunkSize] {
             
             int streamId = 0;
             
-            metadata.msg_stream_id = 2;
-            metadata.msg_type_id = RTMP_PT_CHUNK_SIZE;
             std::vector<uint8_t> buff;
             
             put_byte(buff, 2); // chunk stream ID 2
@@ -594,14 +591,33 @@ namespace videocore
             
             put_be32(buff, chunkSize);
             
-            //metadata.msg_length.data = static_cast<int>(buff.size());
-            
             write(&buff[0], buff.size());
-            //sendPacket(&buff[0], buff.size(), metadata);
             
             m_outChunkSize = chunkSize;
         });
         
+    }
+    void
+    RTMPSession::sendPong()
+    {
+        m_jobQueue.enqueue([&] {
+            
+            int streamId = 0;
+            
+            std::vector<uint8_t> buff;
+            
+            put_byte(buff, 2); // chunk stream ID 2
+            put_be24(buff, 0); // ts
+            put_be24(buff, 6); // size (6 bytes)
+            put_byte(buff, RTMP_PT_PING); // chunk type
+            
+            put_buff(buff, (uint8_t*)&streamId, sizeof(int32_t)); // msg stream id is little-endian
+            put_be16(buff, 7);
+            put_be16(buff, 0);
+            put_be16(buff, 0);
+            
+            write(&buff[0], buff.size());
+        });
     }
     bool
     RTMPSession::parseCurrentData()
@@ -650,7 +666,8 @@ namespace videocore
                             
                         case RTMP_PT_PING:
                         {
-                            printf("received ping\n");
+                            printf("received ping, sending pong.\n");
+                            sendPong();
                         }
                             break;
                             
