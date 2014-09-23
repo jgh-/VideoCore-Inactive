@@ -439,11 +439,22 @@ namespace videocore { namespace simpleApi {
 - (void) startSessionInternal: (NSString*) rtmpUrl
                     streamKey: (NSString*) streamKey
 {
-    std::stringstream uri ;
-    uri << (rtmpUrl ? [rtmpUrl UTF8String] : "") << "/" << (streamKey ? [streamKey UTF8String] : "");
+    
+    std::string url = rtmpUrl ? [rtmpUrl UTF8String] : "";
+    
+    std::string queryString= http::TailSlice(url, "?");
+    
+    if (streamKey && streamKey.length && url.length()) {
+        if (url[url.length()-1]!= '/')
+            url += "/";
+        
+        url += [streamKey UTF8String];
+    }
+    
+    url += "?" + queryString;
     
     m_outputSession.reset(
-                          new videocore::RTMPSession ( uri.str(),
+                          new videocore::RTMPSession ( url,
                                                       [=](videocore::RTMPSession& session,
                                                           ClientState_t state) {
                                                           
