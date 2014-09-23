@@ -64,6 +64,7 @@ namespace videocore
         {
             if(m_uri.search.length() > 0) {
                 pp << "?" << m_uri.search;
+                m_app += "?" + m_uri.search;
             }
             m_playPath = pp.str();
         }
