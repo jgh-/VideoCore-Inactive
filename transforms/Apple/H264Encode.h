@@ -50,7 +50,7 @@ namespace videocore { namespace Apple {
         
     private:
         void setupCompressionSession();
-        
+        void teardownCompressionSession();
         
     private:
         
@@ -61,6 +61,7 @@ namespace videocore { namespace Apple {
         int                    m_frameH;
         int                    m_fps;
         int                    m_bitrate;
+        
         
         bool                   m_forceKeyframe;
         

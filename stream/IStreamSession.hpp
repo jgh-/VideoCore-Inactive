@@ -29,6 +29,8 @@
 #include <functional>
 #include <string>
 
+#include <videocore/system/util.h>
+
 namespace videocore {
     
     enum {
@@ -56,6 +58,10 @@ namespace videocore {
         virtual size_t write(uint8_t* buffer, size_t size) = 0;
         virtual size_t read(uint8_t* buffer, size_t size) = 0;
         virtual const StreamStatus_t status() const = 0;
+        
+        virtual int unsent() = 0;
+        virtual int unread() = 0;
+        
     private:
         virtual void setStatus(StreamStatus_t,bool clear = false) = 0;
     };

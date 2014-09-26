@@ -22,30 +22,16 @@
  THE SOFTWARE.
  
  */
-#ifndef __videocore__IThroughputAdaptation__
-#define __videocore__IThroughputAdaptation__
 
-#include <functional>
-#include <videocore/system/util.h>
+#ifndef __videocore_util_h
+#define __videocore_util_h
 
-namespace videocore {
-    
-    using ThroughputCallback = std::function<void(float vector, float predicted)>;
-    
-    
-    class IThroughputAdaptation {
-    public:
-        virtual ~IThroughputAdaptation() {};
-        
-        virtual void setThroughputCallback(ThroughputCallback callback) = 0;
-        
-        virtual void addSentBytesSample(size_t bytesSent) = 0;
-        
-        virtual void addBufferSizeSample(size_t bufferSize) = 0;
-        
-        virtual void addBufferDurationSample(int64_t bufferDuration) = 0;
-        
-    };
-}
+
+#ifdef DEBUG
+#define DLog(...) printf(__VA_ARGS__)
+#else
+#define DLog(...) {}
+#endif
+
 
 #endif

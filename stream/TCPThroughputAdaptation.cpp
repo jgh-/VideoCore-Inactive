@@ -25,12 +25,16 @@
 #include <videocore/stream/TCPThroughputAdaptation.h>
 #include <chrono>
 #include <cmath>
+#include <stdlib.h>
 
 namespace videocore {
     
     static const float kPI_2 = M_PI_2;
     static const float kWeight = 0.75f;
     static const int   kPivotSamples = 5;
+    static const int   kMeasurementDelay = 2; // seconds - represents the time between measurements when increasing or decreasing bitrate
+    static const int   kSettlementDelay  = 60; // seconds - represents time to wait after a bitrate decrease before attempting to increase again
+    static const int   kIncreaseDelta    = 20; // seconds - number of seconds to wait between increase vectors (after initial ramp up)
     
     TCPThroughputAdaptation::TCPThroughputAdaptation()
     : m_callback(nullptr), m_exiting(false), m_hasFirstTurndown(false), m_bwSampleCount(30), m_previousVector(0.f)
@@ -61,13 +65,15 @@ namespace videocore {
     {
         std::mutex m;
         auto prev = std::chrono::steady_clock::now();
+        //char* home = getenv("HOME");
+        //char* folder = "/Library/Documents";
         
         while(!m_exiting) {
             std::unique_lock<std::mutex> l(m);
             auto now = std::chrono::steady_clock::now();
             auto diff = now - prev;
             auto previousTurndownDiff = std::chrono::duration_cast<std::chrono::seconds>(now - m_previousTurndown).count();
-            
+            auto previousIncreaseDiff = std::chrono::duration_cast<std::chrono::seconds>(now - m_previousIncrease).count();
             prev = now;
             m_sentMutex.lock();
             m_buffMutex.lock();
@@ -95,34 +101,50 @@ namespace videocore {
             
             
             if(!m_bufferSizeSamples.empty()) {
+                bool noBuffer = true;
+              
+                float frontAvg = 0.f;
+                float backAvg = 0.f;
+                int frontCount = 0;
+                int backCount = 0;
+                
+                for (int i = 0 ; i < m_bufferSizeSamples.size() ; ++i) {
 
-                const long bufferDelta = long(m_bufferSizeSamples.back()) - long(m_bufferSizeSamples.front());
+                    const float s1 = m_bufferSizeSamples[i];
+                    if(s1>0) noBuffer = false;
+                    
+                    if ( i < m_bufferSizeSamples.size() / 2 ) {
+                        frontAvg += s1;
+                        frontCount++;
+                    } else {
+                        backAvg += s1;
+                        backCount++;
+                    }
+                }
+                frontAvg /= float(frontCount);
+                backAvg /= float(backCount);
                 
+                if(noBuffer && m_bufferSizeSamples.back() > 0) noBuffer = false;
                 
-                if(m_bufferSizeSamples.back() == 0 && (!m_hasFirstTurndown || previousTurndownDiff > 10)) {
+                //DLog("NB: %d, FT: %f BK: %f\n", noBuffer, frontAvg, backAvg);
+                if(noBuffer && m_bufferSizeSamples.back() == 0 && (!m_hasFirstTurndown || (previousTurndownDiff > kSettlementDelay && previousIncreaseDiff > kIncreaseDelta))) {
                     vec = 1.f;
                 }
-                else if(m_bufferSizeSamples.back() > m_bufferSizeSamples.front()) {
+                else if(!noBuffer && backAvg > frontAvg) {
                     vec = -1.f;
 
                     m_previousTurndown = now;
                     m_hasFirstTurndown = true;
                 }
 
+                
                 if(m_previousVector < 0 && vec >= 0) {
                     m_turnSamples.push_front(m_bwSamples.front());
                     if(m_turnSamples.size() > kPivotSamples) {
                         m_turnSamples.pop_back();
                     }
                 }
-                
-                if(bufferDelta < 0 && m_bufferSizeSamples.back() > 0) {
-                    m_turnSamples.push_front(detectedBytesPerSec);
-                    if(m_turnSamples.size() > kPivotSamples) {
-                        m_turnSamples.pop_back();
-                    }
-                }
-                
+
                 if(m_turnSamples.size() > 0) {
                     
                     
@@ -131,32 +153,38 @@ namespace videocore {
                     }
                     turnAvg /= m_turnSamples.size();
                     
+                    if(detectedBytesPerSec > turnAvg) {
+                        m_turnSamples.push_front(detectedBytesPerSec);
+                        if(m_turnSamples.size() > kPivotSamples) {
+                            m_turnSamples.pop_back();
+                        }
+                    }
+                    
                     float a = (detectedBytesPerSec - avg) / turnAvg ;
                     float slope = 3.f * powf(a,2.f);
                     
                     vec *= std::min(1.f,std::max(atanf(slope) / kPI_2, 0.1f));
-                    //printf("--------------------\n");
-                    //printf("a: %f slope: %f (%f)\n", a, slope, vec);
-                    //printf("S:%zu Δt:%f AVG:%fB/s Δ:%ld TAVG:%f DET:%f\n", totalSent, timeDelta, avg, bufferDelta, turnAvg, detectedBytesPerSec);
-                    //printf("--------------------\n");
                 }
-                
+
                 m_previousVector = vec;
 
             }
             m_sentSamples.clear();
             m_bufferSizeSamples.clear();
+            m_bufferDurationSamples.clear();
             m_sentMutex.unlock();
             m_buffMutex.unlock();
             
             if(m_callback) {
-                
+                if(vec > 0.f) {
+                    m_previousIncrease = now;
+                }
                 m_callback(vec, turnAvg);
             }
             
             if(!m_exiting) {
                 
-                m_cond.wait_until(l, now + std::chrono::seconds(5));
+                m_cond.wait_until(l, now + std::chrono::seconds(kMeasurementDelay));
             }
         }
     }
@@ -173,5 +201,13 @@ namespace videocore {
         m_sentMutex.lock();
         m_sentSamples.push_back(bytesSent);
         m_sentMutex.unlock();
+    }
+    void
+    TCPThroughputAdaptation::addBufferDurationSample(int64_t bufferDuration)
+    {
+        m_durMutex.lock();
+        m_bufferDurationSamples.push_back(bufferDuration);
+        m_durMutex.unlock();
+        
     }
 }

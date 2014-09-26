@@ -37,16 +37,16 @@ switch(glerr)\
 case GL_NO_ERROR:\
 break;\
 case GL_INVALID_ENUM:\
-printf("OGL(" __FILE__ "):: %d: Invalid Enum\n", line );\
+DLog("OGL(" __FILE__ "):: %d: Invalid Enum\n", line );\
 break;\
 case GL_INVALID_VALUE:\
-printf("OGL(" __FILE__ "):: %d: Invalid Value\n", line );\
+DLog("OGL(" __FILE__ "):: %d: Invalid Value\n", line );\
 break;\
 case GL_INVALID_OPERATION:\
-printf("OGL(" __FILE__ "):: %d: Invalid Operation\n", line );\
+DLog("OGL(" __FILE__ "):: %d: Invalid Operation\n", line );\
 break;\
 case GL_OUT_OF_MEMORY:\
-printf("OGL(" __FILE__ "):: %d: Out of Memory\n", line );\
+DLog("OGL(" __FILE__ "):: %d: Out of Memory\n", line );\
 break;\
 } } }
 
@@ -71,6 +71,8 @@ break;\
 #define GL_ERRORS(line)
 #define GL_FRAMEBUFFER_STATUS(line)
 #endif
+
+#include <videocore/system/util.h>
 
 static float s_vbo [] =
 {
@@ -127,7 +129,7 @@ static inline GLuint compile_shader(GLuint type, const char * source)
         
         log = (char*)malloc((size_t)(length));
         glGetShaderInfoLog(shader, length, &length, &log[0]);
-        printf("%s compilation error: %s\n", (type == GL_VERTEX_SHADER ? "GL_VERTEX_SHADER" : "GL_FRAGMENT_SHADER"), log);
+        DLog("%s compilation error: %s\n", (type == GL_VERTEX_SHADER ? "GL_VERTEX_SHADER" : "GL_FRAGMENT_SHADER"), log);
         free(log);
         
         return 0;
@@ -164,7 +166,7 @@ static inline GLuint build_program(const char * vertex, const char * fragment)
         
         glGetProgramInfoLog(p, len, &len, log);
         
-        printf("program log: %s\n", log);
+        DLog("program log: %s\n", log);
         free(log);
     }
 #endif

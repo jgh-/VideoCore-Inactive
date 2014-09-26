@@ -153,7 +153,7 @@ namespace videocore { namespace iOS {
             CVOpenGLESTextureCacheFlush(m_textureCache, 0);
             CFRelease(m_textureCache);
             
-            printf("Releasing GLESContext..\n");
+            DLog("Releasing GLESContext..\n");
             [(id)m_glesCtx release];
         });
         m_mixThread.join();

@@ -43,6 +43,8 @@
 
 namespace videocore { namespace Apple {
 
+    static CMTimeValue s_forcedKeyframePTS = 0;
+    
 #if VERSION_OK
     void vtCallback(void *outputCallbackRefCon,
                     void *sourceFrameRefCon,
@@ -62,7 +64,9 @@ namespace videocore { namespace Apple {
             dependsOnOthers = (CFBooleanRef)CFDictionaryGetValue(attachment, kCMSampleAttachmentKey_DependsOnOthers);
             isKeyframe = (dependsOnOthers == kCFBooleanFalse);
         }
+        
         if(isKeyframe) {
+
             // Send the SPS and PPS.
             CMFormatDescriptionRef format = CMSampleBufferGetFormatDescription(sampleBuffer);
             size_t spsSize, ppsSize;
@@ -101,12 +105,7 @@ namespace videocore { namespace Apple {
     }
     H264Encode::~H264Encode()
     {
-#if VERSION_OK
-        if(m_compressionSession) {
-            VTCompressionSessionInvalidate((VTCompressionSessionRef)m_compressionSession);
-            CFRelease((VTCompressionSessionRef)m_compressionSession);
-        }
-#endif
+        teardownCompressionSession();
     }
     void
     H264Encode::pushBuffer(const uint8_t *const data, size_t size, videocore::IMetadata &metadata)
@@ -124,6 +123,8 @@ namespace videocore { namespace Apple {
             CFMutableDictionaryRef frameProps = NULL;
             
             if(m_forceKeyframe) {
+                s_forcedKeyframePTS = pts.value;
+                
                 frameProps = CFDictionaryCreateMutable(kCFAllocatorDefault, 1,&kCFTypeDictionaryKeyCallBacks,                                                            &kCFTypeDictionaryValueCallBacks);
             
             
@@ -191,26 +192,19 @@ namespace videocore { namespace Apple {
         
         if(err == noErr) {
             m_compressionSession = session;
-            const int32_t v = m_fps * 2; // 2-second kfi
+            const int32_t v = m_fps; // 2-second kfi
             CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_MaxKeyFrameInterval, ref);
             CFRelease(ref);
         }
-
-        if(err == noErr) {
-            const int32_t v = m_fps / 2; // limit the number of frames kept in the buffer
-            CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
-            //err = VTSessionSetProperty(session, kVTCompressionPropertyKey_MaxFrameDelayCount, ref);
-            CFRelease(ref);
-        }
-
+        
         if(err == noErr) {
             const int v = m_fps;
             CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_ExpectedFrameRate, ref);
             CFRelease(ref);
         }
-
+  
         if(err == noErr) {
             err = VTSessionSetProperty(session , kVTCompressionPropertyKey_AllowFrameReordering, kCFBooleanFalse);
         }
@@ -223,7 +217,7 @@ namespace videocore { namespace Apple {
         }
 
         if(err == noErr) {
-            err = VTSessionSetProperty(session, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue);
+            //err = VTSessionSetProperty(session, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue);
         }
         
         if(err == noErr) {
@@ -235,7 +229,16 @@ namespace videocore { namespace Apple {
 #endif
         
     }
-    
+    void
+    H264Encode::teardownCompressionSession()
+    {
+#if VERSION_OK
+        if(m_compressionSession) {
+            VTCompressionSessionInvalidate((VTCompressionSessionRef)m_compressionSession);
+            CFRelease((VTCompressionSessionRef)m_compressionSession);
+        }
+#endif
+    }
     void
     H264Encode::compressionSessionOutput(const uint8_t *data, size_t size, uint64_t ts)
     {
@@ -254,13 +257,20 @@ namespace videocore { namespace Apple {
     H264Encode::setBitrate(int bitrate)
     {
 #if VERSION_OK
+        if(bitrate == m_bitrate) {
+            return;
+        }
         m_bitrate = bitrate;
         if(m_compressionSession) {
             m_encodeMutex.lock();
-            int v = m_bitrate;
+            int v = m_bitrate * 0.9; // headroom
             CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
+            
+            VTCompressionSessionCompleteFrames((VTCompressionSessionRef)m_compressionSession, kCMTimeInvalid);
+            
             VTSessionSetProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_AverageBitRate, ref);
             CFRelease(ref);
+            
             
             v = bitrate / 8;
             CFNumberRef bytes = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &v);

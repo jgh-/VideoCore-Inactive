@@ -27,6 +27,8 @@
 #include <tuple>
 #include <string>
 #include <boost/lexical_cast.hpp>
+#include <videocore/system/util.h>
+
 
 namespace videocore
 {

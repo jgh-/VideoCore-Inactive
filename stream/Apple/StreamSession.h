@@ -42,6 +42,9 @@ namespace videocore {
             size_t write(uint8_t* buffer, size_t size);
             size_t read(uint8_t* buffer, size_t size);
             
+            int unsent();
+            int unread();
+            
             const StreamStatus_t status() const {
                 return m_status;
             };
@@ -59,6 +62,8 @@ namespace videocore {
                         
             StreamSessionCallback_t     m_callback;
             StreamStatus_t              m_status;
+          
+            int m_outSocket;
             
         };
     }

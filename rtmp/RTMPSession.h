@@ -35,6 +35,7 @@
 #include <deque>
 #include <queue>
 #include <map>
+#include <chrono>
 
 #include <videocore/system/JobQueue.hpp>
 #include <cstdlib>
@@ -50,6 +51,9 @@ namespace videocore
     static const int32_t kBitrateAdaptationSampleDuration    = 300; /* Milliseconds */
     static const int32_t kBitrateAdaptationSampleCount       = 10;
     static const int32_t kBitrateAdaptationCeilingRetryTime  = 30;  /* Seconds */
+    
+    using BufStruct = struct { std::shared_ptr<Buffer> buf; std::chrono::steady_clock::time_point time; };
+    
     
     enum {
         kRTMPSessionParameterWidth=0,
@@ -93,7 +97,7 @@ namespace videocore
         
         
         void streamStatusChanged(StreamStatus_t status);
-        void write(uint8_t* data, size_t size);
+        void write(uint8_t* data, size_t size, std::chrono::steady_clock::time_point packetTime = std::chrono::steady_clock::now());
         void dataReceived();
         void setClientState(ClientState_t state);
         void handshake();
@@ -110,6 +114,7 @@ namespace videocore
         void sendSetChunkSize(int32_t chunkSize);
         void sendPong();
         void sendDeleteStream();
+        void sendSetBufferTime(int milliseconds);
         
         bool parseCurrentData();
         void handleInvoke(uint8_t* p);
@@ -125,7 +130,7 @@ namespace videocore
         
         TCPThroughputAdaptation m_throughputSession;
         
-        std::deque<std::shared_ptr<Buffer> > m_streamOutQueue;
+        std::deque<BufStruct> m_streamOutQueue;
         
         std::map<int, uint64_t>             m_previousChunkData;
         std::unique_ptr<RingBuffer>         m_streamInBuffer;

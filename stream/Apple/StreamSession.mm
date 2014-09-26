@@ -27,7 +27,12 @@
 #include <iostream>
 #include <videocore/stream/Apple/StreamSession.h>
 
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
 
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #define SCB(x) ((NSStreamCallback*)(x))
 #define NSIS(x) ((NSInputStream*)(x))
 #define NSOS(x) ((NSOutputStream*)(x))
@@ -77,6 +82,8 @@ namespace videocore {
                 m_inputStream = (NSInputStream*)readStream;
                 m_outputStream = (NSOutputStream*)writeStream;
             
+
+                
                 dispatch_async(dispatch_get_global_queue(0, 0), ^{
                     this->startNetwork();
                 });
@@ -92,7 +99,18 @@ namespace videocore {
             [NSIS(m_inputStream) release];
             [NSOS(m_outputStream) release];
         }
-        
+        int
+        StreamSession::unsent()
+        {
+            return 0;
+        }
+        int
+        StreamSession::unread()
+        {
+            int unread = 0;
+            
+            return unread;
+        }
         size_t
         StreamSession::write(uint8_t *buffer, size_t size)
         {
@@ -106,7 +124,7 @@ namespace videocore {
                 m_status ^= kStreamStatusWriteBufferHasSpace;
             }
             else if (ret < 0) {
-                printf("ERROR! [%d] buffer: %p [ 0x%02x ], size: %zu\n", NSOS(m_outputStream).streamError.code, buffer, buffer[0], size);
+                DLog("ERROR! [%ld] buffer: %p [ 0x%02x ], size: %zu\n", (long)NSOS(m_outputStream).streamError.code, buffer, buffer[0], size);
             }
 
             return ret;
@@ -145,6 +163,13 @@ namespace videocore {
                    NSIS(m_inputStream).streamStatus < 5 &&
                    NSOS(m_outputStream).streamStatus < 5) {
                     // Connected.
+                    CFDataRef nativeSocket = (CFDataRef)CFWriteStreamCopyProperty((CFWriteStreamRef)m_outputStream, kCFStreamPropertySocketNativeHandle);
+                    CFSocketNativeHandle *sock = (CFSocketNativeHandle *)CFDataGetBytePtr(nativeSocket);
+                    m_outSocket = *sock;
+                    int v = 1;
+                    setsockopt(*sock, IPPROTO_TCP, TCP_NODELAY, &v, sizeof(int));
+                    CFRelease(nativeSocket);
+
                     setStatus(kStreamStatusConnected, true);
                 } else return;
             }
@@ -159,7 +184,7 @@ namespace videocore {
             }
             if(event & NSStreamEventErrorOccurred) {
                 setStatus(kStreamStatusErrorEncountered, true);
-                NSLog(@"Status: %d\n", ((NSStream*)stream).streamStatus);
+                NSLog(@"Status: %d\n", (int)((NSStream*)stream).streamStatus);
                 NSLog(@"Error: %@", ((NSStream*)stream).streamError);
             }
         }
@@ -174,7 +199,7 @@ namespace videocore {
             [NSOS(m_outputStream) scheduleInRunLoop:NSRL(m_runLoop) forMode:NSDefaultRunLoopMode];
             [NSOS(m_outputStream) open];
             [NSIS(m_inputStream) open];
-            
+
             [NSRL(m_runLoop) run];
         }
         

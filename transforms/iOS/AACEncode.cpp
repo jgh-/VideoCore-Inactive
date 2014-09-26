@@ -39,14 +39,14 @@ namespace videocore { namespace iOS {
         
         error = AudioFormatGetPropertyInfo(kAudioFormatProperty_Encoders, sizeof(encoderSpecifier),
                                            &encoderSpecifier, &size);
-        if (error) { printf("AudioFormatGetPropertyInfo kAudioFormatProperty_Encoders error %d %4.4s\n", (int)error, (char*)&error); return false; }
+        if (error) { DLog("AudioFormatGetPropertyInfo kAudioFormatProperty_Encoders error %d %4.4s\n", (int)error, (char*)&error); return false; }
         
         UInt32 numEncoders = size / sizeof(AudioClassDescription);
         AudioClassDescription encoderDescriptions[numEncoders];
         
         error = AudioFormatGetProperty(kAudioFormatProperty_Encoders, sizeof(encoderSpecifier),
                                        &encoderSpecifier, &size, encoderDescriptions);
-        if (error) { printf("AudioFormatGetProperty kAudioFormatProperty_Encoders error %d %4.4s\n",
+        if (error) { DLog("AudioFormatGetProperty kAudioFormatProperty_Encoders error %d %4.4s\n",
                             (int)error, (char*)&error); return false; }
         
         for (UInt32 i=0; i < numEncoders; ++i) {

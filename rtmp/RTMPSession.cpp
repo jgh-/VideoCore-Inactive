@@ -34,6 +34,8 @@
 #include <sstream>
 
 
+
+
 namespace videocore
 {
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback callback)
@@ -118,6 +120,8 @@ namespace videocore
             static int c_count = 0;
             c_count ++;
             
+            auto packetTime = std::chrono::steady_clock::now();
+            
             std::vector<uint8_t> chunk;
             std::vector<uint8_t> & outb = this->m_outBuffer;
             size_t len = buf->size();
@@ -151,6 +155,10 @@ namespace videocore
             len -= tosend;
             p += tosend;
             
+            
+            this->write(&outb[0], outb.size(), packetTime);
+            outb.clear();
+            
             while(len > 0) {
                 tosend = std::min(len, m_outChunkSize);
                 p[-1] = RTMP_CHUNK_TYPE_3 | (streamId & 0x1F);
@@ -158,19 +166,12 @@ namespace videocore
                 outb.insert(outb.end(), p-1, p+tosend);
                 p+=tosend;
                 len-=tosend;
-                //if(outb.size() > 3072) {
-                    this->write(&outb[0], outb.size());
-                    outb.clear();
-                //}
-                
-            }
-            if(outb.size() > 0) {
-                this->write(&outb[0], outb.size());
+                this->write(&outb[0], outb.size(), packetTime);
                 outb.clear();
+
             }
-            if(--c_count > 0) {
-                printf("error multiple chunks!\n");
-            }
+            
+
         });
         
     }
@@ -184,19 +185,23 @@ namespace videocore
         pushBuffer(data, size, md);
     }
     void
-    RTMPSession::write(uint8_t* data, size_t size)
+    RTMPSession::write(uint8_t* data, size_t size, std::chrono::steady_clock::time_point packetTime)
     {
+        static std::chrono::steady_clock::time_point previousTimePoint = std::chrono::steady_clock::now();
+        
         if(size > 0) {
             std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(size);
             buf->put(data, size);
-            m_streamOutQueue.push_back(buf);
-            static size_t count = 0;
-            count++;
+            BufStruct b;
+            b.buf = buf;
+            b.time = packetTime;
+            m_streamOutQueue.push_back(b);
+            if(packetTime == previousTimePoint) {
+                return;
+            }
         }
-        //if(!(m_streamSession->status() & kStreamStatusWriteBufferHasSpace)) {
-        //    printf("[1] stream does not have space\n");
-        //}
-        if((m_streamSession->status() & kStreamStatusWriteBufferHasSpace) && m_streamOutRemainder.size()) {
+        previousTimePoint = packetTime;
+        if(/*(m_streamSession->status() & kStreamStatusWriteBufferHasSpace) &&*/ m_streamOutRemainder.size()) {
             
             
             size_t size = m_streamOutRemainder.size();
@@ -214,6 +219,7 @@ namespace videocore
                 m_throughputSession.addSentBytesSample(sent);
                 
                 sent = m_streamSession->write(buffer, ret);
+                
             }
             
             m_throughputSession.addSentBytesSample(sent);
@@ -221,32 +227,44 @@ namespace videocore
             m_streamOutRemainder.read(&buffer, sent);
         }
         
-        while((m_streamSession->status() & kStreamStatusWriteBufferHasSpace) && m_streamOutQueue.size() > 0 && m_streamOutRemainder.size() == 0) {
+        while( m_streamOutQueue.size() > 0 && m_streamOutRemainder.size() == 0) {
             
-            std::shared_ptr<Buffer> front = m_streamOutQueue.front();
-            m_streamOutQueue.pop_front();
+            std::shared_ptr<Buffer> front = m_streamOutQueue.front().buf;
+            size_t sent = 0;
+            
             uint8_t* buf;
             if(front) {
                 size_t size = front->size();
                 front->read(&buf, size);
-                size_t sent = m_streamSession->write(buf, size);
-                
+                sent = m_streamSession->write(buf, size);
+               
                 m_throughputSession.addSentBytesSample(sent);
                 
+                if ( sent > 0 ) {
+                    m_streamOutQueue.pop_front();
+                    if (sent < size) {
+                         m_streamOutRemainder.put(buf+sent, size-sent);
+                    }
+                }
+                
                 if(sent < size) {
-                    m_streamOutRemainder.put(buf+sent, size-sent);
                     break;
                 }
             }
         }
         
         size_t bufferSize = m_streamOutRemainder.size();
+        int64_t bufDur = 0;
+        
         for (auto & it : m_streamOutQueue) {
-            bufferSize += it->size();
+            bufferSize += it.buf->size();
         }
-        
+        if(m_streamOutQueue.size() > 1) {
+            bufDur = std::chrono::duration_cast<std::chrono::milliseconds>(m_streamOutQueue.back().time - m_streamOutQueue.front().time).count();
+        }
+        m_throughputSession.addBufferDurationSample(bufDur);
         m_throughputSession.addBufferSizeSample(bufferSize);
-        
+     
     }
     void
     RTMPSession::dataReceived()
@@ -294,7 +312,7 @@ namespace videocore
                     {
                         if(m_streamInBuffer->size() >= kRTMPSignatureSize) {
                             uint8_t buf[kRTMPSignatureSize];
-                            size_t size = m_streamInBuffer->get(buf, kRTMPSignatureSize);;
+                            m_streamInBuffer->get(buf, kRTMPSignatureSize);
                             
                             setClientState(kClientStateHandshakeComplete);
                             handshake();
@@ -319,8 +337,6 @@ namespace videocore
     void
     RTMPSession::setClientState(ClientState_t state)
     {
-        printf("RTMPStatus: %d\n", state);
-        
         m_state = state;
         m_callback(*this, state);
     }
@@ -346,7 +362,6 @@ namespace videocore
             setClientState(kClientStateNotConnected);
         }
         if(status & kStreamStatusErrorEncountered) {
-            //printf("kStreamStatusErrorEncountered\n");
             setClientState(kClientStateError);
         }
     }
@@ -619,6 +634,25 @@ namespace videocore
             write(&buff[0], buff.size());
         });
     }
+    void
+    RTMPSession::sendSetBufferTime(int milliseconds)
+    {
+        m_jobQueue.enqueue([=]{
+            int streamId = 0;
+            std::vector<uint8_t> buff;
+            put_byte(buff, 2);
+            put_be24(buff, 0);
+            put_be24(buff, 6);
+            put_byte(buff, RTMP_PT_NOTIFY);
+            put_buff(buff, (uint8_t*)&streamId, sizeof(int32_t));
+            
+            put_be16(buff, 3); // SetBufferTime
+            put_be32(buff, milliseconds);
+            
+            write(&buff[0], buff.size());
+            
+        });
+    }
     bool
     RTMPSession::parseCurrentData()
     {
@@ -645,77 +679,76 @@ namespace videocore
                     memcpy(&chunk, p, sizeof(RTMPChunk_0));
                     chunk.msg_length.data = get_be24((uint8_t*)&chunk.msg_length);
                     
-                    //printf("Received chunk of type %d (%d)\n", chunk.msg_type_id, chunk.msg_length.data);
                     p+=sizeof(chunk);
                     ret -= sizeof(chunk);
                     
                     switch(chunk.msg_type_id) {
                         case RTMP_PT_BYTES_READ:
                         {
-                            printf("received bytes read: %d\n", get_be32(p));
+                            //DLog("received bytes read: %d\n", get_be32(p));
                         }
                             break;
                             
                         case RTMP_PT_CHUNK_SIZE:
                         {
                             unsigned long newChunkSize = get_be32(p);
-                            printf("Request to change incoming chunk size from %zu -> %zu\n", m_inChunkSize, newChunkSize);
+                            DLog("Request to change incoming chunk size from %zu -> %zu\n", m_inChunkSize, newChunkSize);
                             m_inChunkSize = newChunkSize;
                         }
                             break;
                             
                         case RTMP_PT_PING:
                         {
-                            printf("received ping, sending pong.\n");
+                            DLog("received ping, sending pong.\n");
                             sendPong();
                         }
                             break;
                             
                         case RTMP_PT_SERVER_WINDOW:
                         {
-                            printf("received server window size: %d\n", get_be32(p));
+                            DLog("received server window size: %d\n", get_be32(p));
                         }
                             break;
                             
                         case RTMP_PT_PEER_BW:
                         {
-                            printf("received peer bandwidth limit: %d type: %d\n", get_be32(p), p[4]);
+                            DLog("received peer bandwidth limit: %d type: %d\n", get_be32(p), p[4]);
                         }
                             break;
                             
                         case RTMP_PT_INVOKE:
                         {
-                            printf("Received invoke\n");
+                            DLog("Received invoke\n");
                             handleInvoke(p);
                         }
                             break;
                         case RTMP_PT_VIDEO:
                         {
-                            printf("received video\n");
+                            DLog("received video\n");
                         }
                             break;
                             
                         case RTMP_PT_AUDIO:
                         {
-                            printf("received audio\n");
+                            DLog("received audio\n");
                         }
                             break;
                             
                         case RTMP_PT_METADATA:
                         {
-                            printf("received metadata\n");
+                            DLog("received metadata\n");
                         }
                             break;
                             
                         case RTMP_PT_NOTIFY:
                         {
-                            printf("received notify\n");
+                            DLog("received notify\n");
                         }
                             break;
                             
                         default:
                         {
-                            printf("received unknown packet type: 0x%02X\n", chunk.msg_type_id);
+                            DLog("received unknown packet type: 0x%02X\n", chunk.msg_type_id);
                             ret = 0;
                         }
                             break;
@@ -754,7 +787,6 @@ namespace videocore
                 default:
                     return false;
             }
-            //printf("Got data: %d, %zu, %zu\n", p-start, ret, size);
         }
         
         return true;
@@ -765,16 +797,16 @@ namespace videocore
     {
         std::string command = get_string(p);
         int32_t pktId = get_double(p+11);
-        //std::string trackedCommand = m_trackedCommands[pktId];
+
         std::string trackedCommand ;
         auto it = m_trackedCommands.find(pktId) ;
         if(it != m_trackedCommands.end()) {
             trackedCommand = it->second;
         }
-        printf("received invoke %s\n", command.c_str());
+        DLog("received invoke %s\n", command.c_str());
         
         if (command == "_result") {
-            printf("tracked command: %s\n", trackedCommand.c_str());
+            DLog("tracked command: %s\n", trackedCommand.c_str());
             if (trackedCommand == "connect") {
                 sendReleaseStream();
                 sendFCPublish();
@@ -782,7 +814,7 @@ namespace videocore
                 setClientState(kClientStateFCPublish);
             } else if (trackedCommand == "createStream") {
                 if (p[10] || p[19] != 0x05 || p[20]) {
-                    printf("RTMP: Unexpected reply on connect()\n");
+                    DLog("RTMP: Unexpected reply on connect()\n");
                 } else {
                     m_streamId = get_double(p+21);
                 }
@@ -791,9 +823,10 @@ namespace videocore
             }
         } else if (command == "onStatus") {
             std::string code = parseStatusCode(p + 3 + command.length());
-            printf("code : %s\n", code.c_str());
+            DLog("code : %s\n", code.c_str());
             if (code == "NetStream.Publish.Start") {
-                sendSetChunkSize(1536);
+                //sendSetBufferTime(2000);
+                sendSetChunkSize(4096);
                 sendHeaderPacket();
                 setClientState(kClientStateSessionStarted);
             }

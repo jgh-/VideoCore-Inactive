@@ -45,20 +45,26 @@ namespace videocore {
         
         void addBufferSizeSample(size_t bufferSize);
         
+        void addBufferDurationSample(int64_t bufferDuration);
+        
     private:
         void sampleThread();
         
     private:
         
         std::chrono::steady_clock::time_point m_previousTurndown;
+        std::chrono::steady_clock::time_point m_previousIncrease;
         
         std::thread             m_thread;
         std::condition_variable m_cond;
         std::mutex              m_sentMutex;
         std::mutex              m_buffMutex;
+        std::mutex              m_durMutex;
         
         std::vector<size_t> m_sentSamples;
         std::vector<size_t> m_bufferSizeSamples;
+        std::vector<int64_t> m_bufferDurationSamples;
+        
         std::deque<float> m_bwSamples;
         std::deque<float> m_turnSamples;
         std::vector<float> m_bwWeights;

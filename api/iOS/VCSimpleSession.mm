@@ -447,7 +447,7 @@ namespace videocore { namespace simpleApi {
                                                       [=](videocore::RTMPSession& session,
                                                           ClientState_t state) {
                                                           
-                                                          printf("ClientState: %d\n", state);
+                                                          DLog("ClientState: %d\n", state);
                                                           
                                                           switch(state) {
                                                                   
@@ -494,7 +494,7 @@ namespace videocore { namespace simpleApi {
                                               bSelf->_estimatedThroughput = predicted;
                                               if(bSelf.useAdaptiveBitrate && bSelf->m_h264Encoder) {
                                                   auto enc = std::dynamic_pointer_cast<videocore::IEncoder>(bSelf->m_h264Encoder);
-                                                  
+                                                  const float measured = predicted * 8 - 128000;
                                                   if(vector != 0) {
                                                       int br = enc->bitrate();
                                                       
@@ -502,9 +502,8 @@ namespace videocore { namespace simpleApi {
                                                           if(vector == -1.f) {
                                                               br *= 0.8;
                                                           } else {
-                                                              //if(vector < -0.1f) {
-                                                              br *= (1.f + (vector * 0.5f));
-                                                              //}
+                                                              br = std::min(measured, br * 0.8f);
+                                                              
                                                           }
                                                           
                                                       } else {
@@ -512,15 +511,14 @@ namespace videocore { namespace simpleApi {
                                                           if(vector == 1.f) {
                                                               br *= 1.2;
                                                           } else {
-                                                              //if(vector > 0.1f) {
-                                                              br *= (1.f + (vector * 0.5f));
-                                                              //}
+                                                              br = std::max(measured,br *( 1.f + (vector * 0.5f)));
+
                                                           }
                                                       }
                                                       br = std::max(std::min(br, _bpsCeiling), 100000);
                                                       enc->setBitrate(br);
                                                       
-                                                      printf("Vector: %lf setting bitrate to \t\t\t\t\t\t%d\n", vector,br);
+                                                      DLog("MEAS: %f VEC: %f BR: %d\n", measured, vector, br);
                                                   }
                                                   
                                                   

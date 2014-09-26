@@ -333,6 +333,6 @@ namespace videocore {
                 m_mixThreadCond.wait_until(l, m_nextMixTime);
             }
         }
-        printf("Exiting audio mixer...\n");
+        DLog("Exiting audio mixer...\n");
     }
 }
