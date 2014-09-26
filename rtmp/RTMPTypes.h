@@ -109,10 +109,10 @@ enum {
 
 // RTMP header type is 1 byte
 enum {
-    RTMP_HEADER_TYPE_FULL      = 0x0, // RTMPChunk_0
-    RTMP_HEADER_TYPE_NO_MSGID  = 0x1, // RTMPChunk_1
-    RTMP_HEADER_TYPE_TIMESTAMP = 0x2, // RTMPChunk_2
-    RTMP_HEADER_TYPE_ONLY      = 0x3, // no chunk
+    RTMP_HEADER_TYPE_FULL              = 0x0, // RTMPChunk_0
+    RTMP_HEADER_TYPE_NO_MSG_STREAM_ID  = 0x1, // RTMPChunk_1
+    RTMP_HEADER_TYPE_TIMESTAMP         = 0x2, // RTMPChunk_2
+    RTMP_HEADER_TYPE_ONLY              = 0x3, // no chunk header
 };
 
 enum {

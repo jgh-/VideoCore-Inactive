@@ -48,10 +48,6 @@ namespace videocore
 {
     class RTMPSession;
     
-    static const int32_t kBitrateAdaptationSampleDuration    = 300; /* Milliseconds */
-    static const int32_t kBitrateAdaptationSampleCount       = 10;
-    static const int32_t kBitrateAdaptationCeilingRetryTime  = 30;  /* Seconds */
-    
     using BufStruct = struct { std::shared_ptr<Buffer> buf; std::chrono::steady_clock::time_point time; };
     
     
@@ -118,6 +114,8 @@ namespace videocore
         
         bool parseCurrentData();
         void handleInvoke(uint8_t* p);
+        bool handleMessage(uint8_t* p, uint8_t msgTypeId);
+        
         std::string parseStatusCode(uint8_t *p);
         int32_t amfPrimitiveObjectSize(uint8_t* p);
         

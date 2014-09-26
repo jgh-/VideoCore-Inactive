@@ -127,17 +127,25 @@ static inline void put_string(std::vector<uint8_t>& data, std::string string) {
     }
     put_buff(data, (const uint8_t*)string.c_str(), string.length());
 }
-static inline std::string get_string(uint8_t* buf) {
+
+static inline std::string get_string(uint8_t* buf, int& bufsize) {
     int len = 0;
     if(*buf++ == kAMFString) {
         len = get_be16(buf);
         buf+=2;
+        bufsize = 2 + len;
     } else {
         len = get_be32(buf);
         buf+=4;
+        bufsize = 4 + len;
     }
+    
     std::string val((const char*)buf,len);
     return val;
+}
+static inline std::string get_string(uint8_t* buf) {
+    int buflen = 0;
+    return get_string(buf, buflen);
 }
 static inline void put_double(std::vector<uint8_t>& data, double val) {
     put_byte(data, kAMFNumber);
