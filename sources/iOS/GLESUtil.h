@@ -86,6 +86,7 @@ static float s_vbo [] =
 };
 
 
+
 static const char s_vs [] =
 "attribute vec2 aPos;"
 "attribute vec2 aCoord;"

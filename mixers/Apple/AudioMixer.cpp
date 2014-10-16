@@ -25,8 +25,8 @@
 
 #include <videocore/mixers/Apple/AudioMixer.h>
 
-static const UInt32 s_samplingRateConverterComplexity = kAudioConverterSampleRateConverterComplexity_Normal;
-static const UInt32 s_samplingRateConverterQuality = kAudioConverterQuality_High;
+static const UInt32 s_samplingRateConverterComplexity = kAudioConverterSampleRateConverterComplexity_Linear;
+static const UInt32 s_samplingRateConverterQuality = kAudioConverterQuality_Min;
 
 namespace videocore { namespace Apple {
     

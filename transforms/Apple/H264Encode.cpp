@@ -192,7 +192,7 @@ namespace videocore { namespace Apple {
         
         if(err == noErr) {
             m_compressionSession = session;
-            const int32_t v = m_fps; // 2-second kfi
+            const int32_t v = m_fps*2; // 2-second kfi
             CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_MaxKeyFrameInterval, ref);
             CFRelease(ref);
@@ -217,7 +217,7 @@ namespace videocore { namespace Apple {
         }
 
         if(err == noErr) {
-            //err = VTSessionSetProperty(session, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue);
+            err = VTSessionSetProperty(session, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue);
         }
         
         if(err == noErr) {
@@ -287,7 +287,7 @@ namespace videocore { namespace Apple {
             CFRelease(duration);
             CFRelease(limit);
             
-            m_forceKeyframe = true;
+            //m_forceKeyframe = true;
             m_encodeMutex.unlock();
             
         }

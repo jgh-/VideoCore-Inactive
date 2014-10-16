@@ -103,9 +103,12 @@ namespace videocore { namespace iOS {
             time.timescale = m_fps;
             time.flags = kCMTimeFlags_Valid;
             
-            [(id)m_assetWriters[wid] startWriting];
-            [(id)m_assetWriters[wid] startSessionAtSourceTime:time];
-            
+            @try {
+                [(id)m_assetWriters[wid] startWriting];
+                [(id)m_assetWriters[wid] startSessionAtSourceTime:time];
+            } @catch (NSException* e) {
+                teardownWriter(wid);
+            }
         }
         return true;
     }

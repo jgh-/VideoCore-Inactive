@@ -78,12 +78,13 @@ namespace videocore { namespace iOS {
         PermissionBlock permission = ^(BOOL granted) {
             if(granted) {
 
-                [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionMixWithOthers | AVAudioSessionCategoryOptionDefaultToSpeaker error:nil];
+                [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker error:nil];
+                [session setMode:AVAudioSessionModeVideoChat error:nil];
                 [session setActive:YES error:nil];
                 
                 AudioComponentDescription acd;
                 acd.componentType = kAudioUnitType_Output;
-                acd.componentSubType = kAudioUnitSubType_VoiceProcessingIO;
+                acd.componentSubType = kAudioUnitSubType_RemoteIO;
                 acd.componentManufacturer = kAudioUnitManufacturer_Apple;
                 acd.componentFlags = 0;
                 acd.componentFlagsMask = 0;

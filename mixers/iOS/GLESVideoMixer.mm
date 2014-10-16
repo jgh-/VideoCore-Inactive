@@ -457,7 +457,7 @@ namespace videocore { namespace iOS {
                 m_mixing = true;
                 PERF_GL_async({
                     glPushGroupMarkerEXT(0, "Videocore.Mix");
-                    CVPixelBufferLockBaseAddress(this->m_pixelBuffer[current_fb], 0);
+                    //CVPixelBufferLockBaseAddress(this->m_pixelBuffer[current_fb], 0);
                     
                     glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[current_fb]);
                     
@@ -469,7 +469,7 @@ namespace videocore { namespace iOS {
                     for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i) {
                         
                         for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {
-                            CVPixelBufferLockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly); // Lock, read-only.
+                           // CVPixelBufferLockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly); // Lock, read-only.
                             CVOpenGLESTextureRef texture = NULL;
                             auto iTex = this->m_sourceTextures.find(*it);
                             if(iTex == this->m_sourceTextures.end()) continue;
@@ -484,7 +484,7 @@ namespace videocore { namespace iOS {
                             glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
                             glDrawArrays(GL_TRIANGLES, 0, 6);
                             GL_ERRORS(__LINE__);
-                            CVPixelBufferUnlockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly);
+                           // CVPixelBufferUnlockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly);
                             /*if(this->m_sourceProperties[*it].blends) {
                                 glDisable(GL_BLEND);
                             }*/
@@ -492,8 +492,8 @@ namespace videocore { namespace iOS {
                     }
                     glFlush();
                     glPopGroupMarkerEXT();
-                    if(locked[!current_fb])
-                        CVPixelBufferUnlockBaseAddress(this->m_pixelBuffer[!current_fb], 0);
+                   // if(locked[!current_fb])
+                   //     CVPixelBufferUnlockBaseAddress(this->m_pixelBuffer[!current_fb], 0);
                     
                     auto lout = this->m_output.lock();
                     if(lout) {
