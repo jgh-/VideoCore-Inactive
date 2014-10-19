@@ -92,6 +92,13 @@ typedef NS_ENUM(NSInteger, VCCameraState)
            useInterfaceOrientation:(BOOL)useInterfaceOrientation;
 
 // -----------------------------------------------------------------------------
+- (instancetype) initWithVideoSize:(CGSize)videoSize
+                         frameRate:(int)fps
+                           bitrate:(int)bps
+           useInterfaceOrientation:(BOOL)useInterfaceOrientation
+                       cameraState:(VCCameraState) cameraState;
+
+// -----------------------------------------------------------------------------
 - (void) startRtmpSessionWithURL:(NSString*) rtmpUrl
                     andStreamKey:(NSString*) streamKey;
 
