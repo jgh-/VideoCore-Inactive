@@ -43,7 +43,7 @@ namespace videocore { namespace iOS {
     class AACEncode : public ITransform
     {
     public:
-        AACEncode(int frequencyInHz, int channelCount);
+        AACEncode(int frequencyInHz, int channelCount, int averageBitrate);
         ~AACEncode();
 
         void setOutput(std::shared_ptr<IOutput> output) { m_output = output; };

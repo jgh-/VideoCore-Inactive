@@ -192,7 +192,7 @@ namespace videocore { namespace Apple {
         
         if(err == noErr) {
             m_compressionSession = session;
-            const int32_t v = m_fps; // 2-second kfi
+            const int32_t v = m_fps * 2; // 2-second kfi
             CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_MaxKeyFrameInterval, ref);
             CFRelease(ref);
@@ -217,7 +217,7 @@ namespace videocore { namespace Apple {
         }
 
         if(err == noErr) {
-            //err = VTSessionSetProperty(session, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue);
+            err = VTSessionSetProperty(session, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue);
         }
         
         if(err == noErr) {
@@ -271,6 +271,15 @@ namespace videocore { namespace Apple {
             VTSessionSetProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_AverageBitRate, ref);
             CFRelease(ref);
             
+            VTSessionCopyProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_AverageBitRate, kCFAllocatorDefault, &ref);
+            
+            SInt32 br = 0;
+            
+            CFNumberGetValue(ref, kCFNumberSInt32Type, &br);
+            
+            m_bitrate = br;
+            
+            CFRelease(ref);
             
             v = bitrate / 8;
             CFNumberRef bytes = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &v);
@@ -278,16 +287,17 @@ namespace videocore { namespace Apple {
             CFNumberRef duration = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &v);
             
             CFMutableArrayRef limit = CFArrayCreateMutable(kCFAllocatorDefault, 2, &kCFTypeArrayCallBacks);
+
             CFArrayAppendValue(limit, bytes);
             CFArrayAppendValue(limit, duration);
-            
+
             VTSessionSetProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_DataRateLimits, limit);
             
             CFRelease(bytes);
             CFRelease(duration);
             CFRelease(limit);
             
-            m_forceKeyframe = true;
+           // m_forceKeyframe = true;
             m_encodeMutex.unlock();
             
         }

@@ -168,6 +168,8 @@ namespace videocore {
                     m_outSocket = *sock;
                     int v = 1;
                     setsockopt(*sock, IPPROTO_TCP, TCP_NODELAY, &v, sizeof(int));
+                    v = 0;
+                    setsockopt(*sock, SOL_SOCKET, SO_SNDBUF, &v, sizeof(int));
                     CFRelease(nativeSocket);
 
                     setStatus(kStreamStatusConnected, true);
