@@ -18,9 +18,6 @@
 		7265D5F3191994B80042DC3B /* Main_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7265D5F1191994B80042DC3B /* Main_iPhone.storyboard */; };
 		7265D5F9191994B80042DC3B /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7265D5F8191994B80042DC3B /* ViewController.mm */; };
 		7265D5FB191994B80042DC3B /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7265D5FA191994B80042DC3B /* Images.xcassets */; };
-		7265D602191994B80042DC3B /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D601191994B80042DC3B /* XCTest.framework */; };
-		7265D603191994B80042DC3B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D5DF191994B80042DC3B /* Foundation.framework */; };
-		7265D604191994B80042DC3B /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D5E3191994B80042DC3B /* UIKit.framework */; };
 		7265D6651919977B0042DC3B /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D6641919977B0042DC3B /* AVFoundation.framework */; };
 		7265D667191997800042DC3B /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D666191997800042DC3B /* AudioToolbox.framework */; };
 		7265D669191997840042DC3B /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D668191997840042DC3B /* CFNetwork.framework */; };
@@ -28,16 +25,6 @@
 		7265D66D191997930042DC3B /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D66C191997930042DC3B /* CoreVideo.framework */; };
 		7265D66F191997970042DC3B /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D66E191997970042DC3B /* OpenGLES.framework */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		7265D605191994B80042DC3B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 7265D5D4191994B80042DC3B /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 7265D5DB191994B80042DC3B;
-			remoteInfo = SampleBroadcaster;
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		1A7B35641942542400AB5FD6 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
@@ -56,7 +43,6 @@
 		7265D5F7191994B80042DC3B /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		7265D5F8191994B80042DC3B /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
 		7265D5FA191994B80042DC3B /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
-		7265D600191994B80042DC3B /* SampleBroadcasterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SampleBroadcasterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7265D601191994B80042DC3B /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		7265D6641919977B0042DC3B /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		7265D666191997800042DC3B /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -64,8 +50,9 @@
 		7265D66A1919978E0042DC3B /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		7265D66C191997930042DC3B /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		7265D66E191997970042DC3B /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
-		89C13C05AD1E4151BD6AB5C7 /* Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.xcconfig; path = Pods/Pods.xcconfig; sourceTree = "<group>"; };
+		AC034311A4E2CCE0CCDA6C72 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
 		D811EF3F24704EBFB916513B /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		DA5713A4139B758B1B834C67 /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -87,16 +74,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		7265D5FD191994B80042DC3B /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				7265D602191994B80042DC3B /* XCTest.framework in Frameworks */,
-				7265D604191994B80042DC3B /* UIKit.framework in Frameworks */,
-				7265D603191994B80042DC3B /* Foundation.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -106,7 +83,7 @@
 				7265D5E5191994B80042DC3B /* SampleBroadcaster */,
 				7265D5DE191994B80042DC3B /* Frameworks */,
 				7265D5DD191994B80042DC3B /* Products */,
-				89C13C05AD1E4151BD6AB5C7 /* Pods.xcconfig */,
+				7314D3F09AB131B5F8068CD5 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -114,7 +91,6 @@
 			isa = PBXGroup;
 			children = (
 				7265D5DC191994B80042DC3B /* SampleBroadcaster.app */,
-				7265D600191994B80042DC3B /* SampleBroadcasterTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -164,6 +140,15 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		7314D3F09AB131B5F8068CD5 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				DA5713A4139B758B1B834C67 /* Pods.debug.xcconfig */,
+				AC034311A4E2CCE0CCDA6C72 /* Pods.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -186,24 +171,6 @@
 			productReference = 7265D5DC191994B80042DC3B /* SampleBroadcaster.app */;
 			productType = "com.apple.product-type.application";
 		};
-		7265D5FF191994B80042DC3B /* SampleBroadcasterTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 7265D614191994B80042DC3B /* Build configuration list for PBXNativeTarget "SampleBroadcasterTests" */;
-			buildPhases = (
-				7265D5FC191994B80042DC3B /* Sources */,
-				7265D5FD191994B80042DC3B /* Frameworks */,
-				7265D5FE191994B80042DC3B /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				7265D606191994B80042DC3B /* PBXTargetDependency */,
-			);
-			name = SampleBroadcasterTests;
-			productName = SampleBroadcasterTests;
-			productReference = 7265D600191994B80042DC3B /* SampleBroadcasterTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -212,14 +179,6 @@
 			attributes = {
 				LastUpgradeCheck = 0510;
 				ORGANIZATIONNAME = videocore;
-				TargetAttributes = {
-					7265D5DB191994B80042DC3B = {
-						DevelopmentTeam = G5RU2HL4SN;
-					};
-					7265D5FF191994B80042DC3B = {
-						TestTargetID = 7265D5DB191994B80042DC3B;
-					};
-				};
 			};
 			buildConfigurationList = 7265D5D7191994B80042DC3B /* Build configuration list for PBXProject "SampleBroadcaster" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -235,7 +194,6 @@
 			projectRoot = "";
 			targets = (
 				7265D5DB191994B80042DC3B /* SampleBroadcaster */,
-				7265D5FF191994B80042DC3B /* SampleBroadcasterTests */,
 			);
 		};
 /* End PBXProject section */
@@ -248,13 +206,6 @@
 				7265D5FB191994B80042DC3B /* Images.xcassets in Resources */,
 				7265D5F3191994B80042DC3B /* Main_iPhone.storyboard in Resources */,
 				7265D5EA191994B80042DC3B /* InfoPlist.strings in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		7265D5FE191994B80042DC3B /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -288,7 +239,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Pods-resources.sh\"\n";
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods/Pods-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -304,22 +255,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		7265D5FC191994B80042DC3B /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		7265D606191994B80042DC3B /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 7265D5DB191994B80042DC3B /* SampleBroadcaster */;
-			targetProxy = 7265D605191994B80042DC3B /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		7265D5E8191994B80042DC3B /* InfoPlist.strings */ = {
@@ -427,7 +363,7 @@
 		};
 		7265D612191994B80042DC3B /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 89C13C05AD1E4151BD6AB5C7 /* Pods.xcconfig */;
+			baseConfigurationReference = DA5713A4139B758B1B834C67 /* Pods.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
@@ -449,7 +385,7 @@
 		};
 		7265D613191994B80042DC3B /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 89C13C05AD1E4151BD6AB5C7 /* Pods.xcconfig */;
+			baseConfigurationReference = AC034311A4E2CCE0CCDA6C72 /* Pods.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
@@ -466,46 +402,6 @@
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = 1;
 				WRAPPER_EXTENSION = app;
-			};
-			name = Release;
-		};
-		7265D615191994B80042DC3B /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/SampleBroadcaster.app/SampleBroadcaster";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(inherited)",
-					"$(DEVELOPER_FRAMEWORKS_DIR)",
-				);
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "SampleBroadcaster/SampleBroadcaster-Prefix.pch";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = "SampleBroadcasterTests/SampleBroadcasterTests-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUNDLE_LOADER)";
-				WRAPPER_EXTENSION = xctest;
-			};
-			name = Debug;
-		};
-		7265D616191994B80042DC3B /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/SampleBroadcaster.app/SampleBroadcaster";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(inherited)",
-					"$(DEVELOPER_FRAMEWORKS_DIR)",
-				);
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "SampleBroadcaster/SampleBroadcaster-Prefix.pch";
-				INFOPLIST_FILE = "SampleBroadcasterTests/SampleBroadcasterTests-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUNDLE_LOADER)";
-				WRAPPER_EXTENSION = xctest;
 			};
 			name = Release;
 		};
@@ -526,15 +422,6 @@
 			buildConfigurations = (
 				7265D612191994B80042DC3B /* Debug */,
 				7265D613191994B80042DC3B /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		7265D614191994B80042DC3B /* Build configuration list for PBXNativeTarget "SampleBroadcasterTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				7265D615191994B80042DC3B /* Debug */,
-				7265D616191994B80042DC3B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
