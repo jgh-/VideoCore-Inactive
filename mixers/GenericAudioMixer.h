@@ -129,6 +129,7 @@ namespace videocore {
 
         std::thread m_mixThread;
         std::mutex  m_mixMutex;
+        std::mutex  m_mixInProgress;
         std::condition_variable m_mixThreadCond;
 
         std::weak_ptr<IOutput> m_output;

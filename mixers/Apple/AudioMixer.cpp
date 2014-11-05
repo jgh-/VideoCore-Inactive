@@ -25,8 +25,8 @@
 
 #include <videocore/mixers/Apple/AudioMixer.h>
 
-static const UInt32 s_samplingRateConverterComplexity = kAudioConverterSampleRateConverterComplexity_Normal;
-static const UInt32 s_samplingRateConverterQuality = kAudioConverterQuality_Medium;
+static const UInt32 s_samplingRateConverterComplexity = kAudioConverterSampleRateConverterComplexity_Linear;
+static const UInt32 s_samplingRateConverterQuality = kAudioConverterQuality_Low;
 
 namespace videocore { namespace Apple {
     
@@ -59,6 +59,9 @@ namespace videocore { namespace Apple {
         const auto inFrequncyInHz = metadata.getData<kAudioMetadataFrequencyInHz>();
         const auto inBitsPerChannel = metadata.getData<kAudioMetadataBitsPerChannel>();
         const auto inChannelCount = metadata.getData<kAudioMetadataChannelCount>();
+        const auto inFlags = metadata.getData<kAudioMetadataFlags>();
+        const auto inBytesPerFrame = metadata.getData<kAudioMetadataBytesPerFrame>();
+        
         //auto inLoops = metadata.getData<kAudioMetadataLoops>();
         
         if(m_outFrequencyInHz == inFrequncyInHz && m_outBitsPerChannel == inBitsPerChannel && m_outChannelCount == inChannelCount)
@@ -71,11 +74,11 @@ namespace videocore { namespace Apple {
         AudioStreamBasicDescription out = {0};
         
         in.mFormatID = kAudioFormatLinearPCM;
-        in.mFormatFlags =  kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
+        in.mFormatFlags =  inFlags;
         in.mChannelsPerFrame = inChannelCount;
         in.mSampleRate = inFrequncyInHz;
         in.mBitsPerChannel = inBitsPerChannel;
-        in.mBytesPerFrame = (in.mBitsPerChannel * in.mChannelsPerFrame) / 8;
+        in.mBytesPerFrame = inBytesPerFrame;
         in.mFramesPerPacket = 1;
         in.mBytesPerPacket = in.mBytesPerFrame * in.mFramesPerPacket;
         

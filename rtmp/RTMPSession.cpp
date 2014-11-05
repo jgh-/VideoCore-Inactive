@@ -647,18 +647,18 @@ namespace videocore
             std::vector<uint8_t> buff;
             put_byte(buff, 2);
             put_be24(buff, 0);
-            put_be24(buff, 6);
-            put_byte(buff, RTMP_PT_NOTIFY);
+            put_be24(buff, 10);
+            put_byte(buff, RTMP_PT_PING);
             put_buff(buff, (uint8_t*)&streamId, sizeof(int32_t));
             
             put_be16(buff, 3); // SetBufferTime
+            put_be32(buff, m_streamId);
             put_be32(buff, milliseconds);
             
             write(&buff[0], buff.size());
             
         });
-    }
-    bool
+    }    bool
     RTMPSession::handleMessage(uint8_t *p, uint8_t msgTypeId)
     {
         bool ret = true;
@@ -860,6 +860,7 @@ namespace videocore
             DLog("code : %s\n", code.c_str());
             if (code == "NetStream.Publish.Start") {
                 sendSetChunkSize(getpagesize());
+                sendSetBufferTime(2500);
                 sendHeaderPacket();
                 setClientState(kClientStateSessionStarted);
             }

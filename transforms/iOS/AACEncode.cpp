@@ -148,22 +148,89 @@ namespace videocore { namespace iOS {
             
             m_bytesPerSample = 2 * channelCount;
             
+            /*
+             case 0:
+             m_absd.mSampleRate = 96000;
+             break;
+             case 1:
+             m_absd.mSampleRate = 88200;
+             break;
+             case 2:
+             m_absd.mSampleRate = 64000;
+             break;
+             case 3:
+             m_absd.mSampleRate = 48000;
+             break;
+             case 4:
+             m_absd.mSampleRate = 44100;
+             break;
+             case 5:
+             m_absd.mSampleRate = 32000;
+             break;
+             case 6:
+             m_absd.mSampleRate = 24000;
+             break;
+             case 7:
+             m_absd.mSampleRate = 22050;
+             break;
+             case 8:
+             m_absd.mSampleRate = 16000;
+             break;
+             case 9:
+             m_absd.mSampleRate = 12000;
+             break;
+             case 10:
+             m_absd.mSampleRate = 11025;
+             break;
+             case 11:
+             m_absd.mSampleRate = 8000;
+             break;
+             case 12:
+             m_absd.mSampleRate = 7350;
+             break;
+
+             */
+            
             uint8_t sampleRateIndex = 0;
             switch(frequencyInHz) {
+                case 96000:
+                    sampleRateIndex = 0;
+                    break;
+                case 88200:
+                    sampleRateIndex = 1;
+                    break;
+                case 64000:
+                    sampleRateIndex = 2;
+                    break;
                 case 48000:
                     sampleRateIndex = 3;
                     break;
                 case 44100:
                     sampleRateIndex = 4;
                     break;
+                case 32000:
+                    sampleRateIndex = 5;
+                    break;
+                case 24000:
+                    sampleRateIndex = 6;
+                    break;
                 case 22050:
                     sampleRateIndex = 7;
+                    break;
+                case 16000:
+                    sampleRateIndex = 8;
+                    break;
+                case 12000:
+                    sampleRateIndex = 9;
                     break;
                 case 11025:
                     sampleRateIndex = 10;
                     break;
                 case 8000:
                     sampleRateIndex = 11;
+                    break;
+                case 7350:
+                    sampleRateIndex = 12;
                     break;
                 default:
                     sampleRateIndex = 15;

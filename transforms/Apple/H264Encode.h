@@ -24,6 +24,8 @@
 #include <videocore/system/Buffer.hpp>
 #include <deque>
 
+#include <CoreVideo/CoreVideo.h>
+
 namespace videocore { namespace Apple {
  
     class H264Encode : public IEncoder
@@ -31,6 +33,8 @@ namespace videocore { namespace Apple {
     public:
         H264Encode( int frame_w, int frame_h, int fps, int bitrate );
         ~H264Encode();
+        
+        CVPixelBufferPoolRef pixelBufferPool();
         
     public:
         /*! ITransform */

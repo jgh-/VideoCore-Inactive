@@ -197,7 +197,7 @@ namespace videocore { namespace iOS {
         
         @autoreleasepool {
             
-        
+            if(!m_pixelBufferPool) {
             NSDictionary* pixelBufferOptions = @{ (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
                                                   (NSString*) kCVPixelBufferWidthKey : @(m_frameW),
                                                   (NSString*) kCVPixelBufferHeightKey : @(m_frameH),
@@ -206,6 +206,11 @@ namespace videocore { namespace iOS {
             
             CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[0]);
             CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[1]);
+            }
+            else {
+                CVReturn ret = CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, m_pixelBufferPool, &m_pixelBuffer[0]);
+                ret = CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, m_pixelBufferPool, &m_pixelBuffer[1]);
+            }
             
         }
         CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, (EAGLContext*)this->m_glesCtx, NULL, &this->m_textureCache);

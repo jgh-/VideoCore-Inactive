@@ -96,6 +96,7 @@ namespace videocore {
     GenericAudioMixer::registerSource(std::shared_ptr<ISource> source,
                                       size_t inBufferSize)
     {
+        m_mixInProgress.lock();
         auto hash = std::hash<std::shared_ptr< ISource> >()(source);
         size_t bufferSize = (inBufferSize ? inBufferSize : (m_bytesPerSample * m_outFrequencyInHz * m_bufferDuration * 4)); // 4 frames of buffer space.
 
@@ -103,10 +104,12 @@ namespace videocore {
 
         m_inBuffer[hash] = std::move(buffer);
         m_inGain[hash] = 1.f;
+        m_mixInProgress.unlock();
     }
     void
     GenericAudioMixer::unregisterSource(std::shared_ptr<ISource> source)
     {
+        m_mixInProgress.lock();
         auto hash = std::hash<std::shared_ptr< ISource> >()(source);
 
         auto it = m_inBuffer.find(hash);
@@ -118,6 +121,7 @@ namespace videocore {
         if(iit != m_inGain.end()) {
             m_inGain.erase(iit);
         }
+        m_mixInProgress.unlock();
     }
     void
     GenericAudioMixer::pushBuffer(const uint8_t* const data,
@@ -285,6 +289,7 @@ namespace videocore {
                 m_nextMixTime += us;
 
                 // Mix and push
+                m_mixInProgress.lock();
                 for ( auto it = m_inBuffer.begin() ; it != m_inBuffer.end() ; ++it )
                 {
 
@@ -313,13 +318,13 @@ namespace videocore {
                         }
                     }
                 }
-
+                m_mixInProgress.unlock();
                 if(sampleBufferSize) {
 
                     AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count() );
                     std::shared_ptr<videocore::ISource> blank;
 
-                    md.setData(m_outFrequencyInHz, m_outBitsPerChannel, m_outChannelCount, false, blank);
+                    md.setData(m_outFrequencyInHz, m_outBitsPerChannel, m_outChannelCount, 0, 0, false, blank);
 
                     auto out = m_output.lock();
                     if(out) {

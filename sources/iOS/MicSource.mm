@@ -117,7 +117,10 @@ namespace videocore { namespace iOS {
                 AudioUnitSetProperty(bThis->m_audioUnit, kAudioOutputUnitProperty_SetInputCallback, kAudioUnitScope_Global, 1, &cb, sizeof(cb));
                 
                 AudioUnitInitialize(bThis->m_audioUnit);
-                AudioOutputUnitStart(bThis->m_audioUnit);
+                OSStatus ret = AudioOutputUnitStart(bThis->m_audioUnit);
+                if(ret != noErr) {
+                    DLog("Failed to start microphone!");
+                }
             }
         };
         
@@ -146,7 +149,7 @@ namespace videocore { namespace iOS {
         auto output = m_output.lock();
         if(output) {
             videocore::AudioBufferMetadata md (0.);
-            md.setData(m_sampleRate, 16, m_channelCount, false, shared_from_this());
+            md.setData(m_sampleRate, 16, m_channelCount, false, kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked, m_channelCount * 2, shared_from_this());
             output->pushBuffer(data, data_size, md);
         }
     }
