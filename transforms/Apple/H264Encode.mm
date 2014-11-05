@@ -56,6 +56,7 @@ namespace videocore { namespace Apple {
         CFArrayRef attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, false);
         CMTime pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
         
+        //printf("status: %d\n", (int) status);
         bool isKeyframe = false;
         if(attachments != NULL) {
             CFDictionaryRef attachment;
@@ -176,6 +177,12 @@ namespace videocore { namespace Apple {
         
 #endif
         VTCompressionSessionRef session = nullptr;
+        NSDictionary* pixelBufferOptions = @{ (NSString*) kCVPixelBufferPixelFormatTypeKey : //@(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange),
+                                              @(kCVPixelFormatType_32BGRA),
+                                              (NSString*) kCVPixelBufferWidthKey : @(m_frameW),
+                                              (NSString*) kCVPixelBufferHeightKey : @(m_frameH),
+                                              (NSString*) kCVPixelBufferOpenGLESCompatibilityKey : @YES,
+                                              (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}};
         
         err = VTCompressionSessionCreate(
                                          kCFAllocatorDefault,
@@ -183,12 +190,11 @@ namespace videocore { namespace Apple {
                                          m_frameH,
                                          kCMVideoCodecType_H264,
                                          encoderSpecifications,
-                                         NULL,
+                                         (__bridge CFDictionaryRef)pixelBufferOptions,
                                          NULL,
                                          &vtCallback,
                                          this,
                                          &session);
-        
         
         if(err == noErr) {
             m_compressionSession = session;
@@ -292,6 +298,14 @@ namespace videocore { namespace Apple {
             
         }
 #endif
+    }
+    
+    CVPixelBufferPoolRef
+    H264Encode::pixelBufferPool() {
+        if(m_compressionSession) {
+            return VTCompressionSessionGetPixelBufferPool((VTCompressionSessionRef)m_compressionSession);
+        }
+        return nullptr;
     }
 }
 }

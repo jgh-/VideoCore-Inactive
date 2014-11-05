@@ -95,16 +95,18 @@
 @end
 namespace videocore { namespace iOS {
  
-    GLESVideoMixer::GLESVideoMixer(int frame_w,
-                                   int frame_h,
-                                   double frameDuration,
-                                   std::function<void(void*)> excludeContext )
+    GLESVideoMixer::GLESVideoMixer( int frame_w,
+                                    int frame_h,
+                                    double frameDuration,
+                                    CVPixelBufferPoolRef pool,
+                                    std::function<void(void*)> excludeContext )
     : m_bufferDuration(frameDuration),
     m_glesCtx(nullptr),
     m_frameW(frame_w),
     m_frameH(frame_h),
     m_exiting(false),
     m_mixing(false),
+    m_pixelBufferPool(pool),
     m_paused(false)
     {
         m_glJobQueue.set_name("com.videocore.composite");
