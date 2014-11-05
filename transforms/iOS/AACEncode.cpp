@@ -170,7 +170,7 @@ namespace videocore { namespace iOS {
             }
             makeAsc(sampleRateIndex, uint8_t(channelCount));
         } else {
-            std::cerr << "Error setting up audio encoder " << result << std::endl ;
+            DLog("Error setting up audio encoder %x", (int)result);
         }
     }
     AACEncode::~AACEncode() {
