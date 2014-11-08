@@ -137,7 +137,7 @@ namespace videocore {
             if(lSource) {
 
                 auto hash = std::hash<std::shared_ptr<ISource> > ()(lSource);
-
+                
                 auto ret = resample(data, size, inMeta);
                 if(ret->size() > 0) {
                     // push buffer
@@ -339,5 +339,17 @@ namespace videocore {
             }
         }
         DLog("Exiting audio mixer...\n");
+    }
+    void
+    GenericAudioMixer::deinterleaveDefloat(float *inBuff,
+                                           short *outBuff,
+                                           unsigned sampleCount)
+    {
+        unsigned offset = sizeof(float)*sampleCount;
+
+        for ( int i = 0 ; i < sampleCount ; ++i ) {
+            outBuff[i] = inBuff[i] * 0x7FFF;
+            outBuff[i+1] = inBuff[i+offset] * 0x7FFF;
+        }
     }
 }

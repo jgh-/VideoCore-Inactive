@@ -49,7 +49,9 @@ namespace videocore { namespace Apple {
     }
     AudioMixer::~AudioMixer()
     {
-        
+        for ( auto & it : m_converters ) {
+            AudioConverterDispose(it.second.converter);
+        }
     }
     std::shared_ptr<Buffer>
     AudioMixer::resample(const uint8_t* const buffer,
@@ -64,51 +66,78 @@ namespace videocore { namespace Apple {
         
         //auto inLoops = metadata.getData<kAudioMetadataLoops>();
         
-        if(m_outFrequencyInHz == inFrequncyInHz && m_outBitsPerChannel == inBitsPerChannel && m_outChannelCount == inChannelCount)
+        if(m_outFrequencyInHz == inFrequncyInHz &&
+           m_outBitsPerChannel == inBitsPerChannel &&
+           m_outChannelCount == inChannelCount)
         {
             // No resampling necessary
             return std::make_shared<Buffer>();
         }
         
-        AudioStreamBasicDescription in = {0};
-        AudioStreamBasicDescription out = {0};
+        uint64_t hash = uint64_t(inBytesPerFrame&0xFF) << 56 | uint64_t(inFlags&0xFF) << 48 | uint64_t(inChannelCount&0xFF) << 40
+                        | uint64_t(inBitsPerChannel&0xFF) << 32 | inFrequncyInHz;
         
-        in.mFormatID = kAudioFormatLinearPCM;
-        in.mFormatFlags =  inFlags;
-        in.mChannelsPerFrame = inChannelCount;
-        in.mSampleRate = inFrequncyInHz;
-        in.mBitsPerChannel = inBitsPerChannel;
-        in.mBytesPerFrame = inBytesPerFrame;
-        in.mFramesPerPacket = 1;
-        in.mBytesPerPacket = in.mBytesPerFrame * in.mFramesPerPacket;
+        auto it = m_converters.find(hash) ;
+        ConverterInst converter = {0};
         
-        out.mFormatID = kAudioFormatLinearPCM;
-        out.mFormatFlags =  kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
-        out.mChannelsPerFrame = m_outChannelCount;
-        out.mSampleRate = m_outFrequencyInHz;
-        out.mBitsPerChannel = m_outBitsPerChannel;
-        out.mBytesPerFrame = (out.mBitsPerChannel * out.mChannelsPerFrame) / 8;
-        out.mFramesPerPacket = 1;
-        out.mBytesPerPacket = out.mBytesPerFrame * out.mFramesPerPacket;
+        if(it == m_converters.end()) {
+            AudioStreamBasicDescription in = {0};
+            AudioStreamBasicDescription out = {0};
+            
+            if(inFlags & kAudioFormatFlagIsFloat) {
+                DLog("Floating point audio");
+            }
+            in.mFormatID = kAudioFormatLinearPCM;
+            in.mFormatFlags =  inFlags;
+            in.mChannelsPerFrame = inChannelCount;
+            in.mSampleRate = inFrequncyInHz;
+            in.mBitsPerChannel = inBitsPerChannel;
+            in.mBytesPerFrame = inBytesPerFrame;
+            in.mFramesPerPacket = 1;
+            in.mBytesPerPacket = in.mBytesPerFrame * in.mFramesPerPacket;
+            
+            out.mFormatID = kAudioFormatLinearPCM;
+            out.mFormatFlags =  kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
+            out.mChannelsPerFrame = m_outChannelCount;
+            out.mSampleRate = m_outFrequencyInHz;
+            out.mBitsPerChannel = m_outBitsPerChannel;
+            out.mBytesPerFrame = (out.mBitsPerChannel * out.mChannelsPerFrame) / 8;
+            out.mFramesPerPacket = 1;
+            out.mBytesPerPacket = out.mBytesPerFrame * out.mFramesPerPacket;
+            
+            converter.asbdIn = in;
+            converter.asbdOut = out;
+            
+            OSStatus ret = AudioConverterNew(&in, &out, &converter.converter);
+            
+            AudioConverterSetProperty(converter.converter,
+                                      kAudioConverterSampleRateConverterComplexity,
+                                      sizeof(s_samplingRateConverterComplexity),
+                                      &s_samplingRateConverterComplexity);
+            
+            AudioConverterSetProperty(converter.converter,
+                                      kAudioConverterSampleRateConverterQuality,
+                                      sizeof(s_samplingRateConverterQuality),
+                                      &s_samplingRateConverterQuality);
+        
+            
+            m_converters[hash] = converter;
+            
+            if(ret != noErr) {
+                DLog("ret = %d (%x)", (int)ret, (unsigned)ret);
+            }
+            
+        } else {
+            converter = it->second;
+        }
+        auto & in = converter.asbdIn;
+        auto & out = converter.asbdOut;
         
         const double inBufferTime = double(size) / (double(in.mBytesPerPacket) * double(in.mSampleRate));
         const double outBufferSampleCount = inBufferTime * double(m_outFrequencyInHz);
         const size_t outBufferSize = out.mBytesPerPacket * outBufferSampleCount;
         const auto outBuffer = std::make_shared<Buffer>(outBufferSize);
-        
-        AudioConverterRef audioConverter;
-        AudioConverterNew(&in, &out, &audioConverter);
-        
-        AudioConverterSetProperty(audioConverter,
-                                  kAudioConverterSampleRateConverterComplexity,
-                                  sizeof(s_samplingRateConverterComplexity),
-                                  &s_samplingRateConverterComplexity);
-        
-        AudioConverterSetProperty(audioConverter,
-                                  kAudioConverterSampleRateConverterQuality,
-                                  sizeof(s_samplingRateConverterQuality),
-                                  &s_samplingRateConverterQuality);
-        
+    
         
         std::unique_ptr<UserData> ud(new UserData());
         ud->size = static_cast<int>(size);
@@ -124,15 +153,17 @@ namespace videocore { namespace Apple {
         outBufferList.mBuffers[0].mData = (*outBuffer)();
         
         UInt32 sampleCount = outBufferSampleCount;
-        AudioConverterFillComplexBuffer(audioConverter, /* AudioConverterRef inAudioConverter */
+        OSStatus ret = AudioConverterFillComplexBuffer(converter.converter, /* AudioConverterRef inAudioConverter */
                                         AudioMixer::ioProc, /* AudioConverterComplexInputDataProc inInputDataProc */
                                         ud.get(), /* void *inInputDataProcUserData */
                                         &sampleCount, /* UInt32 *ioOutputDataPacketSize */
                                         &outBufferList, /* AudioBufferList *outOutputData */
                                         NULL /* AudioStreamPacketDescription *outPacketDescription */
                                         );
-        
-        AudioConverterDispose(audioConverter);
+        if(ret != noErr) {
+            DLog("ret = %d (%x)", (int)ret, (unsigned)ret);
+        }
+      
         outBuffer->setSize(outBufferList.mBuffers[0].mDataByteSize);
         return outBuffer;
     }

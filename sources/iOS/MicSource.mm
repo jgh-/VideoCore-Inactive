@@ -103,7 +103,7 @@ namespace videocore { namespace iOS {
                 AudioStreamBasicDescription desc = {0};
                 desc.mSampleRate = bThis->m_sampleRate;
                 desc.mFormatID = kAudioFormatLinearPCM;
-                desc.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+                desc.mFormatFlags = (kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked);
                 desc.mChannelsPerFrame = bThis->m_channelCount;
                 desc.mFramesPerPacket = 1;
                 desc.mBitsPerChannel = 16;
