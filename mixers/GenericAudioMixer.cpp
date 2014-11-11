@@ -159,8 +159,11 @@ namespace videocore {
                                 AudioBufferMetadata &metadata)
     {
         const auto inFrequncyInHz = metadata.getData<kAudioMetadataFrequencyInHz>();
-        const auto inBitsPerChannel = metadata.getData<kAudioMetadataBitsPerChannel>();
+        auto inBitsPerChannel = metadata.getData<kAudioMetadataBitsPerChannel>();
         const auto inChannelCount = metadata.getData<kAudioMetadataChannelCount>();
+        const auto inFlags = metadata.getData<kAudioMetadataFlags>();
+        const auto inNumberFrames = metadata.getData<kAudioMetadataNumberFrames>();
+        
         //auto inLoops = metadata.getData<kAudioMetadataLoops>();
 
         if(m_outFrequencyInHz == inFrequncyInHz && m_outBitsPerChannel == inBitsPerChannel && m_outChannelCount == inChannelCount)
@@ -170,6 +173,24 @@ namespace videocore {
         }
 
         int16_t (*bitconvert)(void* val) = NULL;
+
+        //
+        
+        uint8_t* intBuffer = nullptr;
+        uint8_t * pOutBuffer = NULL;
+        uint8_t * pInBuffer = const_cast<uint8_t*>(buffer);
+        
+        if(inFlags & 1) {
+            // Floating point lpcm
+            inBitsPerChannel = m_outBitsPerChannel;
+            
+            intBuffer = (uint8_t*) malloc(inNumberFrames * 4);
+
+            deinterleaveDefloat((float*)buffer, (short*)intBuffer,(int) inNumberFrames, inChannelCount);
+            size = inNumberFrames * 4;
+            pInBuffer = intBuffer;
+            
+        }
 
         switch(inBitsPerChannel)
         {
@@ -196,24 +217,24 @@ namespace videocore {
 
         const double ratio = static_cast<double>(inFrequncyInHz) / static_cast<double>(m_outFrequencyInHz);
 
-        const size_t sampleCount = size / bytesPerSample;
+        const size_t sampleCount = inNumberFrames;
         const size_t outSampleCount = sampleCount / ratio;
         const size_t outBufferSize = outSampleCount * m_bytesPerSample;
 
         const auto outBuffer = std::make_shared<Buffer>(outBufferSize);
 
-        uint8_t * pOutBuffer = NULL;
-        uint8_t * pInBuffer = const_cast<uint8_t*>(buffer);
-
+    
         outBuffer->read(&pOutBuffer, outBufferSize);
 
         int16_t* currSample = (int16_t*)(&pOutBuffer[0]);
 
-        double currentInByteOffset = 0.;
-        const double sampleStride = ratio * static_cast<double>(bytesPerSample);
+        float currentInByteOffset = 0.;
+        const float sampleStride = ratio * static_cast<float>(bytesPerSample);
 
         const size_t channelStride = (inChannelCount > 1) * bytesPerChannel;
 
+        const uint8_t* pInStart = pInBuffer;
+        
         for( size_t i = 0 ; i < outSampleCount ; ++i )
         {
             size_t iSample = (static_cast<size_t>(std::floor(currentInByteOffset)) + (bytesPerSample-1)) & ~(bytesPerSample-1); // get an aligned sample.
@@ -221,7 +242,7 @@ namespace videocore {
 
             currentInByteOffset += sampleStride;
 
-            pInBuffer = (const_cast<uint8_t*>(buffer)+iSample);
+            pInBuffer = (const_cast<uint8_t*>(pInStart)+iSample);
 
             int16_t sampleL = bitconvert(pInBuffer);
             int16_t sampleR = bitconvert(pInBuffer + channelStride);
@@ -230,6 +251,9 @@ namespace videocore {
             *currSample++ = sampleR;
 
 
+        }
+        if(intBuffer) {
+            free(intBuffer);
         }
         outBuffer->setSize(outBufferSize);
         return outBuffer;
@@ -324,7 +348,7 @@ namespace videocore {
                     AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count() );
                     std::shared_ptr<videocore::ISource> blank;
 
-                    md.setData(m_outFrequencyInHz, m_outBitsPerChannel, m_outChannelCount, 0, 0, false, blank);
+                    md.setData(m_outFrequencyInHz, m_outBitsPerChannel, m_outChannelCount, 0, 0, (int)requiredSampleCount, false, blank);
 
                     auto out = m_output.lock();
                     if(out) {
@@ -343,13 +367,24 @@ namespace videocore {
     void
     GenericAudioMixer::deinterleaveDefloat(float *inBuff,
                                            short *outBuff,
-                                           unsigned sampleCount)
+                                           unsigned sampleCount,
+                                           unsigned channelCount)
     {
-        unsigned offset = sizeof(float)*sampleCount;
+        unsigned offset = sampleCount;
 
-        for ( int i = 0 ; i < sampleCount ; ++i ) {
-            outBuff[i] = inBuff[i] * 0x7FFF;
-            outBuff[i+1] = inBuff[i+offset] * 0x7FFF;
+
+        const float mult = float(0x7FFF);
+        
+        if(channelCount == 2) {
+            for ( int i = 0 ; i < sampleCount ; i+=2 ) {
+                outBuff[i] = short(inBuff[i] * mult);
+                outBuff[i+1] = short(inBuff[i+offset] * mult);
+            }
+        } else {
+            for (int i = 0 ; i < sampleCount ; i++ ) {
+                outBuff[i] = short(std::min(1.f,std::max(-1.f,inBuff[i])) * mult);
+            }
         }
+
     }
 }

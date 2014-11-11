@@ -36,6 +36,7 @@ namespace videocore { namespace Apple {
         int size;
         int packetSize;
         UInt32 numberPackets;
+        int numChannels;
         AudioStreamPacketDescription * pd ;
         
     } ;
@@ -46,6 +47,7 @@ namespace videocore { namespace Apple {
                            double frameDuration)
     : GenericAudioMixer(outChannelCount, outFrequencyInHz, outBitsPerChannel, frameDuration)
     {
+        DLog("Apple::AudioMixer");
     }
     AudioMixer::~AudioMixer()
     {
@@ -63,12 +65,13 @@ namespace videocore { namespace Apple {
         const auto inChannelCount = metadata.getData<kAudioMetadataChannelCount>();
         const auto inFlags = metadata.getData<kAudioMetadataFlags>();
         const auto inBytesPerFrame = metadata.getData<kAudioMetadataBytesPerFrame>();
-        
-        //auto inLoops = metadata.getData<kAudioMetadataLoops>();
+        const auto inNumberFrames = metadata.getData<kAudioMetadataNumberFrames>();
         
         if(m_outFrequencyInHz == inFrequncyInHz &&
            m_outBitsPerChannel == inBitsPerChannel &&
-           m_outChannelCount == inChannelCount)
+           m_outChannelCount == inChannelCount
+           && !(inFlags & kAudioFormatFlagIsNonInterleaved)
+           && !(inFlags & kAudioFormatFlagIsFloat))
         {
             // No resampling necessary
             return std::make_shared<Buffer>();
@@ -84,9 +87,6 @@ namespace videocore { namespace Apple {
             AudioStreamBasicDescription in = {0};
             AudioStreamBasicDescription out = {0};
             
-            if(inFlags & kAudioFormatFlagIsFloat) {
-                DLog("Floating point audio");
-            }
             in.mFormatID = kAudioFormatLinearPCM;
             in.mFormatFlags =  inFlags;
             in.mChannelsPerFrame = inChannelCount;
@@ -130,21 +130,26 @@ namespace videocore { namespace Apple {
         } else {
             converter = it->second;
         }
+        
         auto & in = converter.asbdIn;
         auto & out = converter.asbdOut;
+
+        const double inSampleCount = inNumberFrames;
+        const double ratio = static_cast<double>(inFrequncyInHz) / static_cast<double>(m_outFrequencyInHz);
         
-        const double inBufferTime = double(size) / (double(in.mBytesPerPacket) * double(in.mSampleRate));
-        const double outBufferSampleCount = inBufferTime * double(m_outFrequencyInHz);
+        const double outBufferSampleCount = std::round(double(inSampleCount) / ratio);
+        
         const size_t outBufferSize = out.mBytesPerPacket * outBufferSampleCount;
         const auto outBuffer = std::make_shared<Buffer>(outBufferSize);
-    
+        
         
         std::unique_ptr<UserData> ud(new UserData());
         ud->size = static_cast<int>(size);
         ud->data = const_cast<uint8_t*>(buffer);
         ud->p = ud->data;
         ud->packetSize = in.mBytesPerPacket;
-        ud->numberPackets = ud->size / ud->packetSize;
+        ud->numberPackets = inSampleCount;
+        ud->numChannels = inChannelCount;
         
         AudioBufferList outBufferList;
         outBufferList.mNumberBuffers = 1;
@@ -175,20 +180,19 @@ namespace videocore { namespace Apple {
                        AudioStreamPacketDescription** ioPacketDesc,
                        void* inUserData )
     {
+        OSStatus err = noErr;
         UserData* ud = static_cast<UserData*>(inUserData);
         
-        UInt32 maxPackets = std::min(ud->numberPackets, *ioNumDataPackets);
-        ud->numberPackets -= maxPackets;
-        *ioNumDataPackets = maxPackets;
-        OSStatus err = noErr;
-        if(maxPackets) {
-            ioData->mBuffers[0].mData = ud->p;
-            ioData->mBuffers[0].mDataByteSize = static_cast<UInt32>(ud->size - (ud->p-ud->data));
-            ioData->mBuffers[0].mNumberChannels = 2;
-            ud->p += maxPackets * ud->packetSize;
-        } else {
-            err = -50;
-        }
+        int numPackets = std::min(*ioNumDataPackets, ud->numberPackets);
+        
+        *ioNumDataPackets = numPackets;
+        
+        ioData->mBuffers[0].mData = ud->p;
+        ioData->mBuffers[0].mDataByteSize = numPackets * ud->packetSize;
+        ioData->mBuffers[0].mNumberChannels = ud->numChannels;
+        ud->p += numPackets * ud->packetSize;
+        
+
         return err;
     }
 }

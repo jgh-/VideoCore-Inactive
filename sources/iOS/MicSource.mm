@@ -58,7 +58,7 @@ static OSStatus handleInputBuffer(void *inRefCon,
                                       &buffers);
 
     if(!status) {
-        mc->inputCallback((uint8_t*)buffers.mBuffers[0].mData, buffers.mBuffers[0].mDataByteSize);
+        mc->inputCallback((uint8_t*)buffers.mBuffers[0].mData, buffers.mBuffers[0].mDataByteSize, inNumberFrames);
     }
     return status;
 }
@@ -144,12 +144,12 @@ namespace videocore { namespace iOS {
         
     }
     void
-    MicSource::inputCallback(uint8_t *data, size_t data_size)
+    MicSource::inputCallback(uint8_t *data, size_t data_size, int inNumberFrames)
     {
         auto output = m_output.lock();
         if(output) {
             videocore::AudioBufferMetadata md (0.);
-            md.setData(m_sampleRate, 16, m_channelCount, false, kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked, m_channelCount * 2, shared_from_this());
+            md.setData(m_sampleRate, 16, m_channelCount, kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked, m_channelCount * 2, inNumberFrames, false,shared_from_this());
             output->pushBuffer(data, data_size, md);
         }
     }
