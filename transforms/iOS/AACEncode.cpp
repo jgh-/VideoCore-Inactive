@@ -80,13 +80,8 @@ namespace videocore { namespace iOS {
         return str;
     }
     
-<<<<<<< HEAD
-    AACEncode::AACEncode(int frequencyInHz, int channelCount, int averageBitrate)
-    : m_sentConfig(false)
-=======
     AACEncode::AACEncode(int frequencyInHz, int channelCount, int bitrate)
     : m_sentConfig(false), m_bitrate(bitrate)
->>>>>>> d99eaf8ce929d6b56f9855947a819b41637f32a2
     {
         
         OSStatus result = 0;

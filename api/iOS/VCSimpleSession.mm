@@ -518,7 +518,7 @@ namespace videocore { namespace simpleApi {
                                                   auto a = std::dynamic_pointer_cast<videocore::IEncoder>(bSelf->m_aacEncoder);
                                                   
                                                   const float measured = predicted * 8 - 128000;
-                                                  /*if(vector != 0) {
+                                                  if(vector != 0) {
                                                       int br = enc->bitrate();
                                                       
                                                       if(vector < 0) {
@@ -541,60 +541,11 @@ namespace videocore { namespace simpleApi {
                                                       br = std::max(std::min(br, _bpsCeiling), 100000);
                                                       enc->setBitrate(br);
                                                       
-                                                      DLog("MEAS: %f VEC: %f BR: %d\n", measured, vector, enc->bitrate());
+                                                      DLog("MEAS: %f VEC: %f BR: %d\n", measured, vector, br);
                                                   }
                                                   
                                                   
-                                              }*/
-                                                  int videoBr = 0;
-                                                  
-                                                  
-                                                  if(vector != 0) {
-                                                      videoBr = enc->bitrate();
-                                                      
-                                                      if ( a ) {
-                                                          
-                                                          
-                                                          if ( videoBr > 500000 ) {
-                                                              a->setBitrate(128000);
-                                                          } else if (videoBr <= 500000 && videoBr > 250000) {
-                                                              a->setBitrate(96000);
-                                                          } else if (videoBr <= 250000 && videoBr > 100000) {
-                                                              a->setBitrate(64000);
-                                                          } else {
-                                                              a->setBitrate(32000);
-                                                          }
-                                                          printf("Audio Bitrate: %d\n", a->bitrate());
-                                                      }
-                                                      
-                                                      const float measured = predicted * 8 - a->bitrate();
-                                                      
-                                                      if(vector < 0) {
-                                                          if(vector == -1.f) {
-                                                              videoBr *= 0.8;
-                                                          } else {
-                                                              videoBr = std::min(measured, videoBr * 0.9f);
-                                                              
-                                                          }
-                                                          
-                                                      } else {
-                                                          
-                                                          if(vector == 1.f) {
-                                                              videoBr *= 1.2;
-                                                          } else {
-                                                              float avg = (measured + videoBr) / 2.f;
-                                                              videoBr = std::min(std::max(avg,videoBr *( 1.f + (vector * 0.5f))), videoBr + kMaxBRLeap);
-                                                              
-                                                          }
-                                                      }
-                                                      videoBr = std::max(std::min(videoBr, m_maxBitrate), kMinVideoBitrate);
-                                                      l->setBitrate(videoBr);
-                                                      m_bitrate = videoBr;
-                                                      printf("Set video BR, attempting to set audio: %d\n", !!a);
-                                                      printf("BR: %d\n", videoBr);
-                                                      
-                                                  }
-
+                                              }
                                               
                                           });
     

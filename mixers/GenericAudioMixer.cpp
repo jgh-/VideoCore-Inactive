@@ -169,6 +169,7 @@ namespace videocore {
                 auto ret = resample(data, size, inMeta);
             
                 if(ret->size() == 0) {
+                    ret->resize(size);
                     ret->put((uint8_t*)data, size);
                 }
                 const float g = 0.70710678118f; // 1 / sqrt(2)
@@ -188,10 +189,9 @@ namespace videocore {
                         }
                     }
                     off_t currOffset = 0;
-                    
+        
                     while(bytesLeft > 0) {
                         size_t toCopy = std::min(window->size - startOffset, bytesLeft);
-                        DLog("mixing %zu", toCopy);
                         
                         uint8_t* p ;
                         ret->read(&p, toCopy);
@@ -380,18 +380,21 @@ namespace videocore {
                 
                 MixWindow* window = m_currentWindow;
                 
-                m_mixQueue.enqueue_sync([&]{
+                //DLog("Starting window swap\n");
+                m_mixQueue.enqueue([&]{
+                   // DLog("Swapping\n");
                     m_currentWindow = m_currentWindow->next;
                     m_currentWindow->start = std::chrono::steady_clock::now();
                     
                 });
-                
+                //DLog("Done window swap\n");
                 AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count() );
                 std::shared_ptr<videocore::ISource> blank;
                     
                 md.setData(m_outFrequencyInHz, m_outBitsPerChannel, m_outChannelCount, 0, 0, (int)window->size, false, blank);
                 auto out = m_output.lock();
                 if(out) {
+                    DLog("pushing %zu bytes[%p]\n", window->size, window);
                     out->pushBuffer(window->buffer, window->size, md);
                 }
                 window->clear();
