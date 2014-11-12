@@ -26,7 +26,7 @@
 #include <videocore/mixers/Apple/AudioMixer.h>
 
 static const UInt32 s_samplingRateConverterComplexity = kAudioConverterSampleRateConverterComplexity_Linear;
-static const UInt32 s_samplingRateConverterQuality = kAudioConverterQuality_Low;
+static const UInt32 s_samplingRateConverterQuality = kAudioConverterQuality_Medium;
 
 namespace videocore { namespace Apple {
     
@@ -120,6 +120,12 @@ namespace videocore { namespace Apple {
                                       sizeof(s_samplingRateConverterQuality),
                                       &s_samplingRateConverterQuality);
         
+            /*auto prime = kConverterPrimeMethod_None;
+            
+            AudioConverterSetProperty(converter.converter,
+                                      kAudioConverterPrimeMethod,
+                                      sizeof(prime),
+                                      &prime);*/
             
             m_converters[hash] = converter;
             

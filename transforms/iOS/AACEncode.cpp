@@ -148,49 +148,6 @@ namespace videocore { namespace iOS {
             
             m_bytesPerSample = 2 * channelCount;
             
-            /*
-             case 0:
-             m_absd.mSampleRate = 96000;
-             break;
-             case 1:
-             m_absd.mSampleRate = 88200;
-             break;
-             case 2:
-             m_absd.mSampleRate = 64000;
-             break;
-             case 3:
-             m_absd.mSampleRate = 48000;
-             break;
-             case 4:
-             m_absd.mSampleRate = 44100;
-             break;
-             case 5:
-             m_absd.mSampleRate = 32000;
-             break;
-             case 6:
-             m_absd.mSampleRate = 24000;
-             break;
-             case 7:
-             m_absd.mSampleRate = 22050;
-             break;
-             case 8:
-             m_absd.mSampleRate = 16000;
-             break;
-             case 9:
-             m_absd.mSampleRate = 12000;
-             break;
-             case 10:
-             m_absd.mSampleRate = 11025;
-             break;
-             case 11:
-             m_absd.mSampleRate = 8000;
-             break;
-             case 12:
-             m_absd.mSampleRate = 7350;
-             break;
-
-             */
-            
             uint8_t sampleRateIndex = 0;
             switch(frequencyInHz) {
                 case 96000:
@@ -292,9 +249,9 @@ namespace videocore { namespace iOS {
             ud->packetSize = static_cast<int>(m_bytesPerSample);
             
             AudioStreamPacketDescription output_packet_desc[num_packets];
-            m_converterMutex.lock();
+
             AudioConverterFillComplexBuffer(m_audioConverter, AACEncode::ioProc, ud.get(), &num_packets, &l, output_packet_desc);
-            m_converterMutex.unlock();
+
             
             p += output_packet_desc[0].mDataByteSize;
             p_out += kSamplesPerFrame * m_bytesPerSample;
@@ -316,7 +273,7 @@ namespace videocore { namespace iOS {
     AACEncode::setBitrate(int bitrate)
     {
         if(m_bitrate != bitrate) {
-            m_converterMutex.lock();
+
             UInt32 br = bitrate;
             AudioConverterDispose(m_audioConverter);
 
@@ -341,7 +298,7 @@ namespace videocore { namespace iOS {
                 AudioConverterGetProperty(m_audioConverter, kAudioConverterEncodeBitRate, &propSize, &br);
                 m_bitrate = br;
             }
-            m_converterMutex.unlock();
+
         }
     }
 }

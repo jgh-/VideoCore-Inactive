@@ -59,7 +59,6 @@ namespace videocore { namespace iOS {
 
         AudioStreamBasicDescription m_in, m_out;
 
-        std::mutex              m_converterMutex;
         AudioConverterRef       m_audioConverter;
         std::weak_ptr<IOutput>  m_output;
         size_t                  m_bytesPerSample;
