@@ -80,12 +80,16 @@ namespace videocore { namespace iOS {
         return str;
     }
     
+<<<<<<< HEAD
     AACEncode::AACEncode(int frequencyInHz, int channelCount, int averageBitrate)
     : m_sentConfig(false)
+=======
+    AACEncode::AACEncode(int frequencyInHz, int channelCount, int bitrate)
+    : m_sentConfig(false), m_bitrate(bitrate)
+>>>>>>> d99eaf8ce929d6b56f9855947a819b41637f32a2
     {
         
         OSStatus result = 0;
-        char err[5];
         
         AudioStreamBasicDescription in = {0}, out = {0};
         
@@ -104,31 +108,38 @@ namespace videocore { namespace iOS {
         in.mBytesPerFrame = in.mBitsPerChannel * in.mChannelsPerFrame / 8;
         in.mBytesPerPacket = in.mFramesPerPacket*in.mBytesPerFrame;
         
+        m_in = in;
+        
         out.mFormatID = kAudioFormatMPEG4AAC;
         out.mFormatFlags = 0;
         out.mFramesPerPacket = kSamplesPerFrame;
         out.mSampleRate = frequencyInHz;
         out.mChannelsPerFrame = channelCount;
         
-        UInt32 outputBitrate = averageBitrate; // 128 kbps
+
+        m_out = out;
+        
+        UInt32 outputBitrate = bitrate;
         UInt32 propSize = sizeof(outputBitrate);
         UInt32 outputPacketSize = 0;
 
+        const OSType subtype = kAudioFormatMPEG4AAC;
         AudioClassDescription requestedCodecs[2] = {
             {
                 kAudioEncoderComponentType,
-                kAudioFormatMPEG4AAC,
+                subtype,
                 kAppleSoftwareAudioCodecManufacturer
             },
             {
                 kAudioEncoderComponentType,
-                kAudioFormatMPEG4AAC,
+                subtype,
                 kAppleHardwareAudioCodecManufacturer
             }
         };
         
         result = AudioConverterNewSpecific(&in, &out, 2, requestedCodecs, &m_audioConverter);
 
+        
         if(result == noErr) {
         
             result = AudioConverterSetProperty(m_audioConverter, kAudioConverterEncodeBitRate, propSize, &outputBitrate);
@@ -143,16 +154,80 @@ namespace videocore { namespace iOS {
             
             m_bytesPerSample = 2 * channelCount;
             
+            /*
+             case 0:
+             m_absd.mSampleRate = 96000;
+             break;
+             case 1:
+             m_absd.mSampleRate = 88200;
+             break;
+             case 2:
+             m_absd.mSampleRate = 64000;
+             break;
+             case 3:
+             m_absd.mSampleRate = 48000;
+             break;
+             case 4:
+             m_absd.mSampleRate = 44100;
+             break;
+             case 5:
+             m_absd.mSampleRate = 32000;
+             break;
+             case 6:
+             m_absd.mSampleRate = 24000;
+             break;
+             case 7:
+             m_absd.mSampleRate = 22050;
+             break;
+             case 8:
+             m_absd.mSampleRate = 16000;
+             break;
+             case 9:
+             m_absd.mSampleRate = 12000;
+             break;
+             case 10:
+             m_absd.mSampleRate = 11025;
+             break;
+             case 11:
+             m_absd.mSampleRate = 8000;
+             break;
+             case 12:
+             m_absd.mSampleRate = 7350;
+             break;
+
+             */
+            
             uint8_t sampleRateIndex = 0;
             switch(frequencyInHz) {
+                case 96000:
+                    sampleRateIndex = 0;
+                    break;
+                case 88200:
+                    sampleRateIndex = 1;
+                    break;
+                case 64000:
+                    sampleRateIndex = 2;
+                    break;
                 case 48000:
                     sampleRateIndex = 3;
                     break;
                 case 44100:
                     sampleRateIndex = 4;
                     break;
+                case 32000:
+                    sampleRateIndex = 5;
+                    break;
+                case 24000:
+                    sampleRateIndex = 6;
+                    break;
                 case 22050:
                     sampleRateIndex = 7;
+                    break;
+                case 16000:
+                    sampleRateIndex = 8;
+                    break;
+                case 12000:
+                    sampleRateIndex = 9;
                     break;
                 case 11025:
                     sampleRateIndex = 10;
@@ -160,12 +235,15 @@ namespace videocore { namespace iOS {
                 case 8000:
                     sampleRateIndex = 11;
                     break;
+                case 7350:
+                    sampleRateIndex = 12;
+                    break;
                 default:
                     sampleRateIndex = 15;
             }
             makeAsc(sampleRateIndex, uint8_t(channelCount));
         } else {
-            std::cerr << "Error setting up audio encoder " << result << std::endl ;
+            DLog("Error setting up audio encoder %x", (int)result);
         }
     }
     AACEncode::~AACEncode() {
@@ -220,8 +298,9 @@ namespace videocore { namespace iOS {
             ud->packetSize = static_cast<int>(m_bytesPerSample);
             
             AudioStreamPacketDescription output_packet_desc[num_packets];
-            
+            m_converterMutex.lock();
             AudioConverterFillComplexBuffer(m_audioConverter, AACEncode::ioProc, ud.get(), &num_packets, &l, output_packet_desc);
+            m_converterMutex.unlock();
             
             p += output_packet_desc[0].mDataByteSize;
             p_out += kSamplesPerFrame * m_bytesPerSample;
@@ -237,6 +316,38 @@ namespace videocore { namespace iOS {
             }
             
             output->pushBuffer(m_outputBuffer(), totalBytes, metadata);
+        }
+    }
+    void
+    AACEncode::setBitrate(int bitrate)
+    {
+        if(m_bitrate != bitrate) {
+            m_converterMutex.lock();
+            UInt32 br = bitrate;
+            AudioConverterDispose(m_audioConverter);
+
+            const OSType subtype = kAudioFormatMPEG4AAC;
+            AudioClassDescription requestedCodecs[2] = {
+                {
+                    kAudioEncoderComponentType,
+                    subtype,
+                    kAppleSoftwareAudioCodecManufacturer
+                },
+                {
+                    kAudioEncoderComponentType,
+                    subtype,
+                    kAppleHardwareAudioCodecManufacturer
+                }
+            };
+            AudioConverterNewSpecific(&m_in, &m_out, 2,requestedCodecs, &m_audioConverter);
+            OSStatus result = AudioConverterSetProperty(m_audioConverter, kAudioConverterEncodeBitRate, sizeof(br), &br);
+            UInt32 propSize = sizeof(br);
+            
+            if(result == noErr) {
+                AudioConverterGetProperty(m_audioConverter, kAudioConverterEncodeBitRate, &propSize, &br);
+                m_bitrate = br;
+            }
+            m_converterMutex.unlock();
         }
     }
 }

@@ -54,16 +54,16 @@ break;\
 switch(status)\
 {\
 case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:\
-printf("OGL(" __FILE__ "):: %d: Incomplete attachment\n", line);\
+DLog("OGL(" __FILE__ "):: %d: Incomplete attachment\n", line);\
 break;\
 case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:\
-printf("OGL(" __FILE__ "):: %d: Incomplete dimensions\n", line);\
+DLog("OGL(" __FILE__ "):: %d: Incomplete dimensions\n", line);\
 break;\
 case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:\
-printf("OGL(" __FILE__ "):: %d: Incomplete missing attachment\n", line);\
+DLog("OGL(" __FILE__ "):: %d: Incomplete missing attachment\n", line);\
 break;\
 case GL_FRAMEBUFFER_UNSUPPORTED:\
-printf("OGL(" __FILE__ "):: %d: Framebuffer combination unsupported\n",line);\
+DLog("OGL(" __FILE__ "):: %d: Framebuffer combination unsupported\n",line);\
 break;\
 } } }
 
@@ -84,6 +84,7 @@ static float s_vbo [] =
     1.f, 1.f,         1.f, 1.f, // 3
     -1.f, 1.f,        0.f, 1.f, // 2
 };
+
 
 
 static const char s_vs [] =

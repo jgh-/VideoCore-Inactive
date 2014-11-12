@@ -60,6 +60,7 @@ namespace videocore { namespace iOS {
         GLESVideoMixer(int frame_w,
                        int frame_h,
                        double frameDuration,
+                       CVPixelBufferPoolRef pixelBufferPool = nullptr,
                        std::function<void(void*)> excludeContext = nullptr);
         
         /*! Destructor */
@@ -132,6 +133,7 @@ namespace videocore { namespace iOS {
         std::condition_variable m_mixThreadCond;
         
         
+        CVPixelBufferPoolRef m_pixelBufferPool;
         CVPixelBufferRef m_pixelBuffer[2];
         CVOpenGLESTextureCacheRef m_textureCache;
         CVOpenGLESTextureRef      m_texture[2];

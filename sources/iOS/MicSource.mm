@@ -58,7 +58,7 @@ static OSStatus handleInputBuffer(void *inRefCon,
                                       &buffers);
 
     if(!status) {
-        mc->inputCallback((uint8_t*)buffers.mBuffers[0].mData, buffers.mBuffers[0].mDataByteSize);
+        mc->inputCallback((uint8_t*)buffers.mBuffers[0].mData, buffers.mBuffers[0].mDataByteSize, inNumberFrames);
     }
     return status;
 }
@@ -78,12 +78,13 @@ namespace videocore { namespace iOS {
         PermissionBlock permission = ^(BOOL granted) {
             if(granted) {
 
-                [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionMixWithOthers | AVAudioSessionCategoryOptionDefaultToSpeaker error:nil];
+                [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker error:nil];
+                [session setMode:AVAudioSessionModeVideoChat error:nil];
                 [session setActive:YES error:nil];
                 
                 AudioComponentDescription acd;
                 acd.componentType = kAudioUnitType_Output;
-                acd.componentSubType = kAudioUnitSubType_VoiceProcessingIO;
+                acd.componentSubType = kAudioUnitSubType_RemoteIO;
                 acd.componentManufacturer = kAudioUnitManufacturer_Apple;
                 acd.componentFlags = 0;
                 acd.componentFlagsMask = 0;
@@ -102,7 +103,7 @@ namespace videocore { namespace iOS {
                 AudioStreamBasicDescription desc = {0};
                 desc.mSampleRate = bThis->m_sampleRate;
                 desc.mFormatID = kAudioFormatLinearPCM;
-                desc.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+                desc.mFormatFlags = (kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked);
                 desc.mChannelsPerFrame = bThis->m_channelCount;
                 desc.mFramesPerPacket = 1;
                 desc.mBitsPerChannel = 16;
@@ -116,7 +117,10 @@ namespace videocore { namespace iOS {
                 AudioUnitSetProperty(bThis->m_audioUnit, kAudioOutputUnitProperty_SetInputCallback, kAudioUnitScope_Global, 1, &cb, sizeof(cb));
                 
                 AudioUnitInitialize(bThis->m_audioUnit);
-                AudioOutputUnitStart(bThis->m_audioUnit);
+                OSStatus ret = AudioOutputUnitStart(bThis->m_audioUnit);
+                if(ret != noErr) {
+                    DLog("Failed to start microphone!");
+                }
             }
         };
         
@@ -140,12 +144,12 @@ namespace videocore { namespace iOS {
         
     }
     void
-    MicSource::inputCallback(uint8_t *data, size_t data_size)
+    MicSource::inputCallback(uint8_t *data, size_t data_size, int inNumberFrames)
     {
         auto output = m_output.lock();
         if(output) {
             videocore::AudioBufferMetadata md (0.);
-            md.setData(m_sampleRate, 16, m_channelCount, false, shared_from_this());
+            md.setData(m_sampleRate, 16, m_channelCount, kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked, m_channelCount * 2, inNumberFrames, false,shared_from_this());
             output->pushBuffer(data, data_size, md);
         }
     }

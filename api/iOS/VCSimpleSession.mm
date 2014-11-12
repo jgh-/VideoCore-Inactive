@@ -353,7 +353,8 @@ namespace videocore { namespace simpleApi {
         [self initInternalWithVideoSize:videoSize
                               frameRate:fps
                                 bitrate:bps
-                useInterfaceOrientation:NO];
+                useInterfaceOrientation:NO
+         cameraState:VCCameraStateBack];
         
     }
     return self;
@@ -369,15 +370,37 @@ namespace videocore { namespace simpleApi {
         [self initInternalWithVideoSize:videoSize
                               frameRate:fps
                                 bitrate:bps
-                useInterfaceOrientation:useInterfaceOrientation];
+                useInterfaceOrientation:useInterfaceOrientation
+                            cameraState:VCCameraStateBack];
     }
     return self;
 }
+
+- (instancetype) initWithVideoSize:(CGSize)videoSize
+                         frameRate:(int)fps
+                           bitrate:(int)bps
+           useInterfaceOrientation:(BOOL)useInterfaceOrientation
+                       cameraState:(VCCameraState) cameraState
+{
+    if (( self = [super init] ))
+    {
+        [self initInternalWithVideoSize:videoSize
+                              frameRate:fps
+                                bitrate:bps
+                useInterfaceOrientation:useInterfaceOrientation
+                            cameraState:cameraState];
+    }
+    return self;
+}
+
+
+
 
 - (void) initInternalWithVideoSize:(CGSize)videoSize
                          frameRate:(int)fps
                            bitrate:(int)bps
            useInterfaceOrientation:(BOOL)useInterfaceOrientation
+                       cameraState:(VCCameraState) cameraState
 {
     self.bitrate = bps;
     self.videoSize = videoSize;
@@ -391,7 +414,7 @@ namespace videocore { namespace simpleApi {
     _previewView = [[VCPreviewView alloc] init];
     self.videoZoomFactor = 1.f;
     
-    _cameraState = VCCameraStateBack;
+    _cameraState = cameraState;
     _exposurePOI = _focusPOI = CGPointMake(0.5f, 0.5f);
     _continuousExposure = _continuousAutofocus = YES;
     
@@ -672,7 +695,7 @@ namespace videocore { namespace simpleApi {
                                                                                 self.videoSize.width, self.videoSize.height
                                                                                 );
 
-        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,false,self.useInterfaceOrientation);
+        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,(self.cameraState == VCCameraStateFront),self.useInterfaceOrientation);
 
         m_cameraSource->setContinuousAutofocus(true);
         m_cameraSource->setContinuousExposure(true);

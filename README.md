@@ -102,6 +102,10 @@ videocore::Apple::StreamSession : videocore::IStreamSession
 
 ##Version History
 
+* 0.1.12 
+        * Bugfixes
+        * Red5 support
+        * Improved Adaptive Bitrate algorithm
 * 0.1.10
 	* Bugfixes
 	* Adaptive Bitrate introduced

@@ -80,6 +80,7 @@ namespace videocore
     }
     RTMPSession::~RTMPSession()
     {
+        DLog("~RTMPSession");
         if(m_state == kClientStateConnected) {
             sendDeleteStream();
         }
@@ -132,13 +133,16 @@ namespace videocore
             const int streamId = inMetadata.getData<kRTMPMetadataMsgStreamId>();
             
             auto it = m_previousChunkData.find(streamId);
+#ifndef RTMP_CHUNK_TYPE_0_ONLY
             if(it == m_previousChunkData.end()) {
+#endif
                 // Type 0.
                 put_byte(chunk, ( streamId & 0x1F));
                 put_be24(chunk, static_cast<uint32_t>(ts));
                 put_be24(chunk, inMetadata.getData<kRTMPMetadataMsgLength>());
                 put_byte(chunk, inMetadata.getData<kRTMPMetadataMsgTypeId>());
                 put_buff(chunk, (uint8_t*)&m_streamId, sizeof(int32_t)); // msg stream id is little-endian
+#ifndef RTMP_CHUNK_TYPE_0_ONLY
             } else {
                 // Type 1.
                 put_byte(chunk, RTMP_CHUNK_TYPE_1 | (streamId & 0x1F));
@@ -146,6 +150,7 @@ namespace videocore
                 put_be24(chunk, inMetadata.getData<kRTMPMetadataMsgLength>());
                 put_byte(chunk, inMetadata.getData<kRTMPMetadataMsgTypeId>());
             }
+#endif
             m_previousChunkData[streamId] = ts;
             put_buff(chunk, p, tosend);
             
@@ -642,18 +647,18 @@ namespace videocore
             std::vector<uint8_t> buff;
             put_byte(buff, 2);
             put_be24(buff, 0);
-            put_be24(buff, 6);
-            put_byte(buff, RTMP_PT_NOTIFY);
+            put_be24(buff, 10);
+            put_byte(buff, RTMP_PT_PING);
             put_buff(buff, (uint8_t*)&streamId, sizeof(int32_t));
             
             put_be16(buff, 3); // SetBufferTime
+            put_be32(buff, m_streamId);
             put_be32(buff, milliseconds);
             
             write(&buff[0], buff.size());
             
         });
-    }
-    bool
+    }    bool
     RTMPSession::handleMessage(uint8_t *p, uint8_t msgTypeId)
     {
         bool ret = true;
@@ -854,7 +859,8 @@ namespace videocore
             std::string code = parseStatusCode(p + 3 + command.length());
             DLog("code : %s\n", code.c_str());
             if (code == "NetStream.Publish.Start") {
-                sendSetChunkSize(4096);
+                sendSetChunkSize(getpagesize());
+                sendSetBufferTime(2500);
                 sendHeaderPacket();
                 setClientState(kClientStateSessionStarted);
             }

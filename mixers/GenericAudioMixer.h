@@ -120,6 +120,8 @@ namespace videocore {
          */
         void mixThread();
 
+        
+        void deinterleaveDefloat(float* inBuff, short* outBuff, unsigned sampleCount, unsigned channelCount);
     protected:
         std::chrono::steady_clock::time_point m_epoch;
         std::chrono::steady_clock::time_point m_nextMixTime;
@@ -129,6 +131,7 @@ namespace videocore {
 
         std::thread m_mixThread;
         std::mutex  m_mixMutex;
+        std::mutex  m_mixInProgress;
         std::condition_variable m_mixThreadCond;
 
         std::weak_ptr<IOutput> m_output;
