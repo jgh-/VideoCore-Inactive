@@ -101,6 +101,8 @@ namespace videocore {
             
             
             if(!m_bufferSizeSamples.empty()) {
+                const long bufferDelta = long(m_bufferSizeSamples.back()) - long(m_bufferSizeSamples.front());
+                
                 bool noBuffer = true;
               
                 float frontAvg = 0.f;
@@ -164,6 +166,8 @@ namespace videocore {
                     float slope = 3.f * powf(a,2.f);
                     
                     vec *= std::min(1.f,std::max(atanf(slope) / kPI_2, 0.1f));
+                    printf("a: %f slope: %f (%f)\n", a, slope, vec);
+                    printf("S:%zu Δt:%f AVG:%fB/s Δ:%ld TAVG:%f DET:%f\n", totalSent, timeDelta, avg, bufferDelta, turnAvg, detectedBytesPerSec);
                 }
 
                 m_previousVector = vec;
