@@ -228,6 +228,8 @@ namespace videocore {
        
         virtual size_t resize(size_t size) {
             if(size > 0) {
+                m_buffer.reset();
+                
                 m_buffer.reset(new uint8_t[size]);
             } else {
                 m_buffer.reset();
@@ -249,6 +251,28 @@ namespace videocore {
         {
             
         };
+        
+        size_t writePosition() const {
+            return m_write;
+        };
+        
+        size_t advanceWrite(size_t offset) {
+            m_mutex.lock();
+            
+            if(offset > m_size) offset = m_size;
+            
+            size_t start = m_write;
+            size_t end = std::min(start+offset, m_total);
+            size_t sz = (end-start);
+            m_write += sz;
+            if(sz < offset) {
+                m_write = (offset - sz);
+            }
+            m_mutex.unlock();
+            
+            return offset;
+        }
+        
         size_t put(uint8_t* data, size_t size) {
             m_mutex.lock();
             if(m_size+size > m_total) size=(m_total-m_size);

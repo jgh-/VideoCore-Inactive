@@ -29,12 +29,32 @@
 #include <iostream>
 #include <videocore/mixers/IAudioMixer.hpp>
 #include <videocore/system/Buffer.hpp>
+#include <videocore/system/JobQueue.hpp>
+
 #include <map>
 #include <thread>
 #include <mutex>
 
 namespace videocore {
 
+    struct MixWindow {
+        MixWindow(size_t size) {
+            buffer = new uint8_t[size]();
+            this->size = size;
+        }
+        ~MixWindow() {
+            delete [] buffer;
+        }
+        void clear() {
+            memset(buffer, 0, size);
+        }
+        
+        std::chrono::steady_clock::time_point start;
+        size_t     size;
+        MixWindow* next;
+        uint8_t*   buffer;
+
+    };
     /*!
      *  Basic, cross-platform mixer that uses a very simple nearest neighbour resampling method
      *  and the sum of the samples to mix.  The mixer takes LPCM data from multiple sources, resamples (if needed), and
@@ -123,21 +143,30 @@ namespace videocore {
         
         void deinterleaveDefloat(float* inBuff, short* outBuff, unsigned sampleCount, unsigned channelCount);
     protected:
+        
+        std::vector<std::shared_ptr<MixWindow>>                m_windows;
+        MixWindow*                            m_currentWindow;
+        
+        JobQueue                              m_mixQueue;
+        
         std::chrono::steady_clock::time_point m_epoch;
         std::chrono::steady_clock::time_point m_nextMixTime;
-
+        std::chrono::steady_clock::time_point m_lastMixTime;
+        
         double m_frameDuration;
         double m_bufferDuration;
 
+        
         std::thread m_mixThread;
         std::mutex  m_mixMutex;
         std::mutex  m_mixInProgress;
         std::condition_variable m_mixThreadCond;
 
         std::weak_ptr<IOutput> m_output;
-        std::map < std::size_t, std::unique_ptr<RingBuffer> > m_inBuffer;
-        std::map < std::size_t, float > m_inGain;
 
+        std::map < std::size_t, float > m_inGain;
+        std::map < std::size_t, std::chrono::steady_clock::time_point > m_lastSampleTime;
+        
         int m_outChannelCount;
         int m_outFrequencyInHz;
         int m_outBitsPerChannel;

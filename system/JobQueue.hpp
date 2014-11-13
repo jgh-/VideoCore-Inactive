@@ -42,7 +42,7 @@ namespace videocore {
         
         Job(std::function<void()> job, std::chrono::steady_clock::time_point dispatch_date) : m_isSynchronous(false), m_job(job), m_dispatchDate(dispatch_date), m_done(false)  {};
     
-        void operator ()() const { m_job(); };
+        void operator ()() { m_job(); setDone(); };
         
         const std::chrono::steady_clock::time_point dispatchDate() const { return m_dispatchDate; };
         bool done() const { return m_done; }
@@ -70,9 +70,9 @@ namespace videocore {
             m_thread.join();
         }
         void enqueue(std::function<void()> job) {
-            enqueue(Job(job));
+            enqueue(std::make_shared<Job>(job));
         }
-        void enqueue(Job job) {
+        void enqueue(std::shared_ptr<Job> job) {
             
             m_jobMutex.lock();
             m_jobs.push(job);
@@ -80,13 +80,13 @@ namespace videocore {
             m_cond.notify_all();
         }
         void enqueue_sync(std::function<void()> job) {
-            enqueue_sync(Job(job));
+            enqueue_sync(std::make_shared<Job>(job));
         }
-        void enqueue_sync(Job job) {
-            job.m_isSynchronous = true;
+        void enqueue_sync(std::shared_ptr<Job> job) {
+            job->m_isSynchronous = true;
             enqueue(job);
             std::unique_lock<std::mutex> lk(m_doneMutex);
-            if(!job.done()) {
+            if(!job->done()) {
                 m_jobDoneCond.wait(lk);
             }
         }
@@ -101,12 +101,11 @@ namespace videocore {
                 
                 m_jobMutex.lock();
                 if(m_jobs.size() > 0) {
-                    Job j = m_jobs.front();
+                    auto j = m_jobs.front();
                     m_jobs.pop();
                     m_jobMutex.unlock();
-                    j();
-                    j.setDone();
-                    if(j.m_isSynchronous) {
+                    (*j)();
+                    if(j->m_isSynchronous) {
                         m_jobDoneCond.notify_one();
                     }
                 } else {
@@ -120,7 +119,7 @@ namespace videocore {
         std::mutex                  m_mutex, m_jobMutex, m_doneMutex;
         std::condition_variable     m_cond, m_jobDoneCond;
         std::atomic<bool>           m_exiting;
-        std::queue<Job>             m_jobs;
+        std::queue<std::shared_ptr<Job>>             m_jobs;
     };
 }
 
