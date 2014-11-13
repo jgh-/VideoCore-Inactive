@@ -79,7 +79,7 @@ namespace videocore { namespace iOS {
             sprintf(str, "%d", (int)error);
         return str;
     }
-    
+
     AACEncode::AACEncode(int frequencyInHz, int channelCount, int bitrate)
     : m_sentConfig(false), m_bitrate(bitrate)
     {
