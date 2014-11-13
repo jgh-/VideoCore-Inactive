@@ -163,11 +163,9 @@ namespace videocore {
         std::condition_variable m_mixThreadCond;
 
         std::weak_ptr<IOutput> m_output;
-        //std::map < std::size_t, std::unique_ptr<RingBuffer> > m_inBuffer;
+
         std::map < std::size_t, float > m_inGain;
-        std::map < std::size_t, std::size_t > m_buffStartPos;
-        
-        //std::unique_ptr<RingBuffer> m_outBuffer;
+        std::map < std::size_t, std::chrono::steady_clock::time_point > m_lastSampleTime;
         
         int m_outChannelCount;
         int m_outFrequencyInHz;

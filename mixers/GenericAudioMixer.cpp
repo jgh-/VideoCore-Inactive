@@ -157,7 +157,7 @@ namespace videocore {
             auto lSource = inSource.lock();
             if(lSource) {
                 
-                auto mixTime = std::chrono::steady_clock::now();
+                const auto cMixTime = std::chrono::steady_clock::now();
                 
                 auto ret = resample(data, size, inMeta);
             
@@ -167,25 +167,35 @@ namespace videocore {
                 }
                 
                 m_mixQueue.enqueue([=]() {
+                    auto mixTime = cMixTime;
+                    const auto hash = std::hash<std::shared_ptr<ISource>>()(inSource.lock());
+                    if((mixTime - m_lastSampleTime[hash]) < std::chrono::microseconds(int64_t(m_frameDuration * 1.0e6))) {
+                        mixTime = m_lastSampleTime[hash];
+                    }
+                    
                     auto diff = std::chrono::duration_cast<std::chrono::microseconds>(mixTime - this->m_currentWindow->start).count();
                     size_t startOffset = 0;
                     size_t bytesLeft = ret->size();
+                    auto sampleDuration = double(ret->size()) / double(m_bytesPerSample * m_outFrequencyInHz);
+                    
                     
                     MixWindow* window = this->m_currentWindow;
                     if(diff > 0) {
                         startOffset = size_t((float(diff) / 1.0e6f) * m_outFrequencyInHz * m_bytesPerSample) & ~(m_bytesPerSample-1);
                         
                         while ( startOffset >= window->size ) {
-                            DLog("startOffset >= window->size: %zu >= %zu\n", startOffset, window->size);
+                           // DLog("startOffset >= window->size: %zu >= %zu\n", startOffset, window->size);
                             startOffset = (startOffset - window->size);
                             window = window->next;
 
                         }
-                    } else {
+                    } /*else {
                         DLog("diff < 0!\n");
-                    }
+                    }*/
                     off_t currOffset = 0;
         
+
+                    
                     while(bytesLeft > 0) {
                         size_t toCopy = std::min(window->size - startOffset, bytesLeft);
                         
@@ -195,9 +205,9 @@ namespace videocore {
                         
                         short* mix = (short*)p;
                         short* winMix = (short*)(window->buffer+startOffset);
-                        size_t count = toCopy / 2;
+                        size_t count = toCopy / sizeof(short);
                         
-                        const float mult = m_inGain[std::hash<std::shared_ptr<ISource>>()(inSource.lock())];
+                        const float mult = m_inGain[hash];
                         
                         for ( size_t i = 0 ; i < count ; ++i ) {
                             winMix[i] = TPMixSamples(winMix[i], mix[i] * mult);
@@ -210,6 +220,7 @@ namespace videocore {
                             startOffset = 0;
                         }
                     }
+                    m_lastSampleTime[hash] = mixTime + std::chrono::microseconds(int64_t(sampleDuration*1.0e6));
                     
                 });
             }
@@ -355,12 +366,12 @@ namespace videocore {
         
         m_nextMixTime = now  + us;
         m_currentWindow->start = now;
-        {
+        /*{
             std::string home = getenv("HOME");
             std::string dir = home + "/Documents/out" + std::to_string(m_outFrequencyInHz) + ".pcm";
             FILE * fp = fopen(dir.c_str(), "w+b");
             fclose(fp);
-        }
+        }*/
         while(!m_exiting.load()) {
             std::unique_lock<std::mutex> l(m_mixMutex);
 
@@ -383,13 +394,13 @@ namespace videocore {
                 if(out) {
                     out->pushBuffer(window->buffer, window->size, md);
                 }
-                {
+               /* {
                     std::string home = getenv("HOME");
                     std::string dir = home + "/Documents/out" + std::to_string(m_outFrequencyInHz) + ".pcm";
                     FILE * fp = fopen(dir.c_str(), "a+b");
                     fwrite(window->buffer, window->size, 1, fp);
                     fclose(fp);
-                }
+                } */
                 window->clear();
                
             }
