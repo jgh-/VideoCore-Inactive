@@ -61,6 +61,9 @@ static inline int16_t b24_to_b16(void* v) {
 }
 extern std::string g_tmpFolder;
 
+static const int kMixWindowCount = 5;
+static const int kWindowBufferCount = 1;
+
 namespace videocore {
 
     inline SInt16 TPMixSamples(SInt16 a, SInt16 b) {
@@ -92,14 +95,17 @@ namespace videocore {
     {
         m_bytesPerSample = outChannelCount * outBitsPerChannel / 8;
 
-        const int windowCount = 4;
-        for ( int i = 0 ; i < windowCount ; ++i ) {
+        
+        for ( int i = 0 ; i < kMixWindowCount ; ++i ) {
             m_windows.emplace_back(std::make_shared<MixWindow>(m_bytesPerSample * frameDuration * outFrequencyInHz));
         }
-        for ( int i = 0 ; i < windowCount-1 ; ++i ) {
+        for ( int i = 0 ; i < kMixWindowCount-1 ; ++i ) {
             m_windows[i]->next = m_windows[i+1].get();
+            m_windows[i+1]->prev = m_windows[i+1].get();
         }
-        m_windows[windowCount-1]->next = m_windows[0].get();
+        m_windows[kMixWindowCount-1]->next = m_windows[0].get();
+        m_windows[0]->prev = m_windows[kMixWindowCount-1].get();
+        
         m_currentWindow = m_windows[0].get();
         m_currentWindow->start = std::chrono::steady_clock::now();
         
@@ -123,26 +129,23 @@ namespace videocore {
     GenericAudioMixer::registerSource(std::shared_ptr<ISource> source,
                                       size_t inBufferSize)
     {
-        m_mixInProgress.lock();
         auto hash = std::hash<std::shared_ptr< ISource> >()(source);
         size_t bufferSize = (inBufferSize ? inBufferSize : (m_bytesPerSample * m_outFrequencyInHz * m_bufferDuration * 4)); // 4 frames of buffer space.
 
         std::unique_ptr<RingBuffer> buffer(new RingBuffer(bufferSize));
 
         m_inGain[hash] = 1.f;
-        m_mixInProgress.unlock();
     }
     void
     GenericAudioMixer::unregisterSource(std::shared_ptr<ISource> source)
     {
-        m_mixInProgress.lock();
         auto hash = std::hash<std::shared_ptr< ISource> >()(source);
 
         auto iit = m_inGain.find(hash);
         if(iit != m_inGain.end()) {
             m_inGain.erase(iit);
         }
-        m_mixInProgress.unlock();
+
     }
     void
     GenericAudioMixer::pushBuffer(const uint8_t* const data,
@@ -165,57 +168,79 @@ namespace videocore {
                     ret->resize(size);
                     ret->put((uint8_t*)data, size);
                 }
-                
+
                 m_mixQueue.enqueue([=]() {
                     auto mixTime = cMixTime;
+                    auto now = std::chrono::steady_clock::now();
+                    
+                    const float g = 0.70710678118f; // 1 / sqrt(2)
+                    
                     const auto hash = std::hash<std::shared_ptr<ISource>>()(inSource.lock());
-                    if((mixTime - m_lastSampleTime[hash]) < std::chrono::microseconds(int64_t(m_frameDuration * 1.0e6))) {
-                        mixTime = m_lastSampleTime[hash];
+                    auto it = m_lastSampleTime.find(hash);
+
+                    if(it != m_lastSampleTime.end() && (mixTime - it->second) < std::chrono::microseconds(int64_t(m_frameDuration * 0.5e6f ))) {
+                        mixTime = it->second;
                     }
                     
-                    auto diff = std::chrono::duration_cast<std::chrono::microseconds>(mixTime - this->m_currentWindow->start).count();
+                    MixWindow* window = this->m_currentWindow;
+                    int oldBufferTraverseCount = 1;
+                    
+                    
                     size_t startOffset = 0;
                     size_t bytesLeft = ret->size();
-                    auto sampleDuration = double(ret->size()) / double(m_bytesPerSample * m_outFrequencyInHz);
+                
+                    auto diff = std::chrono::duration_cast<std::chrono::microseconds>(mixTime - window->start).count();
                     
-                    
-                    MixWindow* window = this->m_currentWindow;
-                    if(diff > 0) {
-                        startOffset = size_t((float(diff) / 1.0e6f) * m_outFrequencyInHz * m_bytesPerSample) & ~(m_bytesPerSample-1);
-                        
-                        while ( startOffset >= window->size ) {
-                           // DLog("startOffset >= window->size: %zu >= %zu\n", startOffset, window->size);
-                            startOffset = (startOffset - window->size);
-                            window = window->next;
-
+                    do {
+                
+                        if (diff < 0 && oldBufferTraverseCount < kWindowBufferCount ) {
+                            window = window->prev;
+                            oldBufferTraverseCount++;
+                            diff = std::chrono::duration_cast<std::chrono::microseconds>(mixTime - window->start).count();
                         }
-                    } /*else {
-                        DLog("diff < 0!\n");
-                    }*/
-                    off_t currOffset = 0;
-        
-
+                        
+                        if(diff > 0) {
+                            startOffset = size_t((float(diff) / 1.0e6f) * m_outFrequencyInHz * m_bytesPerSample) & ~(m_bytesPerSample-1);
+                            
+                            while ( startOffset >= window->size ) {
+                                //DLog("startOffset >= window->size :: %zu >= %zu", startOffset, window->size);
+                                startOffset = (startOffset - window->size);
+                                window = window->next;
+                                
+                            }
+                        }
+                        
+                    }  while(oldBufferTraverseCount < kWindowBufferCount && diff < 0);
+                    if(diff < 0) {
+                       // DLog("Buffer still too far in the past! %lld [enqueue:%lld]", diff, std::chrono::duration_cast<std::chrono::microseconds>(now - cMixTime).count());
+                        mixTime = window->start;
+                    }
                     
+                    auto sampleDuration = double(bytesLeft) / double(m_bytesPerSample * m_outFrequencyInHz);
+                    
+                    uint8_t* p ;
+                    ret->read(&p, bytesLeft);
+                    
+                    if((window->size - startOffset) < bytesLeft) {
+                       // DLog("window[%zu] offset[%zu] buffer[%zu] diff[%lld]", window->size, startOffset, bytesLeft, diff);
+                    }
                     while(bytesLeft > 0) {
                         size_t toCopy = std::min(window->size - startOffset, bytesLeft);
-                        
-                        uint8_t* p ;
-                        ret->read(&p, toCopy);
-                        p += currOffset;
-                        
+
                         short* mix = (short*)p;
                         short* winMix = (short*)(window->buffer+startOffset);
                         size_t count = toCopy / sizeof(short);
                         
-                        const float mult = m_inGain[hash];
+                        const float mult = m_inGain[hash] * g;
                         
-                        for ( size_t i = 0 ; i < count ; ++i ) {
-                            winMix[i] = TPMixSamples(winMix[i], mix[i] * mult);
+                        for ( size_t i = 0 ; i < count  ; i++ ) {
+                            winMix[i]   += mix[i] * mult;
                         }
                         
-                        currOffset += toCopy;
+                        p += toCopy;
                         bytesLeft -= toCopy;
                         if(bytesLeft) {
+                            //DLog("window->next: toCopy[%zu] bytesLeft[%zu]", toCopy, bytesLeft);
                             window = window->next;
                             startOffset = 0;
                         }
@@ -223,6 +248,7 @@ namespace videocore {
                     m_lastSampleTime[hash] = mixTime + std::chrono::microseconds(int64_t(sampleDuration*1.0e6));
                     
                 });
+
             }
         }
     }
@@ -308,7 +334,7 @@ namespace videocore {
         
         for( size_t i = 0 ; i < outSampleCount ; ++i )
         {
-            size_t iSample = (static_cast<size_t>(std::floor(currentInByteOffset)) + (bytesPerSample-1)) & ~(bytesPerSample-1); // get an aligned sample.
+            size_t iSample = (static_cast<size_t>(std::floor(currentInByteOffset))) & ~(bytesPerSample-1); // get an aligned sample.
 
 
             currentInByteOffset += sampleStride;
@@ -371,7 +397,7 @@ namespace videocore {
             std::string dir = home + "/Documents/out" + std::to_string(m_outFrequencyInHz) + ".pcm";
             FILE * fp = fopen(dir.c_str(), "w+b");
             fclose(fp);
-        }*/
+        } */
         while(!m_exiting.load()) {
             std::unique_lock<std::mutex> l(m_mixMutex);
 
@@ -381,10 +407,16 @@ namespace videocore {
 
                 m_nextMixTime += us;
                 
+                MixWindow* currentWindow = m_currentWindow;
+                int backBufferCount = 0;
+                
                 MixWindow* window = m_currentWindow;
-                    
-                m_currentWindow = window->next;
-                m_currentWindow->start = window->start + us;
+                while ( backBufferCount < (kWindowBufferCount-1)) {
+                    window = window->prev;
+                    ++backBufferCount;
+                }
+                m_currentWindow = currentWindow->next;
+                m_currentWindow->start = currentWindow->start + us;
 
                 AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count() );
                 std::shared_ptr<videocore::ISource> blank;

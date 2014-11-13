@@ -296,8 +296,10 @@ namespace videocore { namespace iOS {
             UInt32 propSize = sizeof(br);
             
             if(result == noErr) {
-                AudioConverterGetProperty(m_audioConverter, kAudioConverterEncodeBitRate, &propSize, &br);
-                m_bitrate = br;
+                result = AudioConverterGetProperty(m_audioConverter, kAudioConverterEncodeBitRate, &propSize, &br);
+                if(result == noErr) {
+                    m_bitrate = br;
+                }
             }
 
         }

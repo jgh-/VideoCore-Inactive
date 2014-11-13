@@ -52,6 +52,8 @@ namespace videocore {
         std::chrono::steady_clock::time_point start;
         size_t     size;
         MixWindow* next;
+        MixWindow* prev;
+        
         uint8_t*   buffer;
 
     };
@@ -159,7 +161,6 @@ namespace videocore {
         
         std::thread m_mixThread;
         std::mutex  m_mixMutex;
-        std::mutex  m_mixInProgress;
         std::condition_variable m_mixThreadCond;
 
         std::weak_ptr<IOutput> m_output;
