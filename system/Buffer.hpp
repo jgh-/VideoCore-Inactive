@@ -228,6 +228,8 @@ namespace videocore {
        
         virtual size_t resize(size_t size) {
             if(size > 0) {
+                m_buffer.reset();
+                
                 m_buffer.reset(new uint8_t[size]);
             } else {
                 m_buffer.reset();

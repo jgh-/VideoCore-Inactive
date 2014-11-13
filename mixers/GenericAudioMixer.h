@@ -144,7 +144,7 @@ namespace videocore {
         void deinterleaveDefloat(float* inBuff, short* outBuff, unsigned sampleCount, unsigned channelCount);
     protected:
         
-        std::vector<MixWindow>                m_windows;
+        std::vector<std::shared_ptr<MixWindow>>                m_windows;
         MixWindow*                            m_currentWindow;
         
         JobQueue                              m_mixQueue;
