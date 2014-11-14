@@ -25,8 +25,8 @@
 
 #include <videocore/mixers/Apple/AudioMixer.h>
 
-static const UInt32 s_samplingRateConverterComplexity = kAudioConverterSampleRateConverterComplexity_Linear;
-static const UInt32 s_samplingRateConverterQuality = kAudioConverterQuality_Min;
+static const UInt32 s_samplingRateConverterComplexity = kAudioConverterSampleRateConverterComplexity_Normal;
+static const UInt32 s_samplingRateConverterQuality = kAudioConverterQuality_Medium;
 
 namespace videocore { namespace Apple {
     
@@ -38,6 +38,8 @@ namespace videocore { namespace Apple {
         UInt32 numberPackets;
         int numChannels;
         AudioStreamPacketDescription * pd ;
+        bool isInterleaved;
+        bool usesOSStruct;
         
     } ;
     
@@ -66,6 +68,7 @@ namespace videocore { namespace Apple {
         const auto inFlags = metadata.getData<kAudioMetadataFlags>();
         const auto inBytesPerFrame = metadata.getData<kAudioMetadataBytesPerFrame>();
         const auto inNumberFrames = metadata.getData<kAudioMetadataNumberFrames>();
+        const auto inUsesOSStruct = metadata.getData<kAudioMetadataUsesOSStruct>();
         
         if(m_outFrequencyInHz == inFrequncyInHz &&
            m_outBitsPerChannel == inBitsPerChannel &&
@@ -120,12 +123,12 @@ namespace videocore { namespace Apple {
                                       sizeof(s_samplingRateConverterQuality),
                                       &s_samplingRateConverterQuality);
         
-            /*auto prime = kConverterPrimeMethod_None;
+            auto prime = kConverterPrimeMethod_None;
             
             AudioConverterSetProperty(converter.converter,
                                       kAudioConverterPrimeMethod,
                                       sizeof(prime),
-                                      &prime);*/
+                                      &prime);
             
             m_converters[hash] = converter;
             
@@ -152,10 +155,12 @@ namespace videocore { namespace Apple {
         std::unique_ptr<UserData> ud(new UserData());
         ud->size = static_cast<int>(size);
         ud->data = const_cast<uint8_t*>(buffer);
-        ud->p = ud->data;
+        ud->p = inUsesOSStruct ? 0 : ud->data;
         ud->packetSize = in.mBytesPerPacket;
         ud->numberPackets = inSampleCount;
         ud->numChannels = inChannelCount;
+        ud->isInterleaved = !(inFlags & kAudioFormatFlagIsNonInterleaved);
+        ud->usesOSStruct = inUsesOSStruct;
         
         AudioBufferList outBufferList;
         outBufferList.mNumberBuffers = 1;
@@ -192,13 +197,24 @@ namespace videocore { namespace Apple {
         int numPackets = std::min(*ioNumDataPackets, ud->numberPackets);
         
         *ioNumDataPackets = numPackets;
+        if(!ud->usesOSStruct) {
+            ioData->mBuffers[0].mData = ud->p;
+            ioData->mBuffers[0].mDataByteSize = numPackets * ud->packetSize;
+            ioData->mBuffers[0].mNumberChannels = ud->numChannels;
+            ud->p += numPackets * ud->packetSize;
+        } else {
+            AudioBufferList* ab = (AudioBufferList*) ud->data;
+            ioData->mNumberBuffers = ab->mNumberBuffers;
+            const long p = (long)ud->p;
+            for ( int i = 0 ; i < ab->mNumberBuffers ; ++i ) {
+                uint8_t* data = (uint8_t*)ab->mBuffers[i].mData;
+                ioData->mBuffers[i].mData = (void*)(data + p);
+                ioData->mBuffers[i].mDataByteSize = numPackets * ud->packetSize;
+                ioData->mBuffers[i].mNumberChannels = ab->mBuffers[i].mNumberChannels;
+            }
+            ud->p += numPackets * ud->packetSize;
+        }
         
-        ioData->mBuffers[0].mData = ud->p;
-        ioData->mBuffers[0].mDataByteSize = numPackets * ud->packetSize;
-        ioData->mBuffers[0].mNumberChannels = ud->numChannels;
-        ud->p += numPackets * ud->packetSize;
-        
-
         return err;
     }
 }

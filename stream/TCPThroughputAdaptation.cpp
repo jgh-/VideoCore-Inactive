@@ -68,6 +68,8 @@ namespace videocore {
         //char* home = getenv("HOME");
         //char* folder = "/Library/Documents";
         
+        pthread_setname_np("com.videocore.tcp.adaptation");
+
         while(!m_exiting) {
             std::unique_lock<std::mutex> l(m);
             auto now = std::chrono::steady_clock::now();
@@ -166,8 +168,8 @@ namespace videocore {
                     float slope = 3.f * powf(a,2.f);
                     
                     vec *= std::min(1.f,std::max(atanf(slope) / kPI_2, 0.1f));
-                    printf("a: %f slope: %f (%f)\n", a, slope, vec);
-                    printf("S:%zu Δt:%f AVG:%fB/s Δ:%ld TAVG:%f DET:%f\n", totalSent, timeDelta, avg, bufferDelta, turnAvg, detectedBytesPerSec);
+                    //DLog("a: %f slope: %f (%f)\n", a, slope, vec);
+                    //DLog("S:%zu Δt:%f AVG:%fB/s Δ:%ld TAVG:%f DET:%f\n", totalSent, timeDelta, avg, bufferDelta, turnAvg, detectedBytesPerSec);
                 }
 
                 m_previousVector = vec;

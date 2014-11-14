@@ -43,6 +43,7 @@ namespace videocore { namespace iOS {
         m_pixelBuffers[0] = nullptr;
         m_pixelBuffers[1] = nullptr;
         
+        m_queue.set_name("com.videcore.h264.7");
         setupWriters();
     }
     H264Encode::~H264Encode()

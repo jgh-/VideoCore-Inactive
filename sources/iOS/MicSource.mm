@@ -149,7 +149,17 @@ namespace videocore { namespace iOS {
         auto output = m_output.lock();
         if(output) {
             videocore::AudioBufferMetadata md (0.);
-            md.setData(m_sampleRate, 16, m_channelCount, kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked, m_channelCount * 2, inNumberFrames, false,shared_from_this());
+            
+            md.setData(m_sampleRate,
+                       16,
+                       m_channelCount,
+                       kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked,
+                       m_channelCount * 2,
+                       inNumberFrames,
+                       false,
+                       false,
+                       shared_from_this());
+            
             output->pushBuffer(data, data_size, md);
         }
     }

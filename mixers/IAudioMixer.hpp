@@ -40,6 +40,7 @@ namespace videocore {
         kAudioMetadataFlags,            /*!< Specifies the audio flags */
         kAudioMetadataBytesPerFrame,    /*!< Specifies the number of bytes per frame */
         kAudioMetadataNumberFrames,     /*!< Number of sample frames in the buffer. */
+        kAudioMetadataUsesOSStruct,     /*!< Indicates that the audio is not raw but instead uses a platform-specific struct */
         kAudioMetadataLoops,            /*!< Indicates whether or not the buffer should loop. Currently ignored. */
         kAudioMetadataSource            /*!< A smart pointer to the source. */
     };
@@ -47,7 +48,7 @@ namespace videocore {
     /*!
      *  Specifies the properties of the incoming audio buffer.
      */
-    typedef MetaData<'soun', int, int, int, int, int, int, bool, std::weak_ptr<ISource> > AudioBufferMetadata;
+    typedef MetaData<'soun', int, int, int, int, int, int, bool, bool, std::weak_ptr<ISource> > AudioBufferMetadata;
 
     class ISource;
 

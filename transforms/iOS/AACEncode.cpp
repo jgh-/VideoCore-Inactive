@@ -199,6 +199,7 @@ namespace videocore { namespace iOS {
         }
     }
     AACEncode::~AACEncode() {
+        
         AudioConverterDispose(m_audioConverter);
     }
     void
@@ -250,9 +251,9 @@ namespace videocore { namespace iOS {
             ud->packetSize = static_cast<int>(m_bytesPerSample);
             
             AudioStreamPacketDescription output_packet_desc[num_packets];
-
+            m_converterMutex.lock();
             AudioConverterFillComplexBuffer(m_audioConverter, AACEncode::ioProc, ud.get(), &num_packets, &l, output_packet_desc);
-
+            m_converterMutex.unlock();
             
             p += output_packet_desc[0].mDataByteSize;
             p_out += kSamplesPerFrame * m_bytesPerSample;
@@ -274,7 +275,7 @@ namespace videocore { namespace iOS {
     AACEncode::setBitrate(int bitrate)
     {
         if(m_bitrate != bitrate) {
-
+            m_converterMutex.lock();
             UInt32 br = bitrate;
             AudioConverterDispose(m_audioConverter);
 
@@ -296,12 +297,10 @@ namespace videocore { namespace iOS {
             UInt32 propSize = sizeof(br);
             
             if(result == noErr) {
-                result = AudioConverterGetProperty(m_audioConverter, kAudioConverterEncodeBitRate, &propSize, &br);
-                if(result == noErr) {
-                    m_bitrate = br;
-                }
+                AudioConverterGetProperty(m_audioConverter, kAudioConverterEncodeBitRate, &propSize, &br);
+                m_bitrate = br;
             }
-
+            m_converterMutex.unlock();
         }
     }
 }

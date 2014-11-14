@@ -108,7 +108,7 @@ namespace videocore {
         
         m_currentWindow = m_windows[0].get();
         m_currentWindow->start = std::chrono::steady_clock::now();
-        
+        m_mixQueue.set_name("com.videocore.audiomix");
         m_mixThread = std::thread([this]() {
             pthread_setname_np("com.videocore.audiomixer");
             this->mixThread();
@@ -421,7 +421,7 @@ namespace videocore {
                 AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count() );
                 std::shared_ptr<videocore::ISource> blank;
                     
-                md.setData(m_outFrequencyInHz, m_outBitsPerChannel, m_outChannelCount, 0, 0, (int)window->size, false, blank);
+                md.setData(m_outFrequencyInHz, m_outBitsPerChannel, m_outChannelCount, 0, 0, (int)window->size, false, false, blank);
                 auto out = m_output.lock();
                 if(out) {
                     out->pushBuffer(window->buffer, window->size, md);
