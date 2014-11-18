@@ -755,6 +755,11 @@ namespace videocore
             int header_type = (p[0] & 0xC0) >> 6;
             p++;
             ret--;
+            
+            if (ret <= 0) {
+                ret = 0;
+                break;
+            }
 
             switch(header_type) {
                 case RTMP_HEADER_TYPE_FULL:
