@@ -51,7 +51,7 @@ namespace videocore { namespace iOS {
                 CVPixelBufferRelease(it.first);
             }
         };
-        void setBuffer(CVPixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache);
+        void setBuffer(CVPixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache, JobQueue& jobQueue, void* glContext);
         
         CVOpenGLESTextureRef currentTexture() const { return m_currentTexture; };
         

@@ -104,52 +104,76 @@ namespace videocore { namespace iOS {
     // -------------------------------------------------------------------------
     
     void
-    SourceBuffer::setBuffer(CVPixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache)
+    SourceBuffer::setBuffer(CVPixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache, JobQueue& m_glJobQueue, void* m_glesCtx)
     {
-        
+        bool flush = false;
         auto it = m_pixelBuffers.find(ref);
-        if(it == m_pixelBuffers.end()) {
-            CVPixelBufferRetain(ref);
-            CVPixelBufferLockBaseAddress(ref, kCVPixelBufferLock_ReadOnly);
-            OSType format = CVPixelBufferGetPixelFormatType(ref);
-            bool is32bit = true;
-            if(format == kCVPixelFormatType_16LE565) is32bit = false;
-            
-            CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
-                                                                        textureCache,
-                                                                        ref,
-                                                                        NULL,
-                                                                        GL_TEXTURE_2D,
-                                                                        is32bit ? GL_RGBA : GL_RGB,
-                                                                        (GLsizei)CVPixelBufferGetWidth(ref),
-                                                                        (GLsizei)CVPixelBufferGetHeight(ref),
-                                                                        is32bit ? GL_BGRA : GL_RGB,
-                                                                        is32bit ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_5_6_5,
-                                                                        0,
-                                                                        &m_pixelBuffers[ref].first);
-            CVPixelBufferUnlockBaseAddress(ref, kCVPixelBufferLock_ReadOnly);
-            
-            glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_pixelBuffers[ref].first));
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        }
-        m_currentBuffer = ref;
-        m_currentTexture = m_pixelBuffers[ref].first;
         const auto now = std::chrono::steady_clock::now();
         
-        m_pixelBuffers[ref].second = now;
-        
-        for ( auto it = m_pixelBuffers.begin() ; it != m_pixelBuffers.end() ;  ) {
-            if ( now - it->second.second > std::chrono::seconds(1)) { // Buffer hasn't been used in more than 1 second, release it.
-                CFRelease(it->second.first);
-                CVPixelBufferRelease(it->first);
-                it = m_pixelBuffers.erase(it);
-            } else {
-                ++ it;
-            }
+        if(it == m_pixelBuffers.end()) {
+            CVPixelBufferRetain(ref);
+            PERF_GL_async({
+                CVPixelBufferLockBaseAddress(ref, kCVPixelBufferLock_ReadOnly);
+                OSType format = CVPixelBufferGetPixelFormatType(ref);
+                bool is32bit = true;
+                if(format == kCVPixelFormatType_16LE565) is32bit = false;
+                
+                CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                             textureCache,
+                                                             ref,
+                                                             NULL,
+                                                             GL_TEXTURE_2D,
+                                                             is32bit ? GL_RGBA : GL_RGB,
+                                                             (GLsizei)CVPixelBufferGetWidth(ref),
+                                                             (GLsizei)CVPixelBufferGetHeight(ref),
+                                                             is32bit ? GL_BGRA : GL_RGB,
+                                                             is32bit ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_5_6_5,
+                                                             0,
+                                                             &m_pixelBuffers[ref].first);
+                CVPixelBufferUnlockBaseAddress(ref, kCVPixelBufferLock_ReadOnly);
+                
+                glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_pixelBuffers[ref].first));
+                
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                
+                this->m_currentBuffer = ref;
+                this->m_currentTexture = this->m_pixelBuffers[ref].first;
+                this->m_pixelBuffers[ref].second = now;
+                
+                CVOpenGLESTextureCacheFlush(textureCache, 0);
+            });
+            flush = true;
+        } else {
+            m_currentBuffer = ref;
+            m_currentTexture = m_pixelBuffers[ref].first;
+            m_pixelBuffers[ref].second = now;
+            
         }
+        
+        PERF_GL_async({
+            
+            int c = 0;
+            bool flush = false;
+            
+            for ( auto it = m_pixelBuffers.begin() ; it != m_pixelBuffers.end() ;  ++ c ) {
+                
+                if ( now - it->second.second > std::chrono::milliseconds(200) && it->first != this->m_currentBuffer) {
+                    // Buffer hasn't been used in more than 200ms, release it.
+                    CFRelease(it->second.first);
+                    CVPixelBufferRelease(it->first);
+                    it = this->m_pixelBuffers.erase(it);
+                } else {
+                    ++ it;
+                }
+            }
+            if(flush) {
+                CVOpenGLESTextureCacheFlush(textureCache, 0);
+            }
+            
+        });
     }
     // -------------------------------------------------------------------------
     //
@@ -397,20 +421,20 @@ namespace videocore { namespace iOS {
         if(zIndex > m_zRange.second){
             m_zRange.second = zIndex;
         }
-        
+
         std::weak_ptr<ISource> source = md.getData<kVideoMetadataSource>();
 
         const auto h = hash(source);
         
         CVPixelBufferRef inPixelBuffer = (CVPixelBufferRef)data;
         
-        CVPixelBufferRetain(inPixelBuffer);
-        
-        PERF_GL_async({
-            m_sourceBuffers[h].setBuffer(inPixelBuffer, m_textureCache);
-            CVPixelBufferRelease(inPixelBuffer);
-        });
-        
+    
+        m_sourceBuffers[h].setBuffer(inPixelBuffer, this->m_textureCache, m_glJobQueue, m_glesCtx);
+        auto it = std::find(this->m_layerMap[zIndex].begin(), this->m_layerMap[zIndex].end(), h);
+        if(it == this->m_layerMap[zIndex].end()) {
+            this->m_layerMap[zIndex].push_back(h);
+        }
+        this->m_sourceMats[h] = mat;
 
     }
     void
@@ -472,8 +496,8 @@ namespace videocore { namespace iOS {
                         for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {
                            // CVPixelBufferLockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly); // Lock, read-only.
                             CVOpenGLESTextureRef texture = NULL;
+                            
                             auto iTex = this->m_sourceBuffers.find(*it);
-                            //auto iTex = this->m_sourceTextures.find(*it);
                             if(iTex == this->m_sourceBuffers.end()) continue;
                             
                             texture = iTex->second.currentTexture();
@@ -493,7 +517,7 @@ namespace videocore { namespace iOS {
                             }*/
                         }
                     }
-                    //glFlush();
+                    glFlush();
                     glPopGroupMarkerEXT();
                    // if(locked[!current_fb])
                    //     CVPixelBufferUnlockBaseAddress(this->m_pixelBuffer[!current_fb], 0);
