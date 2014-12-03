@@ -31,7 +31,7 @@ namespace videocore { namespace Apple {
     class H264Encode : public IEncoder
     {
     public:
-        H264Encode( int frame_w, int frame_h, int fps, int bitrate );
+        H264Encode( int frame_w, int frame_h, int fps, int bitrate, bool useBaseline = true );
         ~H264Encode();
         
         CVPixelBufferPoolRef pixelBufferPool();
@@ -50,10 +50,10 @@ namespace videocore { namespace Apple {
         const int bitrate() const { return m_bitrate; };
         
     public:
-        void compressionSessionOutput(const uint8_t* data, size_t size, uint64_t ts);
+        void compressionSessionOutput(const uint8_t* data, size_t size, uint64_t pts, uint64_t dts);
         
     private:
-        void setupCompressionSession();
+        void setupCompressionSession( bool useBaseline );
         void teardownCompressionSession();
         
     private:
