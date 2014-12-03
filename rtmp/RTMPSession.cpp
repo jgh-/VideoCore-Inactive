@@ -466,7 +466,7 @@ namespace videocore
     {
         RTMPChunk_0 metadata = {{0}};
         metadata.msg_stream_id = kControlChannelStreamId;
-        metadata.msg_type_id = RTMP_PT_INVOKE;
+        metadata.msg_type_id = RTMP_PT_NOTIFY;
         std::vector<uint8_t> buff;
         put_string(buff, "releaseStream");
         put_double(buff, ++m_numberOfInvokes);
@@ -482,7 +482,7 @@ namespace videocore
     {
         RTMPChunk_0 metadata = {{0}};
         metadata.msg_stream_id = kControlChannelStreamId;
-        metadata.msg_type_id = RTMP_PT_INVOKE;
+        metadata.msg_type_id = RTMP_PT_NOTIFY;
         std::vector<uint8_t> buff;
         put_string(buff, "FCPublish");
         put_double(buff, ++m_numberOfInvokes);
@@ -755,6 +755,11 @@ namespace videocore
             int header_type = (p[0] & 0xC0) >> 6;
             p++;
             ret--;
+            
+            if (ret <= 0) {
+                ret = 0;
+                break;
+            }
 
             switch(header_type) {
                 case RTMP_HEADER_TYPE_FULL:
