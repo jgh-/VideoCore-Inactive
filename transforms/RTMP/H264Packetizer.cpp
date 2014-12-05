@@ -28,7 +28,7 @@
 
 namespace videocore { namespace rtmp {
     
-    H264Packetizer::H264Packetizer() : m_videoTs(0), m_sentConfig(false)
+    H264Packetizer::H264Packetizer( int ctsOffset ) : m_videoTs(0), m_sentConfig(false), m_ctsOffset(ctsOffset)
     {
         
     }
@@ -47,9 +47,9 @@ namespace videocore { namespace rtmp {
         int flags = 0;
         const int flags_size = 5;
         int dts = inMetadata.dts ;
-        int pts = inMetadata.pts + 200; // correct for pts < dts which some players (ffmpeg) don't like
+        int pts = inMetadata.pts + m_ctsOffset; // correct for pts < dts which some players (ffmpeg) don't like
         
-        dts = dts > 0 ? dts : pts - 200 ;
+        dts = dts > 0 ? dts : pts - m_ctsOffset ;
         
         bool is_config = (nal_type == 7 || nal_type == 8);
         
@@ -111,7 +111,7 @@ namespace videocore { namespace rtmp {
                 put_buff(outBuffer, inBuffer, inSize);
             }
             
-            outMeta.setData(dts, static_cast<int>(outBuffer.size()), RTMP_PT_VIDEO, kVideoChannelStreamId);
+            outMeta.setData(dts, static_cast<int>(outBuffer.size()), RTMP_PT_VIDEO, kVideoChannelStreamId, nal_type == 5);
             
             output->pushBuffer(&outBuffer[0], outBuffer.size(), outMeta);
         }

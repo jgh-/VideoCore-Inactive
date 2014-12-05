@@ -161,7 +161,7 @@ namespace videocore
             p += tosend;
             
             
-            this->write(&outb[0], outb.size(), packetTime);
+            this->write(&outb[0], outb.size(), packetTime, inMetadata.getData<kRTMPMetadataIsKeyframe>() );
             outb.clear();
             
             while(len > 0) {
@@ -185,12 +185,12 @@ namespace videocore
     {
         RTMPMetadata_t md(0.);
         
-        md.setData(metadata.timestamp.data, metadata.msg_length.data, metadata.msg_type_id, metadata.msg_stream_id);
+        md.setData(metadata.timestamp.data, metadata.msg_length.data, metadata.msg_type_id, metadata.msg_stream_id, false);
         
         pushBuffer(data, size, md);
     }
     void
-    RTMPSession::write(uint8_t* data, size_t size, std::chrono::steady_clock::time_point packetTime)
+    RTMPSession::write(uint8_t* data, size_t size, std::chrono::steady_clock::time_point packetTime, bool isKeyframe)
     {
         static std::chrono::steady_clock::time_point previousTimePoint = std::chrono::steady_clock::now();
         

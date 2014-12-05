@@ -29,8 +29,8 @@
 
 namespace videocore { namespace rtmp {
 
-    AACPacketizer::AACPacketizer(float sampleRate, int channelCount)
-    : m_audioTs(0), m_sentAudioConfig(false), m_sampleRate(sampleRate), m_channelCount(channelCount)
+    AACPacketizer::AACPacketizer(float sampleRate, int channelCount, int ctsOffset)
+    : m_audioTs(0), m_sentAudioConfig(false), m_sampleRate(sampleRate), m_channelCount(channelCount), m_ctsOffset(ctsOffset)
     {
         memset(m_asc, 0, sizeof(m_asc));
     }
@@ -52,11 +52,11 @@ namespace videocore { namespace rtmp {
         const int flags_size = 2;
 
 
-        int ts = metadata.timestampDelta;
+        int ts = metadata.timestampDelta + m_ctsOffset ;
 
         auto output = m_output.lock();
 
-        RTMPMetadata_t outMeta(metadata.timestampDelta);
+        RTMPMetadata_t outMeta(ts);
 
         if(inSize == 2 && !m_asc[0] && !m_asc[1]) {
             m_asc[0] = inBuffer[0];
@@ -77,13 +77,10 @@ namespace videocore { namespace rtmp {
                 put_buff(outBuffer, (uint8_t*)m_asc, sizeof(m_asc));
 
             } else {
-
                 put_buff(outBuffer, inBuffer, inSize);
-                m_audioTs += metadata.timestampDelta;
-
             }
 
-            outMeta.setData(ts, static_cast<int>(outBuffer.size()), RTMP_PT_AUDIO, kAudioChannelStreamId);
+            outMeta.setData(ts, static_cast<int>(outBuffer.size()), RTMP_PT_AUDIO, kAudioChannelStreamId, false);
 
             output->pushBuffer(&outBuffer[0], outBuffer.size(), outMeta);
         }

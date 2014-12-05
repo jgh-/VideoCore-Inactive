@@ -64,10 +64,11 @@ namespace videocore
         kRTMPMetadataTimestamp=0,
         kRTMPMetadataMsgLength,
         kRTMPMetadataMsgTypeId,
-        kRTMPMetadataMsgStreamId
+        kRTMPMetadataMsgStreamId,
+        kRTMPMetadataIsKeyframe
     };
     
-    typedef MetaData<'rtmp', int32_t, int32_t, uint8_t, int32_t> RTMPMetadata_t;
+    typedef MetaData<'rtmp', int32_t, int32_t, uint8_t, int32_t, bool> RTMPMetadata_t;
     
     using RTMPSessionStateCallback = std::function<void(RTMPSession& session, ClientState_t state)>;
     
@@ -93,7 +94,7 @@ namespace videocore
         
         
         void streamStatusChanged(StreamStatus_t status);
-        void write(uint8_t* data, size_t size, std::chrono::steady_clock::time_point packetTime = std::chrono::steady_clock::now());
+        void write(uint8_t* data, size_t size, std::chrono::steady_clock::time_point packetTime = std::chrono::steady_clock::now(), bool isKeyframe = false);
         void dataReceived();
         void setClientState(ClientState_t state);
         void handshake();

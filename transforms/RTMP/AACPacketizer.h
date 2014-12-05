@@ -35,7 +35,7 @@ namespace videocore { namespace rtmp {
     class AACPacketizer : public ITransform
     {
     public:
-        AACPacketizer(float sampleRate=44100, int channelCount=2);
+        AACPacketizer(float sampleRate=44100, int channelCount=2, int ctsOffset=0);
 
         void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
         void setOutput(std::shared_ptr<IOutput> output);
@@ -52,6 +52,7 @@ namespace videocore { namespace rtmp {
         char m_asc[2];
         bool m_sentAudioConfig;
         float m_sampleRate;
+        int m_ctsOffset;
         int m_channelCount;
     };
 
