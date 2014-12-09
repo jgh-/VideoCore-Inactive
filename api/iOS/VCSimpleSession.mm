@@ -658,7 +658,9 @@ namespace videocore { namespace simpleApi {
         m_positionTransform = positionTransform;
         
         // Inform delegate that camera source has been added
-        [_delegate didAddCameraSource:self];
+        if ([_delegate respondsToSelector:@selector(didAddCameraSource:)]) {
+            [_delegate didAddCameraSource:self];
+        }
     }
     {
         // Add mic source

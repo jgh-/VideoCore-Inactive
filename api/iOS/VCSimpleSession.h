@@ -52,7 +52,7 @@ typedef NS_ENUM(NSInteger, VCCameraState)
     VCCameraStateBack
 };
 
-@protocol VCSessionDelegate
+@protocol VCSessionDelegate <NSObject>
 @required
 - (void) connectionStatusChanged: (VCSessionState) sessionState;
 @optional
