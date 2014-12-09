@@ -656,6 +656,11 @@ namespace videocore { namespace simpleApi {
         positionTransform->setOutput(m_videoMixer);
         m_aspectTransform = aspectTransform;
         m_positionTransform = positionTransform;
+        
+        // Inform delegate that camera source has been added
+        if ([_delegate respondsToSelector:@selector(didAddCameraSource:)]) {
+            [_delegate didAddCameraSource:self];
+        }
     }
     {
         // Add mic source
