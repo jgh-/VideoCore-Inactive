@@ -33,6 +33,8 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <UIKit/UIKit.h>
 
+@class VCSimpleSession;
+
 typedef NS_ENUM(NSInteger, VCSessionState)
 {
     VCSessionStateNone,
@@ -53,6 +55,8 @@ typedef NS_ENUM(NSInteger, VCCameraState)
 @protocol VCSessionDelegate
 @required
 - (void) connectionStatusChanged: (VCSessionState) sessionState;
+@optional
+- (void) didAddCameraSource:(VCSimpleSession*)session;
 @end
 
 @interface VCSimpleSession : NSObject
