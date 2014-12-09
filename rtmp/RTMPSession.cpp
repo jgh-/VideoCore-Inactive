@@ -39,36 +39,38 @@
 namespace videocore
 {
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback callback)
-    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_uri(http::ParseHttpUrl(uri)), m_callback(callback), m_bandwidthCallback(nullptr), m_outChunkSize(128), m_inChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false)
+    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_callback(callback), m_bandwidthCallback(nullptr), m_outChunkSize(128), m_inChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false)
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
 #endif
+        
+        
         boost::char_separator<char> sep("/");
+        boost::tokenizer<boost::char_separator<char>> uri_tokens(uri, sep);
+        
+        // http::ParseHttpUrl is destructive to the parameter passed in.
+        std::string uri_cpy(uri);
+        m_uri = http::ParseHttpUrl(uri_cpy);
         boost::tokenizer<boost::char_separator<char> > tokens(m_uri.path, sep );
         
-        auto itr = tokens.begin();
+        
+        int tokenCount = 0;
         std::stringstream pp;
-        {
-            std::stringstream app;
-            for (; itr != tokens.end() ; ++itr) {
-                auto peek = itr;
-                ++peek;
-                if (peek == tokens.end()) {
-                    pp << *itr;
-                    break;
-                }
-                app << *itr <<  "/";
+        for ( auto it = uri_tokens.begin() ; it != uri_tokens.end() ; ++it) {
+            if(tokenCount++ < 2) { // skip protocol and host/port
+                continue;
             }
-            m_app = app.str();
-            m_app.pop_back();
-        }
-        {
-            if(m_uri.search.length() > 0) {
-                pp << "?" << m_uri.search;
+            if(tokenCount == 3) {
+                m_app = *it;
+            } else {
+                pp << *it << "/";
             }
-            m_playPath = pp.str();
         }
+        
+        m_playPath = pp.str();
+        m_playPath.pop_back();
+        
         long port = (m_uri.port > 0) ? m_uri.port : 1935;
         
         m_jobQueue.set_name("com.videocore.rtmp");
@@ -865,7 +867,7 @@ namespace videocore
             DLog("code : %s\n", code.c_str());
             if (code == "NetStream.Publish.Start") {
                 sendSetChunkSize(getpagesize());
-                sendSetBufferTime(2500);
+                //sendSetBufferTime(2500);
                 sendHeaderPacket();
                 setClientState(kClientStateSessionStarted);
             }
