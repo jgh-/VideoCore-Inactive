@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="5056" systemVersion="13D65" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="vXZ-lx-hvc">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6254" systemVersion="14B25" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="vXZ-lx-hvc">
     <dependencies>
-        <deployment defaultVersion="1792" identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3733"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6247"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
@@ -17,9 +18,13 @@
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="sJT-7B-7CU">
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="sJT-7B-7CU">
                                 <rect key="frame" x="72" y="513" width="177" height="35"/>
                                 <color key="backgroundColor" white="0.39000000000000001" alpha="1" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="35" id="o6y-1j-whG"/>
+                                    <constraint firstAttribute="width" constant="177" id="vBh-ZC-VZW"/>
+                                </constraints>
                                 <state key="normal" title="Connect">
                                     <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
@@ -27,15 +32,19 @@
                                     <action selector="btnConnectTouch:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="U36-yX-cp8"/>
                                 </connections>
                             </button>
-                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="L0s-wI-daT">
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="L0s-wI-daT">
                                 <rect key="frame" x="0.0" y="0.0" width="320" height="505"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                             </view>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="2fi-mo-0CV" firstAttribute="top" secondItem="sJT-7B-7CU" secondAttribute="bottom" constant="20" id="hx9-90-ftv"/>
+                            <constraint firstItem="L0s-wI-daT" firstAttribute="top" secondItem="kh9-bI-dsS" secondAttribute="topMargin" id="5wT-jJ-YIW"/>
+                            <constraint firstItem="sJT-7B-7CU" firstAttribute="top" secondItem="L0s-wI-daT" secondAttribute="bottom" constant="8" id="CHE-mL-vhx"/>
+                            <constraint firstAttribute="centerX" secondItem="sJT-7B-7CU" secondAttribute="centerX" id="cVT-Y5-v45"/>
+                            <constraint firstItem="2fi-mo-0CV" firstAttribute="top" secondItem="sJT-7B-7CU" secondAttribute="bottom" constant="20" id="fgw-7I-k37"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="L0s-wI-daT" secondAttribute="trailing" constant="-16" id="nyA-0b-b2e"/>
+                            <constraint firstItem="L0s-wI-daT" firstAttribute="leading" secondItem="kh9-bI-dsS" secondAttribute="leadingMargin" constant="-16" id="yhA-hw-wcW"/>
                         </constraints>
                     </view>
                     <connections>
