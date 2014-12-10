@@ -107,6 +107,22 @@ namespace videocore { namespace iOS {
          *  Toggle the camera between front and back-facing cameras.
          */
         void toggleCamera();
+
+        /*!
+         * If the orientation is locked, we ignore device / interface
+         * orientation changes.
+         *
+         * \return `true` is returned if the orientation is locked
+         */
+        bool orientationLocked();
+        
+        /*!
+         * Lock the camera orientation so that device / interface
+         * orientation changes are ignored.
+         *
+         *  \param orientationLocked  Bool indicating whether to lock the orientation.
+         */
+        void setOrientationLocked(bool orientationLocked);
         
         /*!
          *  Attempt to turn the torch mode on or off.
@@ -168,6 +184,7 @@ namespace videocore { namespace iOS {
         bool m_usingDeprecatedMethods;
         bool m_torchOn;
         bool m_useInterfaceOrientation;
+        bool m_orientationLocked;
 
     };
     
