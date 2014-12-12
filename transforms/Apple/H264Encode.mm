@@ -152,6 +152,7 @@ namespace videocore { namespace Apple {
         // Parts of this code pulled from https://github.com/galad87/HandBrake-QuickSync-Mac/blob/2c1332958f7095c640cbcbcb45ffc955739d5945/libhb/platform/macosx/encvt_h264.c
         // More info from WWDC 2014 Session 513
         
+        m_encodeMutex.lock();
         OSStatus err = noErr;
         CFMutableDictionaryRef encoderSpecifications = nullptr;
         
@@ -239,6 +240,7 @@ namespace videocore { namespace Apple {
             VTCompressionSessionPrepareToEncodeFrames(session);
         }
 #endif
+        m_encodeMutex.unlock();
         
     }
     void
@@ -273,6 +275,7 @@ namespace videocore { namespace Apple {
             return;
         }
         m_bitrate = bitrate;
+
         if(m_compressionSession) {
             m_encodeMutex.lock();
             
@@ -281,23 +284,24 @@ namespace videocore { namespace Apple {
             
             VTCompressionSessionCompleteFrames((VTCompressionSessionRef)m_compressionSession, kCMTimeInvalid);
             
-            VTSessionSetProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_AverageBitRate, ref);
+            OSStatus ret = VTSessionSetProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_AverageBitRate, ref);
+            
+            if(ret != noErr) {
+                DLog("H264Encode::setBitrate Error setting bitrate! %d", (int) ret);
+            }
             CFRelease(ref);
+            ret = VTSessionCopyProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_AverageBitRate, kCFAllocatorDefault, &ref);
             
-            OSStatus ret = VTSessionCopyProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_AverageBitRate, kCFAllocatorDefault, &ref);
-            
-            if(ret == noErr) {
+            if(ret == noErr && ref) {
                 SInt32 br = 0;
             
                 CFNumberGetValue(ref, kCFNumberSInt32Type, &br);
-            
-                m_bitrate = br;
                 
+                m_bitrate = br;
                 CFRelease(ref);
             } else {
                 m_bitrate = v;
             }
-            
             v = bitrate / 8;
             CFNumberRef bytes = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &v);
             v = 1;
@@ -309,7 +313,6 @@ namespace videocore { namespace Apple {
             CFArrayAppendValue(limit, duration);
 
             VTSessionSetProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_DataRateLimits, limit);
-            
             CFRelease(bytes);
             CFRelease(duration);
             CFRelease(limit);

@@ -867,7 +867,7 @@ namespace videocore
             DLog("code : %s\n", code.c_str());
             if (code == "NetStream.Publish.Start") {
                 sendSetChunkSize(getpagesize());
-                //sendSetBufferTime(2500);
+                sendSetBufferTime(2500);
                 sendHeaderPacket();
                 setClientState(kClientStateSessionStarted);
             }

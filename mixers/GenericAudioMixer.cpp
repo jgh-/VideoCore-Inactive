@@ -61,8 +61,8 @@ static inline int16_t b24_to_b16(void* v) {
 }
 extern std::string g_tmpFolder;
 
-static const int kMixWindowCount = 5;
-static const int kWindowBufferCount = 1;
+static const int kMixWindowCount = 10;
+static const int kWindowBufferCount = 0;
 
 namespace videocore {
 
@@ -183,7 +183,7 @@ namespace videocore {
                     }
                     
                     MixWindow* window = this->m_currentWindow;
-                    int oldBufferTraverseCount = 1;
+                    int oldBufferTraverseCount = 0;
                     
                     
                     size_t startOffset = 0;
@@ -191,31 +191,29 @@ namespace videocore {
                 
                     auto diff = std::chrono::duration_cast<std::chrono::microseconds>(mixTime - window->start).count();
                     
-                    do {
+                    while(oldBufferTraverseCount < kWindowBufferCount && diff < 0) {
                 
                         if (diff < 0 && oldBufferTraverseCount < kWindowBufferCount ) {
                             window = window->prev;
                             oldBufferTraverseCount++;
                             diff = std::chrono::duration_cast<std::chrono::microseconds>(mixTime - window->start).count();
                         }
-                        
-                        if(diff > 0) {
-                            startOffset = size_t((float(diff) / 1.0e6f) * m_outFrequencyInHz * m_bytesPerSample) & ~(m_bytesPerSample-1);
-                            
-                            while ( startOffset >= window->size ) {
-                                //DLog("startOffset >= window->size :: %zu >= %zu", startOffset, window->size);
-                                startOffset = (startOffset - window->size);
-                                window = window->next;
-                                
-                            }
-                        }
-                        
-                    }  while(oldBufferTraverseCount < kWindowBufferCount && diff < 0);
+                    } ;
+                    
                     if(diff < 0) {
                        // DLog("Buffer still too far in the past! %lld [enqueue:%lld]", diff, std::chrono::duration_cast<std::chrono::microseconds>(now - cMixTime).count());
                         mixTime = window->start;
                     }
-                    
+                    else if(diff > 0) {
+                        startOffset = size_t((float(diff) / 1.0e6f) * m_outFrequencyInHz * m_bytesPerSample) & ~(m_bytesPerSample-1);
+                        
+                        while ( startOffset >= window->size ) {
+                            //DLog("startOffset >= window->size :: %zu >= %zu", startOffset, window->size);
+                            startOffset = (startOffset - window->size);
+                            window = window->next;
+                            
+                        }
+                    }
                     auto sampleDuration = double(bytesLeft) / double(m_bytesPerSample * m_outFrequencyInHz);
                     
                     uint8_t* p ;
@@ -392,12 +390,7 @@ namespace videocore {
         
         m_nextMixTime = now  + us;
         m_currentWindow->start = now;
-        /*{
-            std::string home = getenv("HOME");
-            std::string dir = home + "/Documents/out" + std::to_string(m_outFrequencyInHz) + ".pcm";
-            FILE * fp = fopen(dir.c_str(), "w+b");
-            fclose(fp);
-        } */
+
         while(!m_exiting.load()) {
             std::unique_lock<std::mutex> l(m_mixMutex);
 
@@ -405,20 +398,22 @@ namespace videocore {
             
             if( now >= m_nextMixTime) {
 
+                //DLog("now-m_nextMixTime: %lld", std::chrono::duration_cast<std::chrono::microseconds>(now - m_nextMixTime).count());
+                
                 m_nextMixTime += us;
                 
                 MixWindow* currentWindow = m_currentWindow;
                 int backBufferCount = 0;
                 
                 MixWindow* window = m_currentWindow;
-                while ( backBufferCount < (kWindowBufferCount-1)) {
+                while ( backBufferCount < kWindowBufferCount) {
                     window = window->prev;
                     ++backBufferCount;
                 }
                 m_currentWindow = currentWindow->next;
                 m_currentWindow->start = currentWindow->start + us;
 
-                AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count() );
+                AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(window->start - m_epoch).count() );
                 std::shared_ptr<videocore::ISource> blank;
                     
                 md.setData(m_outFrequencyInHz, m_outBitsPerChannel, m_outChannelCount, 0, 0, (int)window->size, false, false, blank);
@@ -426,18 +421,12 @@ namespace videocore {
                 if(out) {
                     out->pushBuffer(window->buffer, window->size, md);
                 }
-               /* {
-                    std::string home = getenv("HOME");
-                    std::string dir = home + "/Documents/out" + std::to_string(m_outFrequencyInHz) + ".pcm";
-                    FILE * fp = fopen(dir.c_str(), "a+b");
-                    fwrite(window->buffer, window->size, 1, fp);
-                    fclose(fp);
-                } */
+                
                 window->clear();
                
             }
             if(!m_exiting.load()) {
-                m_mixThreadCond.wait_until(l, m_nextMixTime);
+                m_mixThreadCond.wait_until(l, std::chrono::steady_clock::now()+std::chrono::milliseconds(3));
             }
         }
         DLog("Exiting audio mixer...\n");
