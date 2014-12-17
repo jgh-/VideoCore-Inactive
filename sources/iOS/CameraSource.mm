@@ -62,7 +62,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 - (void) orientationChanged: (NSNotification*) notification
 {
     auto source = m_source.lock();
-    if(source) {
+    if(source && !source->orientationLocked()) {
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
             source->reorientCamera();
         });
@@ -87,6 +87,7 @@ namespace videocore { namespace iOS {
     m_fps(15),
     m_usingDeprecatedMethods(true),
     m_previewLayer(nullptr),
+    m_orientationLocked(false),
     m_torchOn(false),
     m_useInterfaceOrientation(false)
     {
@@ -99,6 +100,7 @@ namespace videocore { namespace iOS {
     m_previewLayer(nullptr),
     m_matrix(glm::mat4(1.f)),
     m_usingDeprecatedMethods(false),
+    m_orientationLocked(false),
     m_torchOn(false),
     m_useInterfaceOrientation(false)
     {}
@@ -208,11 +210,13 @@ namespace videocore { namespace iOS {
                     
                     [session startRunning];
                     
-                    if(bThis->m_useInterfaceOrientation) {
-                        [[NSNotificationCenter defaultCenter] addObserver:((id)bThis->m_callbackSession) selector:@selector(orientationChanged:) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
-                    } else {
-                        [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
-                        [[NSNotificationCenter defaultCenter] addObserver:((id)bThis->m_callbackSession) selector:@selector(orientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
+                    if(!bThis->m_orientationLocked) {
+                        if(bThis->m_useInterfaceOrientation) {
+                            [[NSNotificationCenter defaultCenter] addObserver:((id)bThis->m_callbackSession) selector:@selector(orientationChanged:) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
+                        } else {
+                            [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+                            [[NSNotificationCenter defaultCenter] addObserver:((id)bThis->m_callbackSession) selector:@selector(orientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
+                        }
                     }
                     [output release];
                 }
@@ -266,6 +270,16 @@ namespace videocore { namespace iOS {
         }
         return nil;
         
+    }
+    bool
+    CameraSource::orientationLocked()
+    {
+        return m_orientationLocked;
+    }
+    void
+    CameraSource::setOrientationLocked(bool orientationLocked)
+    {
+        m_orientationLocked = orientationLocked;
     }
     bool
     CameraSource::setTorch(bool torchOn)
