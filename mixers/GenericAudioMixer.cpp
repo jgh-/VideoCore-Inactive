@@ -173,11 +173,13 @@ namespace videocore {
 
                 m_mixQueue.enqueue([=]() {
                     auto mixTime = cMixTime;
-                    auto now = std::chrono::steady_clock::now();
                     
                     const float g = 0.70710678118f; // 1 / sqrt(2)
                     
-                    const auto hash = std::hash<std::shared_ptr<ISource>>()(inSource.lock());
+                    const auto lSource = inSource.lock();
+                    if(!lSource) return ;
+                    
+                    const auto hash = std::hash<std::shared_ptr<ISource>>()(lSource);
                     auto it = m_lastSampleTime.find(hash);
 
                     if(it != m_lastSampleTime.end() && (mixTime - it->second) < std::chrono::microseconds(int64_t(m_frameDuration * 0.5e6f ))) {
