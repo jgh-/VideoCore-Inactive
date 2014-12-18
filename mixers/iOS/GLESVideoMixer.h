@@ -44,7 +44,7 @@ namespace videocore { namespace iOS {
  
     struct SourceBuffer
     {
-        SourceBuffer() {};
+        SourceBuffer() : m_currentTexture(nullptr), m_currentBuffer(nullptr) {};
         ~SourceBuffer() {
             for ( auto & it : m_pixelBuffers ) {
                 CFRelease(it.second.first);

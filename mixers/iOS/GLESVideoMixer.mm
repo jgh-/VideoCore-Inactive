@@ -118,7 +118,8 @@ namespace videocore { namespace iOS {
                 bool is32bit = true;
                 if(format == kCVPixelFormatType_16LE565) is32bit = false;
                 
-                CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                CVOpenGLESTextureRef texture = nullptr;
+                CVReturn ret = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
                                                              textureCache,
                                                              ref,
                                                              NULL,
@@ -129,20 +130,24 @@ namespace videocore { namespace iOS {
                                                              is32bit ? GL_BGRA : GL_RGB,
                                                              is32bit ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_5_6_5,
                                                              0,
-                                                             &m_pixelBuffers[ref].first);
+                                                             &texture);
                 CVPixelBufferUnlockBaseAddress(ref, kCVPixelBufferLock_ReadOnly);
                 
-                glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_pixelBuffers[ref].first));
-                
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                
-                this->m_currentBuffer = ref;
-                this->m_currentTexture = this->m_pixelBuffers[ref].first;
-                this->m_pixelBuffers[ref].second = now;
-                
+                if(ret == noErr) {
+                    glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_pixelBuffers[ref].first));
+                    
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                    
+                    this->m_currentBuffer = ref;
+                    this->m_currentTexture = this->m_pixelBuffers[ref].first;
+                    m_pixelBuffers[ref].first = texture;
+                    this->m_pixelBuffers[ref].second = now;
+                } else {
+                    DLog("%d: Error creating texture! (%ld)", __LINE__, (long)ret);
+                }
                 CVOpenGLESTextureCacheFlush(textureCache, 0);
             });
             flush = true;
@@ -390,6 +395,7 @@ namespace videocore { namespace iOS {
             }
             
         }
+        m_sourceBuffers.erase(h);
         for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i )
         {
             for ( auto iit = m_layerMap[i].begin() ; iit!= m_layerMap[i].end() ; ++iit) {
@@ -507,10 +513,12 @@ namespace videocore { namespace iOS {
                                 glEnable(GL_BLEND);
                                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                             }*/
-                            glUniformMatrix4fv(m_uMat, 1, GL_FALSE, &this->m_sourceMats[*it][0][0]);
-                            glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
-                            glDrawArrays(GL_TRIANGLES, 0, 6);
-                            GL_ERRORS(__LINE__);
+                            if(texture) {
+                                glUniformMatrix4fv(m_uMat, 1, GL_FALSE, &this->m_sourceMats[*it][0][0]);
+                                glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
+                                glDrawArrays(GL_TRIANGLES, 0, 6);
+                            }
+                            //GL_ERRORS(__LINE__);
                            // CVPixelBufferUnlockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly);
                             /*if(this->m_sourceProperties[*it].blends) {
                                 glDisable(GL_BLEND);

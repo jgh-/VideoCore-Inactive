@@ -83,8 +83,9 @@ namespace videocore {
                 m_outputStream = (NSOutputStream*)writeStream;
             
 
+                dispatch_queue_t queue = dispatch_queue_create("com.videocore.network", 0);
                 
-                dispatch_async(dispatch_get_global_queue(0, 0), ^{
+                dispatch_async(queue, ^{
                     this->startNetwork();
                 });
             }
@@ -98,6 +99,7 @@ namespace videocore {
             [NSOS(m_outputStream) close];
             [NSIS(m_inputStream) release];
             [NSOS(m_outputStream) release];
+            CFRunLoopStop([NSRL(m_runLoop) getCFRunLoop]);
         }
         int
         StreamSession::unsent()
