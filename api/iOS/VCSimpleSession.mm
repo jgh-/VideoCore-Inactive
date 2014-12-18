@@ -125,6 +125,7 @@ namespace videocore { namespace simpleApi {
 
     VCCameraState _cameraState;
     VCSessionState _rtmpSessionState;
+    BOOL   _orientationLocked;
     BOOL   _torch;
     
     BOOL _useAdaptiveBitrate;
@@ -145,6 +146,7 @@ namespace videocore { namespace simpleApi {
 @dynamic bitrate;
 @dynamic fps;
 @dynamic useInterfaceOrientation;
+@dynamic orientationLocked;
 @dynamic torch;
 @dynamic cameraState;
 @dynamic rtmpSessionState;
@@ -198,6 +200,17 @@ namespace videocore { namespace simpleApi {
 - (BOOL) useInterfaceOrientation
 {
     return _useInterfaceOrientation;
+}
+- (BOOL) orientationLocked
+{
+    return _orientationLocked;
+}
+- (void) setOrientationLocked:(BOOL)orientationLocked
+{
+    _orientationLocked = orientationLocked;
+    if(m_cameraSource) {
+        m_cameraSource->setOrientationLocked(orientationLocked);
+    }
 }
 - (BOOL) torch
 {
@@ -639,6 +652,7 @@ namespace videocore { namespace simpleApi {
     {
         // Add camera source
         m_cameraSource = std::make_shared<videocore::iOS::CameraSource>();
+        m_cameraSource->setOrientationLocked(self.orientationLocked);
         auto aspectTransform = std::make_shared<videocore::AspectTransform>(self.videoSize.width,self.videoSize.height,videocore::AspectTransform::kAspectFit);
 
         auto positionTransform = std::make_shared<videocore::PositionTransform>(self.videoSize.width/2, self.videoSize.height/2,
