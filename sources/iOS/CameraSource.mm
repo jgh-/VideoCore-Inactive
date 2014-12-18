@@ -398,7 +398,7 @@ namespace videocore { namespace iOS {
     {
         m_output = output;
         
-        auto mixer = std::static_pointer_cast<IVideoMixer>(output);
+        //auto mixer = std::static_pointer_cast<IVideoMixer>(output);
         
     }
     void

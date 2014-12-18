@@ -132,11 +132,11 @@ namespace videocore { namespace iOS {
 
     }
     MicSource::~MicSource() {
-        auto output = m_output.lock();
-        if(output) {
-            auto mixer = std::dynamic_pointer_cast<IAudioMixer>(output);
-            mixer->unregisterSource(shared_from_this());
-        }
+        //auto output = m_output.lock();
+        //if(output) {
+        //    auto mixer = std::dynamic_pointer_cast<IAudioMixer>(output);
+        //    mixer->unregisterSource(shared_from_this());
+        //}
         if(m_audioUnit) {
             AudioOutputUnitStop(m_audioUnit);
             AudioComponentInstanceDispose(m_audioUnit);

@@ -141,10 +141,12 @@ namespace videocore {
     {
         auto hash = std::hash<std::shared_ptr< ISource> >()(source);
 
-        auto iit = m_inGain.find(hash);
-        if(iit != m_inGain.end()) {
-            m_inGain.erase(iit);
-        }
+        m_mixQueue.enqueue([=]() {
+            auto iit = m_inGain.find(hash);
+            if(iit != m_inGain.end()) {
+                m_inGain.erase(iit);
+            }
+        });
 
     }
     void
