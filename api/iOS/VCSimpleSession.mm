@@ -695,7 +695,8 @@ namespace videocore { namespace simpleApi {
             m_h264Encoder = std::make_shared<videocore::Apple::H264Encode>(self.videoSize.width,
                                                                            self.videoSize.height,
                                                                            self.fps,
-                                                                           self.bitrate);
+                                                                           self.bitrate,
+                                                                           false);
         } else {
             m_h264Encoder =std::make_shared<videocore::iOS::H264Encode>(self.videoSize.width,
                                                                         self.videoSize.height,
