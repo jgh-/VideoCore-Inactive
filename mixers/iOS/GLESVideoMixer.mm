@@ -141,9 +141,10 @@ namespace videocore { namespace iOS {
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                     
+                    m_pixelBuffers[ref].first = texture;
+                    
                     this->m_currentBuffer = ref;
                     this->m_currentTexture = this->m_pixelBuffers[ref].first;
-                    m_pixelBuffers[ref].first = texture;
                     this->m_pixelBuffers[ref].second = now;
                 } else {
                     DLog("%d: Error creating texture! (%ld)", __LINE__, (long)ret);
@@ -517,6 +518,8 @@ namespace videocore { namespace iOS {
                                 glUniformMatrix4fv(m_uMat, 1, GL_FALSE, &this->m_sourceMats[*it][0][0]);
                                 glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
                                 glDrawArrays(GL_TRIANGLES, 0, 6);
+                            } else {
+                                DLog("Null texture!");
                             }
                             //GL_ERRORS(__LINE__);
                            // CVPixelBufferUnlockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly);
