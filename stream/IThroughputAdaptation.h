@@ -45,6 +45,7 @@ namespace videocore {
         
         virtual void addBufferDurationSample(int64_t bufferDuration) = 0;
         
+        virtual void reset() = 0;
     };
 }
 

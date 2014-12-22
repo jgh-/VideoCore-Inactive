@@ -61,6 +61,11 @@ namespace videocore {
         m_callback = callback;
     }
     void
+    TCPThroughputAdaptation::reset()
+    {
+        m_bufferSizeSamples.clear();
+    }
+    void
     TCPThroughputAdaptation::sampleThread()
     {
         std::mutex m;

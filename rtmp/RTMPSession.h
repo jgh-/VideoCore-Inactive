@@ -146,6 +146,7 @@ namespace videocore
         
         size_t          m_outChunkSize;
         size_t          m_inChunkSize;
+        size_t          m_bufferSize;
         
         int32_t         m_streamId;
         int32_t         m_createStreamInvoke;

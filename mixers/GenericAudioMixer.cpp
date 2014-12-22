@@ -430,7 +430,7 @@ namespace videocore {
                
             }
             if(!m_exiting.load()) {
-                m_mixThreadCond.wait_until(l, std::chrono::steady_clock::now()+std::chrono::milliseconds(3));
+                m_mixThreadCond.wait_until(l, m_nextMixTime);
             }
         }
         DLog("Exiting audio mixer...\n");

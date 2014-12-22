@@ -79,7 +79,7 @@ namespace videocore { namespace iOS {
             if(granted) {
 
                 [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker error:nil];
-                [session setMode:AVAudioSessionModeVideoChat error:nil];
+                //[session setMode:AVAudioSessionModeVideoChat error:nil];
                 [session setActive:YES error:nil];
                 
                 AudioComponentDescription acd;

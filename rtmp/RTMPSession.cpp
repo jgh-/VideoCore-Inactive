@@ -39,7 +39,7 @@
 namespace videocore
 {
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback callback)
-    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_callback(callback), m_bandwidthCallback(nullptr), m_outChunkSize(128), m_inChunkSize(128), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false)
+    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_callback(callback), m_bandwidthCallback(nullptr), m_outChunkSize(128), m_inChunkSize(128), m_bufferSize(0), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false)
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
@@ -162,7 +162,12 @@ namespace videocore
             len -= tosend;
             p += tosend;
             
-            
+            // if the buffer is getting too large, clear it out.
+            if(inMetadata.getData<kRTMPMetadataIsKeyframe>() && m_bufferSize > 2000000) {
+                m_streamOutQueue.clear();
+                m_bufferSize = 0;
+                m_throughputSession.reset();
+            }
             this->write(&outb[0], outb.size(), packetTime, inMetadata.getData<kRTMPMetadataIsKeyframe>() );
             outb.clear();
             
@@ -202,6 +207,7 @@ namespace videocore
             BufStruct b;
             b.buf = buf;
             b.time = packetTime;
+            m_bufferSize += b.buf->size();
             m_streamOutQueue.push_back(b);
             if(packetTime == previousTimePoint) {
                 return;
@@ -248,6 +254,7 @@ namespace videocore
                 m_throughputSession.addSentBytesSample(sent);
                 
                 if ( sent > 0 ) {
+                    m_bufferSize -= front->size();
                     m_streamOutQueue.pop_front();
                     if (sent < size) {
                          m_streamOutRemainder.put(buf+sent, size-sent);
