@@ -57,6 +57,7 @@ typedef NS_ENUM(NSInteger, VCCameraState)
 - (void) connectionStatusChanged: (VCSessionState) sessionState;
 @optional
 - (void) didAddCameraSource:(VCSimpleSession*)session;
+- (void) detectedThroughput: (NSInteger) throughputInBytesPerSecond;
 @end
 
 @interface VCSimpleSession : NSObject

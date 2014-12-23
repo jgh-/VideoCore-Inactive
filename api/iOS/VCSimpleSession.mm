@@ -527,6 +527,9 @@ namespace videocore { namespace simpleApi {
                                               
                                               bSelf->_estimatedThroughput = predicted;
                                               if(bSelf.useAdaptiveBitrate && bSelf->m_h264Encoder) {
+                                                  if([bSelf.delegate respondsToSelector:@selector(detectedThroughput:)]) {
+                                                      [bSelf.delegate detectedThroughput:predicted];
+                                                  }
                                                   auto enc = std::dynamic_pointer_cast<videocore::IEncoder>(bSelf->m_h264Encoder);
                                                   auto a = std::dynamic_pointer_cast<videocore::IEncoder>(bSelf->m_aacEncoder);
                                                   
