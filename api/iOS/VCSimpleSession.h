@@ -31,6 +31,7 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
+#import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
 
 @class VCSimpleSession;
@@ -109,5 +110,7 @@ typedef NS_ENUM(NSInteger, VCCameraState)
                     andStreamKey:(NSString*) streamKey;
 
 - (void) endRtmpSession;
+
+- (void) getCameraPreviewLayer: (AVCaptureVideoPreviewLayer**) previewLayer;
 
 @end

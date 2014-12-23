@@ -591,7 +591,11 @@ namespace videocore { namespace simpleApi {
     
     self.rtmpSessionState = VCSessionStateEnded;
 }
-
+- (void) getCameraPreviewLayer:(AVCaptureVideoPreviewLayer **)previewLayer {
+    if(m_cameraSource) {
+        m_cameraSource->getPreviewLayer((void**)previewLayer);
+    }
+}
 // -----------------------------------------------------------------------------
 //  Private Methods
 // -----------------------------------------------------------------------------
