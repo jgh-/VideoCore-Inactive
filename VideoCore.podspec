@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name                = "VideoCore"
-  s.version             = "0.2.1.1"
+  s.version             = "0.2.1.2"
   s.summary             = "An audio and video manipulation and streaming pipeline with support for RTMP."
   s.description      = <<-DESC
                           This is a work-in-progress library with the
