@@ -199,9 +199,10 @@ namespace videocore { namespace iOS {
     m_exiting(false),
     m_mixing(false),
     m_pixelBufferPool(pool),
-    m_paused(false)
+    m_paused(false),
+    m_glJobQueue("com.videocore.composite")
     {
-        m_glJobQueue.set_name("com.videocore.composite");
+        
         
         
         PERF_GL_sync({
@@ -493,7 +494,7 @@ namespace videocore { namespace iOS {
                     
                     glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[current_fb]);
                     
-                    //glClear(GL_COLOR_BUFFER_BIT);
+                    glClear(GL_COLOR_BUFFER_BIT);
                     glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
                     glBindVertexArrayOES(this->m_vao);
                     glUseProgram(this->m_prog);

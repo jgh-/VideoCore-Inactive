@@ -39,7 +39,8 @@
 namespace videocore
 {
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback callback)
-    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_callback(callback), m_bandwidthCallback(nullptr), m_outChunkSize(128), m_inChunkSize(128), m_bufferSize(0), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false)
+    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_callback(callback), m_bandwidthCallback(nullptr), m_outChunkSize(128), m_inChunkSize(128), m_bufferSize(0), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false),
+    m_jobQueue("com.videocore.rtmp")
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
@@ -72,8 +73,6 @@ namespace videocore
         m_playPath.pop_back();
         
         long port = (m_uri.port > 0) ? m_uri.port : 1935;
-        
-        m_jobQueue.set_name("com.videocore.rtmp");
         
         m_streamSession->connect(m_uri.host, static_cast<int>(port), [&](IStreamSession& session, StreamStatus_t status) {
             streamStatusChanged(status);

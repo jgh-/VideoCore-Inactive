@@ -26,6 +26,13 @@
 #ifndef videocore_JobQueue_hpp
 #define videocore_JobQueue_hpp
 
+#ifdef __APPLE__
+#include <dispatch/dispatch.h>
+#define _USE_GCD 1
+#else
+#define _USE_GCD 0
+#endif
+
 #include <atomic>
 #include <mutex>
 #include <thread>
@@ -59,42 +66,67 @@ namespace videocore {
     class JobQueue
     {
     public:
-        JobQueue() : m_exiting(false)
+        JobQueue(std::string name = "") : m_exiting(false)
         {
+#if !_USE_GCD
             m_thread = std::thread([&]() { thread(); });
+            if(name.size() > 0) {
+                enqueue([=]() { pthread_setname_np(name.c_str()); });
+            }
+#else
+            m_queue = dispatch_queue_create(name.c_str(), 0);
+#endif
         }
         ~JobQueue()
         {
             m_exiting = true;
+#if !_USE_GCD
             m_cond.notify_all();
             m_thread.join();
+#else
+            dispatch_sync(m_queue, ^{});
+            dispatch_release(m_queue);
+#endif
         }
         void enqueue(std::function<void()> job) {
             enqueue(std::make_shared<Job>(job));
         }
         void enqueue(std::shared_ptr<Job> job) {
-            
+#if !_USE_GCD
             m_jobMutex.lock();
             m_jobs.push(job);
             m_jobMutex.unlock();
             m_cond.notify_all();
+#else
+            dispatch_async(m_queue, ^{
+                (*job)();
+            });
+#endif
         }
         void enqueue_sync(std::function<void()> job) {
             enqueue_sync(std::make_shared<Job>(job));
         }
         void enqueue_sync(std::shared_ptr<Job> job) {
+#if !_USE_GCD
             job->m_isSynchronous = true;
             enqueue(job);
             std::unique_lock<std::mutex> lk(m_doneMutex);
             if(!job->done()) {
                 m_jobDoneCond.wait(lk);
             }
+#else
+            dispatch_sync(m_queue, ^{
+                (*job)();
+            });
+#endif
         }
         void set_name(std::string name) {
+#if !_USE_GCD
             enqueue([=]() { pthread_setname_np(name.c_str()); });
+#endif
         }
     private:
-        
+#if !_USE_GCD
         void thread() {
             do {
                 std::unique_lock<std::mutex> l(m_mutex);
@@ -114,12 +146,18 @@ namespace videocore {
                 }
             } while(!(m_exiting.load()));
         }
+#endif
     private:
+#if !_USE_GCD
         std::thread                 m_thread;
         std::mutex                  m_mutex, m_jobMutex, m_doneMutex;
         std::condition_variable     m_cond, m_jobDoneCond;
-        std::atomic<bool>           m_exiting;
         std::queue<std::shared_ptr<Job>>             m_jobs;
+#else
+        dispatch_queue_t            m_queue;
+#endif
+        std::atomic<bool>           m_exiting;
+        
     };
 }
 

@@ -33,7 +33,8 @@
 namespace videocore { namespace iOS {
     
     H264Encode::H264Encode( int frame_w, int frame_h, int fps, int bitrate )
-    : m_lastFilePos(0), m_frameCount(0), m_frameW(frame_w), m_frameH(frame_h), m_fps(fps),  m_bitrate(bitrate), m_currentWriter(0)
+    : m_lastFilePos(0), m_frameCount(0), m_frameW(frame_w), m_frameH(frame_h), m_fps(fps),  m_bitrate(bitrate), m_currentWriter(0),
+    m_queue("com.videcore.h264.7")
     {
         m_tmpFile[0] = [[NSTemporaryDirectory() stringByAppendingString:@"tmp1.mov"] UTF8String];
         m_tmpFile[1] = [[NSTemporaryDirectory() stringByAppendingString:@"tmp2.mov"] UTF8String];
@@ -43,7 +44,6 @@ namespace videocore { namespace iOS {
         m_pixelBuffers[0] = nullptr;
         m_pixelBuffers[1] = nullptr;
         
-        m_queue.set_name("com.videcore.h264.7");
         setupWriters();
     }
     H264Encode::~H264Encode()

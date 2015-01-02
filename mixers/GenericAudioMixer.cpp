@@ -91,7 +91,8 @@ namespace videocore {
     m_outChannelCount(outChannelCount),
     m_outFrequencyInHz(outFrequencyInHz),
     m_outBitsPerChannel(16),
-    m_exiting(false)
+    m_exiting(false),
+    m_mixQueue("com.videocore.audiomix")
     {
         m_bytesPerSample = outChannelCount * outBitsPerChannel / 8;
 
@@ -108,7 +109,7 @@ namespace videocore {
         
         m_currentWindow = m_windows[0].get();
         m_currentWindow->start = std::chrono::steady_clock::now();
-        m_mixQueue.set_name("com.videocore.audiomix");
+
         m_mixThread = std::thread([this]() {
             pthread_setname_np("com.videocore.audiomixer");
             this->mixThread();
@@ -133,7 +134,7 @@ namespace videocore {
         size_t bufferSize = (inBufferSize ? inBufferSize : (m_bytesPerSample * m_outFrequencyInHz * m_bufferDuration * 4)); // 4 frames of buffer space.
 
         std::unique_ptr<RingBuffer> buffer(new RingBuffer(bufferSize));
-
+        
         m_inGain[hash] = 1.f;
     }
     void

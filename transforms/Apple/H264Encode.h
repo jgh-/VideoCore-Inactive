@@ -20,7 +20,6 @@
  
  */
 #include <videocore/transforms/IEncoder.hpp>
-#include <videocore/system/JobQueue.hpp>
 #include <videocore/system/Buffer.hpp>
 #include <deque>
 
