@@ -133,8 +133,8 @@ namespace videocore
             uint64_t ts = inMetadata.getData<kRTMPMetadataTimestamp>() ;
             const int streamId = inMetadata.getData<kRTMPMetadataMsgStreamId>();
             
-            auto it = m_previousChunkData.find(streamId);
 #ifndef RTMP_CHUNK_TYPE_0_ONLY
+            auto it = m_previousChunkData.find(streamId);
             if(it == m_previousChunkData.end()) {
 #endif
                 // Type 0.

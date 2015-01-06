@@ -216,7 +216,7 @@ namespace videocore { namespace Apple {
         }
   
         if(err == noErr) {
-            CFBooleanRef allowFrameReodering = useBaseline ? kCFBooleanFalse : kCFBooleanTrue;
+            CFBooleanRef allowFrameReodering = useBaseline ? kCFBooleanFalse : kCFBooleanFalse;
             err = VTSessionSetProperty(session , kVTCompressionPropertyKey_AllowFrameReordering, allowFrameReodering);
         }
 
@@ -258,7 +258,7 @@ namespace videocore { namespace Apple {
     {
 #if VERSION_OK
         auto l = m_output.lock();
-        if(l) {
+        if(l && data && size > 0) {
             videocore::VideoBufferMetadata md(pts, dts);
             
             l->pushBuffer(data, size, md);

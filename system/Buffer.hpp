@@ -25,7 +25,33 @@
 #ifndef videocore_Buffer_h
 #define videocore_Buffer_h
 
+#ifdef __APPLE__
 #import <CoreFoundation/CFByteOrder.h> // TODO: Remove Apple framework reliance in this code.
+
+#define double_swap CFConvertFloat64HostToSwapped
+#else 
+
+double double_swap(double value){
+    union v {
+        double       f;
+        uint64_t     i;
+    };
+    
+    union v val;
+    
+    val.f = value;
+    val.i = htonll(val.i);
+    
+    return val.f;
+}
+
+#define CFConvertDoubleSwappedToHost double_swap
+
+typedef double CFSwappedFloat64;
+
+#endif
+
+
 
 #include <vector>
 #include <string>
@@ -150,7 +176,7 @@ static inline std::string get_string(uint8_t* buf) {
 static inline void put_double(std::vector<uint8_t>& data, double val) {
     put_byte(data, kAMFNumber);
     
-    CFSwappedFloat64 buf = CFConvertFloat64HostToSwapped(val);
+    CFSwappedFloat64 buf = double_swap(val);
     
     put_buff(data, (uint8_t*)&buf, sizeof(CFSwappedFloat64));
 }
