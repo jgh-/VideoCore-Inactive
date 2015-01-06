@@ -25,7 +25,15 @@
 #include <videocore/mixers/GenericAudioMixer.h>
 #include <sstream>
 #include <vector>
-//#include <arm_neon.h>
+#include <stdint.h>
+
+
+#ifndef INT16_MAX
+#define INT16_MAX 0x7FFF
+#endif
+#ifndef INT16_MIN
+#define INT16_MIN ~INT16_MAX
+#endif
 
 static inline int16_t b8_to_b16(void* v) {
     int16_t val = *(int8_t*)v;
@@ -66,7 +74,7 @@ static const int kWindowBufferCount = 0;
 
 namespace videocore {
 
-    inline SInt16 TPMixSamples(SInt16 a, SInt16 b) {
+    inline int16_t TPMixSamples(int16_t a, int16_t b) {
         return
         // If both samples are negative, mixed signal must have an amplitude between the lesser of A and B, and the minimum permissible negative amplitude
         a < 0 && b < 0 ?

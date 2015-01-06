@@ -26,10 +26,12 @@
 #define __videocore__TCPThroughputAdaptation__
 
 #include <videocore/stream/IThroughputAdaptation.h>
+#include <videocore/system/JobQueue.hpp>
 #include <vector>
 #include <deque>
 #include <thread>
-
+#include <condition_variable>
+#include <mutex>
 namespace videocore {
     class TCPThroughputAdaptation : public IThroughputAdaptation
     {

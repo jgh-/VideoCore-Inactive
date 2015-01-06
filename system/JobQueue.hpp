@@ -31,8 +31,10 @@
 #define _USE_GCD 1
 #else
 #define _USE_GCD 0
+#include <sys/prctl.h>
+#define pthread_setname_np(thread_name) prctl(PR_SET_NAME, thread_name)
 #endif
-
+#include <condition_variable>
 #include <atomic>
 #include <mutex>
 #include <thread>

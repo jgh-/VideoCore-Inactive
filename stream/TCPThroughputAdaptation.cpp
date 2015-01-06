@@ -22,6 +22,7 @@
  THE SOFTWARE.
  
  */
+
 #include <videocore/stream/TCPThroughputAdaptation.h>
 #include <chrono>
 #include <cmath>

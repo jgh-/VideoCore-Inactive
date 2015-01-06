@@ -24,7 +24,7 @@
  */
 #ifndef videocore_IOutput_hpp
 #define videocore_IOutput_hpp
-
+#include <chrono>
 #include <cstdlib>
 #include <videocore/transforms/IMetadata.hpp>
 

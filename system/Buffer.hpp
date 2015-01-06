@@ -25,13 +25,19 @@
 #ifndef videocore_Buffer_h
 #define videocore_Buffer_h
 
+#include <memory>
+#include <vector>
+#include <string>
+#include <stdint.h>
+#include <mutex>
+
 #ifdef __APPLE__
 #import <CoreFoundation/CFByteOrder.h> // TODO: Remove Apple framework reliance in this code.
 
 #define double_swap CFConvertFloat64HostToSwapped
-#else 
-
-double double_swap(double value){
+#else
+#include <byteswap.h>
+inline double double_swap(double value){
     union v {
         double       f;
         uint64_t     i;
@@ -40,7 +46,7 @@ double double_swap(double value){
     union v val;
     
     val.f = value;
-    val.i = htonll(val.i);
+    val.i = bswap_64(val.i);
     
     return val.f;
 }
@@ -51,12 +57,6 @@ typedef double CFSwappedFloat64;
 
 #endif
 
-
-
-#include <vector>
-#include <string>
-#include <stdint.h>
-#include <mutex>
 
 
 typedef enum
