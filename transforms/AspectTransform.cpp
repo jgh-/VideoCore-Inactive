@@ -25,10 +25,9 @@
 
 #include <videocore/transforms/AspectTransform.h>
 #include <videocore/mixers/IVideoMixer.hpp>
-
+#include <videocore/system/pixelBuffer/IPixelBuffer.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <CoreVideo/CoreVideo.h>
 
 namespace videocore {
     
@@ -84,11 +83,14 @@ namespace videocore {
         auto output = m_output.lock();
         
         if(output) {
-            CVPixelBufferRef pb = (CVPixelBufferRef)data;
-            CVPixelBufferLockBaseAddress(pb, kCVPixelBufferLock_ReadOnly);
-            
-            float width = CVPixelBufferGetWidth(pb);
-            float height = CVPixelBufferGetHeight(pb);
+            //CVPixelBufferRef pb = (CVPixelBufferRef)data;
+            //CVPixelBufferLockBaseAddress(pb, kCVPixelBufferLock_ReadOnly);
+            IPixelBuffer* pb = (IPixelBuffer*)data;
+
+            pb->lock(true);
+
+            float width = float(pb->width());//CVPixelBufferGetWidth(pb);
+            float height = float(pb->height());//CVPixelBufferGetHeight(pb);
             
             if(width != m_prevWidth || height != m_prevHeight) {
                 setBoundingBoxDirty();
@@ -97,7 +99,6 @@ namespace videocore {
             }
             
             if(m_boundingBoxDirty) {
-                // TODO: Replace CVPixelBufferRef with an internal format.
                 
                 float wfac = float(m_boundingWidth) / width;
                 float hfac = float(m_boundingHeight) / height;
@@ -112,7 +113,9 @@ namespace videocore {
                 m_boundingBoxDirty = false;
             }
             
-            CVPixelBufferUnlockBaseAddress(pb, kCVPixelBufferLock_ReadOnly);
+            pb->unlock(true);
+
+            //CVPixelBufferUnlockBaseAddress(pb, kCVPixelBufferLock_ReadOnly);
             
             videocore::VideoBufferMetadata& md = dynamic_cast<videocore::VideoBufferMetadata&>(metadata);
             glm::mat4 & mat = md.getData<videocore::kVideoMetadataMatrix>();
