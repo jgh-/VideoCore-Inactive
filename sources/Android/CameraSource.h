@@ -48,13 +48,18 @@ namespace videocore { namespace Android {
     						void* pContext, 
     						XAuint32 eventId, 
     						XAuint32 eventData);
+    	static void recordCallback(XARecordItf caller,
+    							   void* pContext,
+    							   XAuint32 event);
     private:
     	std::weak_ptr<IOutput> m_output;
 
+    	XAObjectItf m_recordObject;
     	XAObjectItf m_cameraObject;
     	XAObjectItf m_engineObject;
     	XAEngineItf m_engine;
 
+    	std::vector<uint8_t> m_buffer;
 	};
 
 }}
