@@ -72,6 +72,8 @@ extern std::string g_tmpFolder;
 static const int kMixWindowCount = 10;
 static const int kWindowBufferCount = 0;
 
+static const float kE = 2.7182818284590f;
+
 namespace videocore {
 
     inline int16_t TPMixSamples(int16_t a, int16_t b) {
@@ -378,8 +380,10 @@ namespace videocore {
         auto s = source.lock();
         if(s) {
             auto hash = std::hash<std::shared_ptr<ISource>>()(s);
-
-            m_inGain[hash] = std::max(0.f, std::min(1.f, gain));
+            
+            gain = std::max(0.f, std::min(1.f, gain));
+            gain = powf(gain, 4);
+            m_inGain[hash] = gain;
 
         }
     }

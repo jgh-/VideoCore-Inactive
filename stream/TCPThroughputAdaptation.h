@@ -50,7 +50,7 @@ namespace videocore {
         void addBufferDurationSample(int64_t bufferDuration);
         
         void reset();
-        
+        void start();
     private:
         void sampleThread();
         
