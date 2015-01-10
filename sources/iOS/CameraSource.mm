@@ -25,6 +25,7 @@
 
 #include <videocore/sources/iOS/CameraSource.h>
 #include <videocore/mixers/IVideoMixer.hpp>
+#include <videocore/system/pixelBuffer/Apple/ApplePixelBuffer.h>
 
 #import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
@@ -379,9 +380,11 @@ namespace videocore { namespace iOS {
             
             md.setData(1, m_matrix, shared_from_this());
             
-            CVPixelBufferRetain(pixelBufferRef);
-            output->pushBuffer((uint8_t*)pixelBufferRef, sizeof(pixelBufferRef), md);
-            CVPixelBufferRelease(pixelBufferRef);
+            auto pixelBuffer = std::make_shared<Apple::ApplePixelBuffer>(pixelBufferRef);
+            
+            pixelBuffer->setState(kVCPixelBufferStateEnqueued);
+            output->pushBuffer((uint8_t*)&pixelBuffer, sizeof(pixelBuffer), md);
+            
         }
     }
     
