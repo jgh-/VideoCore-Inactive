@@ -113,7 +113,6 @@ namespace videocore { namespace iOS {
         auto it = m_pixelBuffers.find(ref->cvBuffer());
         const auto now = std::chrono::steady_clock::now();
         if(it == m_pixelBuffers.end()) {
-            
             PERF_GL_async({
                 
                 ref->lock(true);
@@ -144,40 +143,38 @@ namespace videocore { namespace iOS {
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                    
-                    this->m_pixelBuffers[ref->cvBuffer()].texture = texture;
-                    
+                    this->m_pixelBuffers.emplace(ref->cvBuffer(), ref);
+                    auto iit = this->m_pixelBuffers.find(ref->cvBuffer());
+                    iit->second.texture = texture;
                     this->m_currentBuffer = ref;
                     this->m_currentTexture = texture;
-                    this->m_pixelBuffers[ref->cvBuffer()].time = now;
+                    iit->second.time = now;
                 } else {
                     DLog("%d: Error creating texture! (%ld)", __LINE__, (long)ret);
                 }
             });
             flush = true;
         } else {
-
+            
             m_currentBuffer = ref;
-            m_currentTexture = m_pixelBuffers[ref->cvBuffer()].texture;
-            m_pixelBuffers[ref->cvBuffer()].time = now;
+            m_currentTexture = it->second.texture;
+            it->second.time = now;
             
         }
         
         ref->setState(kVCPixelBufferStateAcquired);
         
         PERF_GL_async({
-            
-            int c = 0;
-            bool flush = false;
-            
-            for ( auto it = m_pixelBuffers.begin() ; it != m_pixelBuffers.end() ;  ++ c ) {
-                
-                if ( now - it->second.time > std::chrono::milliseconds(200) && it->first != this->m_currentBuffer->cvBuffer() ) {
+            const auto currentBuffer = this->m_currentBuffer->cvBuffer();
+            for ( auto it = this->m_pixelBuffers.begin() ; it != m_pixelBuffers.end() ; ) {
+
+                if ( now - it->second.time > std::chrono::milliseconds(200) && it->first != currentBuffer ) {
                     // Buffer hasn't been used in more than 200ms, release it.
                     it = this->m_pixelBuffers.erase(it);
                 } else {
                     ++ it;
                 }
+                
             }
             if(flush) {
                 CVOpenGLESTextureCacheFlush(textureCache, 0);
@@ -239,7 +236,6 @@ namespace videocore { namespace iOS {
             textures[1] = CVOpenGLESTextureGetName(m_texture[1]);
             glDeleteTextures(2, textures);
             
-            DLog("Clearing sourceBuffers");
             m_sourceBuffers.clear();
             
             CVPixelBufferRelease(m_pixelBuffer[0]);
@@ -249,7 +245,6 @@ namespace videocore { namespace iOS {
             CVOpenGLESTextureCacheFlush(m_textureCache, 0);
             CFRelease(m_textureCache);
             
-            DLog("Releasing GLESContext..\n");
             [(id)m_glesCtx release];
         });
         m_mixThread.join();

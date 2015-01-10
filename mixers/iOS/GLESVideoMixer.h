@@ -45,7 +45,7 @@ namespace videocore { namespace iOS {
  
     struct SourceBuffer
     {
-        SourceBuffer() : m_currentTexture(nullptr), m_pixelBuffers() { DLog("SourceBuffer::SourceBuffer()"); };
+        SourceBuffer() : m_currentTexture(nullptr), m_pixelBuffers() { };
         ~SourceBuffer() { };
         void setBuffer(Apple::ApplePixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache, JobQueue& jobQueue, void* glContext);
         
@@ -54,7 +54,7 @@ namespace videocore { namespace iOS {
         
     private:
         typedef struct __Buffer_ {
-            __Buffer_() : texture(nullptr), buffer() {};
+            __Buffer_(Apple::ApplePixelBufferRef buf) : texture(nullptr), buffer(buf) {};
             ~__Buffer_() { if(texture) { CFRelease(texture); } };
                 
             Apple::ApplePixelBufferRef buffer;

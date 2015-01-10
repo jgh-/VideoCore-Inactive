@@ -28,7 +28,7 @@
 
 
 #ifdef DEBUG
-#define DLog(...) printf(__VA_ARGS__)
+#define DLog(...) printf(__VA_ARGS__);
 #else
 #define DLog(...) {}
 #endif
