@@ -169,8 +169,8 @@ namespace videocore { namespace iOS {
         PERF_GL_async({
             //const auto currentBuffer = this->m_currentBuffer->cvBuffer();
             for ( auto it = this->m_pixelBuffers.begin() ; it != m_pixelBuffers.end() ; ) {
-
-                if ( ((now - it->second.time > std::chrono::milliseconds(2000)) || it->second.buffer->isTemporary()) && it->first != this->m_currentTexture ) {
+                
+                if ( ((now - it->second.time > std::chrono::milliseconds(2000)) || it->second.buffer->isTemporary()) && it->first != this->m_currentBuffer->cvBuffer() ) {
                     // Buffer hasn't been used in more than 1s or is temporary, release it.
                     it = this->m_pixelBuffers.erase(it);
                 } else {

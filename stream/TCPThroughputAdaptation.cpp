@@ -50,7 +50,9 @@ namespace videocore {
     {
         m_exiting = true;
         m_cond.notify_all();
-        m_thread.join();
+        if(m_thread.joinable()) {
+            m_thread.join();
+        }
     }
 
     void
