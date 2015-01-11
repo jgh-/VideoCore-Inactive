@@ -136,19 +136,21 @@ namespace videocore { namespace iOS {
                                                                             &texture);
                 
                 ref->unlock(true);
-                if(ret == noErr) {
+                if(ret == noErr && texture) {
                     glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
                     
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                    this->m_pixelBuffers.emplace(ref->cvBuffer(), ref);
-                    auto iit = this->m_pixelBuffers.find(ref->cvBuffer());
+                    
+                    auto iit = this->m_pixelBuffers.emplace(ref->cvBuffer(), ref).first;
+                    //auto iit = this->m_pixelBuffers.find(ref->cvBuffer());
                     iit->second.texture = texture;
                     this->m_currentBuffer = ref;
                     this->m_currentTexture = texture;
                     iit->second.time = now;
+                    
                 } else {
                     DLog("%d: Error creating texture! (%ld)", __LINE__, (long)ret);
                 }
@@ -165,11 +167,11 @@ namespace videocore { namespace iOS {
         ref->setState(kVCPixelBufferStateAcquired);
         
         PERF_GL_async({
-            const auto currentBuffer = this->m_currentBuffer->cvBuffer();
+            //const auto currentBuffer = this->m_currentBuffer->cvBuffer();
             for ( auto it = this->m_pixelBuffers.begin() ; it != m_pixelBuffers.end() ; ) {
 
-                if ( now - it->second.time > std::chrono::milliseconds(200) && it->first != currentBuffer ) {
-                    // Buffer hasn't been used in more than 200ms, release it.
+                if ( ((now - it->second.time > std::chrono::milliseconds(2000)) || it->second.buffer->isTemporary()) && it->first != this->m_currentTexture ) {
+                    // Buffer hasn't been used in more than 1s or is temporary, release it.
                     it = this->m_pixelBuffers.erase(it);
                 } else {
                     ++ it;

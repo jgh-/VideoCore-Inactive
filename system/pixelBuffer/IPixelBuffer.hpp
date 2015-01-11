@@ -61,6 +61,8 @@ namespace videocore {
         
         virtual void setState(const PixelBufferState state) = 0;
         virtual const PixelBufferState state() const = 0;
+        
+        virtual const bool isTemporary() const = 0; /* mark if the pixel buffer needs to disappear soon */
 	};
 }
 

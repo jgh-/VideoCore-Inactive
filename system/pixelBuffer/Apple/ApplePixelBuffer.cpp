@@ -28,8 +28,11 @@
 
 namespace videocore { namespace Apple {
  
-    ApplePixelBuffer::ApplePixelBuffer(CVPixelBufferRef pb)
-    : m_state(kVCPixelBufferStateAvailable), m_locked(false), m_pixelBuffer(CVPixelBufferRetain(pb))
+    ApplePixelBuffer::ApplePixelBuffer(CVPixelBufferRef pb, bool temporary)
+    : m_state(kVCPixelBufferStateAvailable),
+    m_locked(false),
+    m_pixelBuffer(CVPixelBufferRetain(pb)),
+    m_temporary(temporary)
     {
         m_pixelFormat = (PixelBufferFormatType)CVPixelBufferGetPixelFormatType(pb);
     }

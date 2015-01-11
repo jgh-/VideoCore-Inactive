@@ -62,7 +62,7 @@ namespace videocore { namespace iOS {
             std::chrono::steady_clock::time_point time;
         } Buffer_;
         
-        std::map<CVPixelBufferRef, Buffer_>   m_pixelBuffers;
+        std::map< CVPixelBufferRef, Buffer_ >   m_pixelBuffers;
         Apple::ApplePixelBufferRef  m_currentBuffer;
         CVOpenGLESTextureRef        m_currentTexture;
     };

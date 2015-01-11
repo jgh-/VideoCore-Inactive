@@ -37,7 +37,7 @@ namespace videocore { namespace Apple {
         
     public:
         
-        ApplePixelBuffer(CVPixelBufferRef pb);
+        ApplePixelBuffer(CVPixelBufferRef pb, bool temporary = false);
         ~ApplePixelBuffer();
         
         static const size_t hash(std::shared_ptr<ApplePixelBuffer> buf) { return std::hash<std::shared_ptr<ApplePixelBuffer>>()(buf); };
@@ -55,6 +55,8 @@ namespace videocore { namespace Apple {
         void  setState(const PixelBufferState state) { m_state = state; };
         const PixelBufferState state() const { return m_state; };
         
+        const bool isTemporary() const { return m_temporary; };
+        
     public:
         const CVPixelBufferRef cvBuffer() const { return m_pixelBuffer; };
         
@@ -65,6 +67,7 @@ namespace videocore { namespace Apple {
         PixelBufferState m_state;
         
         bool m_locked;
+        bool m_temporary;
     };
     
     typedef std::shared_ptr<videocore::Apple::ApplePixelBuffer> ApplePixelBufferRef;
