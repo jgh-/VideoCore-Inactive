@@ -25,15 +25,28 @@
 #ifndef videocore_IPixelBuffer_hpp
 #define videocore_IPixelBuffer_hpp
 
+#include <stdint.h>
+
 namespace videocore {
 
-	typedef enum {
+    enum {
+
 		kVCPixelBufferFormat32BGRA = 'bgra',
 		kVCPixelBufferFormat32RGBA = 'rgba',
 		kVCPixelBufferFormatL565 = 'L565',
 		kCVPixelBufferFormat420v = '420v',
-	} PixelBufferFormatType;
-	
+
+    } PixelBufferFormatType_;
+    
+    typedef uint32_t PixelBufferFormatType;
+    
+    typedef enum {
+        kVCPixelBufferStateAvailable,
+        kVCPixelBufferStateDequeued,
+        kVCPixelBufferStateEnqueued,
+        kVCPixelBufferStateAcquired
+    } PixelBufferState;
+    
 	class IPixelBuffer {
 	public:
 		virtual ~IPixelBuffer() {};
@@ -47,6 +60,12 @@ namespace videocore {
 
 		virtual void  lock(bool readOnly = false) = 0;
 		virtual void  unlock(bool readOnly = false) = 0;
+        
+        virtual void setState(const PixelBufferState state) = 0;
+        virtual const PixelBufferState state() const = 0;
+        
+        virtual const bool isTemporary() const = 0; /* mark if the pixel buffer needs to disappear soon */
+
 	};
 }
 

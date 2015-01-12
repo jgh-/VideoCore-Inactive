@@ -1,3 +1,4 @@
+
 /*
  
  Video Core
@@ -23,15 +24,35 @@
  
  */
 
-#ifndef __videocore_util_h
-#define __videocore_util_h
+#include <videocore/system/pixelBuffer/Apple/ApplePixelBuffer.h>
 
-
-#ifdef DEBUG
-#define DLog(...) printf(__VA_ARGS__);
-#else
-#define DLog(...) {}
-#endif
-
-
-#endif
+namespace videocore { namespace Apple {
+ 
+    ApplePixelBuffer::ApplePixelBuffer(CVPixelBufferRef pb, bool temporary)
+    : m_state(kVCPixelBufferStateAvailable),
+    m_locked(false),
+    m_pixelBuffer(CVPixelBufferRetain(pb)),
+    m_temporary(temporary)
+    {
+        m_pixelFormat = (PixelBufferFormatType)CVPixelBufferGetPixelFormatType(pb);
+    }
+    ApplePixelBuffer::~ApplePixelBuffer()
+    {
+        CVPixelBufferRelease(m_pixelBuffer);
+    }
+    
+    void
+    ApplePixelBuffer::lock(bool readonly)
+    {
+        m_locked = true;
+        CVPixelBufferLockBaseAddress( (CVPixelBufferRef)cvBuffer(), readonly ? kCVPixelBufferLock_ReadOnly : 0 );
+    }
+    void
+    ApplePixelBuffer::unlock(bool readonly)
+    {
+        m_locked = false;
+        CVPixelBufferUnlockBaseAddress( (CVPixelBufferRef)cvBuffer(), readonly ? kCVPixelBufferLock_ReadOnly : 0 );
+    }
+    
+}
+}

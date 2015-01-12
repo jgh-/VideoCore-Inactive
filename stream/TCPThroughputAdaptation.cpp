@@ -33,27 +33,26 @@ namespace videocore {
     static const float kPI_2 = M_PI_2;
     static const float kWeight = 0.75f;
     static const int   kPivotSamples = 5;
-    static const int   kMeasurementDelay = 2; // seconds - represents the time between measurements when increasing or decreasing bitrate
-    static const int   kSettlementDelay  = 60; // seconds - represents time to wait after a bitrate decrease before attempting to increase again
-    static const int   kIncreaseDelta    = 20; // seconds - number of seconds to wait between increase vectors (after initial ramp up)
+    static const int   kMeasurementDelay = 5; // seconds - represents the time between measurements when increasing or decreasing bitrate
+    static const int   kSettlementDelay  = 30; // seconds - represents time to wait after a bitrate decrease before attempting to increase again
+    static const int   kIncreaseDelta    = 10; // seconds - number of seconds to wait between increase vectors (after initial ramp up)
     
     TCPThroughputAdaptation::TCPThroughputAdaptation()
-    : m_callback(nullptr), m_exiting(false), m_hasFirstTurndown(false), m_bwSampleCount(30), m_previousVector(0.f)
+    : m_callback(nullptr), m_exiting(false), m_hasFirstTurndown(false), m_bwSampleCount(30), m_previousVector(0.f), m_started(false)
     {
         float v = (1.f - powf(kWeight, m_bwSampleCount)) / (1.f - kWeight) ;
         for ( int i = 0 ; i < m_bwSampleCount ; ++i ) {
             m_bwWeights.push_back(powf(kWeight, i) / v);
         }
         
-        m_thread = std::thread([&]{
-            this->sampleThread();
-        });
     }
     TCPThroughputAdaptation::~TCPThroughputAdaptation()
     {
         m_exiting = true;
         m_cond.notify_all();
-        m_thread.join();
+        if(m_started) {
+            m_thread.join();
+        }
     }
 
     void
@@ -67,6 +66,15 @@ namespace videocore {
         m_bufferSizeSamples.clear();
     }
     void
+    TCPThroughputAdaptation::start() {
+        if(!m_started) {
+            m_started = true;
+            m_thread = std::thread([&]{
+                this->sampleThread();
+            });
+        }
+    }
+    void
     TCPThroughputAdaptation::sampleThread()
     {
         std::mutex m;
@@ -78,11 +86,21 @@ namespace videocore {
 
         while(!m_exiting) {
             std::unique_lock<std::mutex> l(m);
+
+            
+            if(!m_exiting) {
+                m_cond.wait_until(l, std::chrono::steady_clock::now() + std::chrono::seconds(kMeasurementDelay));
+            }
+            if(m_exiting) {
+                break;
+            }
+            
             auto now = std::chrono::steady_clock::now();
             auto diff = now - prev;
             auto previousTurndownDiff = std::chrono::duration_cast<std::chrono::seconds>(now - m_previousTurndown).count();
             auto previousIncreaseDiff = std::chrono::duration_cast<std::chrono::seconds>(now - m_previousIncrease).count();
             prev = now;
+            
             m_sentMutex.lock();
             m_buffMutex.lock();
             
@@ -109,7 +127,7 @@ namespace videocore {
             
             
             if(!m_bufferSizeSamples.empty()) {
-                const long bufferDelta = long(m_bufferSizeSamples.back()) - long(m_bufferSizeSamples.front());
+                //const long bufferDelta = long(m_bufferSizeSamples.back()) - long(m_bufferSizeSamples.front());
                 
                 bool noBuffer = true;
               
@@ -136,7 +154,7 @@ namespace videocore {
                 
                 if(noBuffer && m_bufferSizeSamples.back() > 0) noBuffer = false;
                 
-                //DLog("NB: %d, FT: %f BK: %f\n", noBuffer, frontAvg, backAvg);
+                DLog("NB: %d, FT: %f BK: %f\n", noBuffer, frontAvg, backAvg);
                 if(noBuffer && m_bufferSizeSamples.back() == 0 && (!m_hasFirstTurndown || (previousTurndownDiff > kSettlementDelay && previousIncreaseDiff > kIncreaseDelta))) {
                     vec = 1.f;
                 }
@@ -194,10 +212,6 @@ namespace videocore {
                 m_callback(vec, turnAvg);
             }
             
-            if(!m_exiting) {
-                
-                m_cond.wait_until(l, now + std::chrono::seconds(kMeasurementDelay));
-            }
         }
     }
     void

@@ -48,6 +48,8 @@ namespace videocore { namespace Apple {
         
         const int bitrate() const { return m_bitrate; };
         
+        void requestKeyframe();
+        
     public:
         void compressionSessionOutput(const uint8_t* data, size_t size, uint64_t pts, uint64_t dts);
         

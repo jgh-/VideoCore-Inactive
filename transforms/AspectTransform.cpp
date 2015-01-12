@@ -83,14 +83,13 @@ namespace videocore {
         auto output = m_output.lock();
         
         if(output) {
-            //CVPixelBufferRef pb = (CVPixelBufferRef)data;
-            //CVPixelBufferLockBaseAddress(pb, kCVPixelBufferLock_ReadOnly);
-            IPixelBuffer* pb = (IPixelBuffer*)data;
 
+            std::shared_ptr<IPixelBuffer> pb = *(std::shared_ptr<IPixelBuffer>*)data;
+            
             pb->lock(true);
-
-            float width = float(pb->width());//CVPixelBufferGetWidth(pb);
-            float height = float(pb->height());//CVPixelBufferGetHeight(pb);
+            
+            float width = float(pb->width());
+            float height = float(pb->height());
             
             if(width != m_prevWidth || height != m_prevHeight) {
                 setBoundingBoxDirty();
@@ -114,8 +113,6 @@ namespace videocore {
             }
             
             pb->unlock(true);
-
-            //CVPixelBufferUnlockBaseAddress(pb, kCVPixelBufferLock_ReadOnly);
             
             videocore::VideoBufferMetadata& md = dynamic_cast<videocore::VideoBufferMetadata&>(metadata);
             glm::mat4 & mat = md.getData<videocore::kVideoMetadataMatrix>();

@@ -266,7 +266,11 @@ namespace videocore { namespace Apple {
 #endif
 
     }
-    
+    void
+    H264Encode::requestKeyframe()
+    {
+        m_forceKeyframe = true;
+    }
     void
     H264Encode::setBitrate(int bitrate)
     {
@@ -279,7 +283,7 @@ namespace videocore { namespace Apple {
         if(m_compressionSession) {
             m_encodeMutex.lock();
             
-            int v = m_bitrate * 0.9; // headroom
+            int v = m_bitrate ;
             CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
             
             VTCompressionSessionCompleteFrames((VTCompressionSessionRef)m_compressionSession, kCMTimeInvalid);
@@ -303,20 +307,7 @@ namespace videocore { namespace Apple {
                 m_bitrate = v;
             }
             v = bitrate / 8;
-            CFNumberRef bytes = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &v);
-            v = 1;
-            CFNumberRef duration = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &v);
             
-            CFMutableArrayRef limit = CFArrayCreateMutable(kCFAllocatorDefault, 2, &kCFTypeArrayCallBacks);
-
-            CFArrayAppendValue(limit, bytes);
-            CFArrayAppendValue(limit, duration);
-
-            VTSessionSetProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_DataRateLimits, limit);
-            CFRelease(bytes);
-            CFRelease(duration);
-            CFRelease(limit);
-
             m_encodeMutex.unlock();
             
         }

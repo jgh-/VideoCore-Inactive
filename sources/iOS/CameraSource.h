@@ -65,7 +65,7 @@ namespace videocore { namespace iOS {
          *  \param useFront Start with the front-facing camera
          *  \param useInterfaceOrientation whether to use interface or device orientation as reference for video capture orientation
          */
-        void setupCamera(int fps = 15, bool useFront = true, bool useInterfaceOrientation = false);
+        void setupCamera(int fps = 15, bool useFront = true, bool useInterfaceOrientation = false, NSString* sessionPreset = nil);
 
         
         /*!

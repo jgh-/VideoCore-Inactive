@@ -25,6 +25,7 @@
 
 #include <videocore/sources/iOS/CameraSource.h>
 #include <videocore/mixers/IVideoMixer.hpp>
+#include <videocore/system/pixelBuffer/Apple/ApplePixelBuffer.h>
 
 #import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
@@ -101,7 +102,7 @@ namespace videocore { namespace iOS {
     }
     
     void
-    CameraSource::setupCamera(int fps, bool useFront, bool useInterfaceOrientation)
+    CameraSource::setupCamera(int fps, bool useFront, bool useInterfaceOrientation, NSString* sessionPreset)
     {
         m_fps = fps;
         m_useInterfaceOrientation = useInterfaceOrientation;
@@ -132,7 +133,9 @@ namespace videocore { namespace iOS {
                     AVCaptureSession* session = [[AVCaptureSession alloc] init];
                     AVCaptureDeviceInput* input;
                     AVCaptureVideoDataOutput* output;
-                    
+                    if(sessionPreset) {
+                        session.sessionPreset = (NSString*)sessionPreset;
+                    }
                     bThis->m_captureSession = session;
                     
                     input = [AVCaptureDeviceInput deviceInputWithDevice:((AVCaptureDevice*)m_captureDevice) error:nil];
@@ -379,9 +382,11 @@ namespace videocore { namespace iOS {
             
             md.setData(1, m_matrix, shared_from_this());
             
-            CVPixelBufferRetain(pixelBufferRef);
-            output->pushBuffer((uint8_t*)pixelBufferRef, sizeof(pixelBufferRef), md);
-            CVPixelBufferRelease(pixelBufferRef);
+            auto pixelBuffer = std::make_shared<Apple::ApplePixelBuffer>(pixelBufferRef, true);
+            
+            pixelBuffer->setState(kVCPixelBufferStateEnqueued);
+            output->pushBuffer((uint8_t*)&pixelBuffer, sizeof(pixelBuffer), md);
+            
         }
     }
     

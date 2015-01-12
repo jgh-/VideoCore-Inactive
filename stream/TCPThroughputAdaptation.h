@@ -50,7 +50,7 @@ namespace videocore {
         void addBufferDurationSample(int64_t bufferDuration);
         
         void reset();
-        
+        void start();
     private:
         void sampleThread();
         
@@ -79,6 +79,7 @@ namespace videocore {
         
         float m_previousVector;
         
+        bool m_started;
         bool m_exiting;
         bool m_hasFirstTurndown;
         
