@@ -79,6 +79,7 @@ namespace videocore {
         
         float m_previousVector;
         
+        bool m_started;
         bool m_exiting;
         bool m_hasFirstTurndown;
         

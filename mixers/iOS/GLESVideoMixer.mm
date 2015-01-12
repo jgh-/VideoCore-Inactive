@@ -138,15 +138,16 @@ namespace videocore { namespace iOS {
                 ref->unlock(true);
                 if(ret == noErr && texture) {
                     glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
-                    
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                     
                     auto iit = this->m_pixelBuffers.emplace(ref->cvBuffer(), ref).first;
-                    //auto iit = this->m_pixelBuffers.find(ref->cvBuffer());
                     iit->second.texture = texture;
+                    if(this->m_currentBuffer) {
+                        this->m_currentBuffer->setState(kVCPixelBufferStateAvailable);
+                    }
                     this->m_currentBuffer = ref;
                     this->m_currentTexture = texture;
                     iit->second.time = now;
@@ -157,7 +158,9 @@ namespace videocore { namespace iOS {
             });
             flush = true;
         } else {
-            
+            if(m_currentBuffer) {
+                m_currentBuffer->setState(kVCPixelBufferStateAvailable);
+            }
             m_currentBuffer = ref;
             m_currentTexture = it->second.texture;
             it->second.time = now;
@@ -170,7 +173,7 @@ namespace videocore { namespace iOS {
             //const auto currentBuffer = this->m_currentBuffer->cvBuffer();
             for ( auto it = this->m_pixelBuffers.begin() ; it != m_pixelBuffers.end() ; ) {
                 
-                if ( ((now - it->second.time > std::chrono::milliseconds(2000)) || it->second.buffer->isTemporary()) && it->first != this->m_currentBuffer->cvBuffer() ) {
+                if ( (it->second.buffer->isTemporary()) && it->second.buffer->cvBuffer() != this->m_currentBuffer->cvBuffer() ) {
                     // Buffer hasn't been used in more than 1s or is temporary, release it.
                     it = this->m_pixelBuffers.erase(it);
                 } else {
@@ -402,7 +405,12 @@ namespace videocore { namespace iOS {
             }
             
         }
-        //m_sourceBuffers.erase(h);
+        {
+            auto iit = m_sourceBuffers.find(h);
+            if(iit != m_sourceBuffers.end()) {
+                m_sourceBuffers.erase(iit);
+            }
+        }
         for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i )
         {
             for ( auto iit = m_layerMap[i].begin() ; iit!= m_layerMap[i].end() ; ++iit) {
@@ -516,6 +524,8 @@ namespace videocore { namespace iOS {
                             
                             texture = iTex->second.currentTexture();
                             
+                            //DLog("Composing %p", iTex->second.currentBuffer()->cvBuffer());
+                            
                             // TODO: Add blending.
                             /*if(this->m_sourceProperties[*it].blends) {
                              glEnable(GL_BLEND);
@@ -528,7 +538,9 @@ namespace videocore { namespace iOS {
                             } else {
                                 DLog("Null texture!");
                             }
-                            
+                            //if ( iTex->second.currentBuffer() ) {
+                            //    iTex->second.currentBuffer()->setState(kVCPixelBufferStateAvailable);
+                            // }
                             //GL_ERRORS(__LINE__);
                            // CVPixelBufferUnlockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly);
                             /*if(this->m_sourceProperties[*it].blends) {
@@ -539,9 +551,6 @@ namespace videocore { namespace iOS {
                     glFlush();
                     glPopGroupMarkerEXT();
                     
-                    //for ( auto it : m_sourceBuffers) {
-                    //    it.second.currentBuffer()->setState(kVCPixelBufferStateAvailable);
-                    //}
                    // if(locked[!current_fb])
                    //     CVPixelBufferUnlockBaseAddress(this->m_pixelBuffer[!current_fb], 0);
                     
