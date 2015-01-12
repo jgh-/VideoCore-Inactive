@@ -30,6 +30,7 @@
 #include <iostream>
 #include <videocore/mixers/IVideoMixer.hpp>
 #include <videocore/system/JobQueue.hpp>
+#include <videocore/system/pixelBuffer/Apple/ApplePixelBuffer.h>
 
 #include <map>
 #include <thread>
@@ -44,23 +45,26 @@ namespace videocore { namespace iOS {
  
     struct SourceBuffer
     {
-        SourceBuffer() : m_currentTexture(nullptr), m_currentBuffer(nullptr) {};
-        ~SourceBuffer() {
-            for ( auto & it : m_pixelBuffers ) {
-                CFRelease(it.second.first);
-                CVPixelBufferRelease(it.first);
-            }
-        };
-        void setBuffer(CVPixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache, JobQueue& jobQueue, void* glContext);
+        SourceBuffer() : m_currentTexture(nullptr), m_pixelBuffers() { };
+        ~SourceBuffer() { };
+        void setBuffer(Apple::ApplePixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache, JobQueue& jobQueue, void* glContext);
         
         CVOpenGLESTextureRef currentTexture() const { return m_currentTexture; };
-        CVPixelBufferRef currentBuffer() const { return m_currentBuffer; };
+        Apple::ApplePixelBufferRef currentBuffer() const { return m_currentBuffer; };
         
     private:
+        typedef struct __Buffer_ {
+            __Buffer_(Apple::ApplePixelBufferRef buf) : texture(nullptr), buffer(buf) {};
+            ~__Buffer_() { if(texture) { CFRelease(texture); } };
+                
+            Apple::ApplePixelBufferRef buffer;
+            CVOpenGLESTextureRef texture;
+            std::chrono::steady_clock::time_point time;
+        } Buffer_;
         
-        std::map<CVPixelBufferRef, std::pair<CVOpenGLESTextureRef, std::chrono::steady_clock::time_point>> m_pixelBuffers;
-        CVPixelBufferRef                                           m_currentBuffer;
-        CVOpenGLESTextureRef                                       m_currentTexture;
+        std::map< CVPixelBufferRef, Buffer_ >   m_pixelBuffers;
+        Apple::ApplePixelBufferRef  m_currentBuffer;
+        CVOpenGLESTextureRef        m_currentTexture;
     };
     /*
      *  Takes CVPixelBufferRef inputs and outputs a single CVPixelBufferRef that has been composited from the various sources.

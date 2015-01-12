@@ -38,7 +38,7 @@ namespace videocore {
     static const int   kIncreaseDelta    = 10; // seconds - number of seconds to wait between increase vectors (after initial ramp up)
     
     TCPThroughputAdaptation::TCPThroughputAdaptation()
-    : m_callback(nullptr), m_exiting(false), m_hasFirstTurndown(false), m_bwSampleCount(30), m_previousVector(0.f)
+    : m_callback(nullptr), m_exiting(false), m_hasFirstTurndown(false), m_bwSampleCount(30), m_previousVector(0.f), m_started(false)
     {
         float v = (1.f - powf(kWeight, m_bwSampleCount)) / (1.f - kWeight) ;
         for ( int i = 0 ; i < m_bwSampleCount ; ++i ) {
@@ -50,7 +50,9 @@ namespace videocore {
     {
         m_exiting = true;
         m_cond.notify_all();
-        m_thread.join();
+        if(m_started) {
+            m_thread.join();
+        }
     }
 
     void
@@ -65,9 +67,12 @@ namespace videocore {
     }
     void
     TCPThroughputAdaptation::start() {
-        m_thread = std::thread([&]{
-            this->sampleThread();
-        });
+        if(!m_started) {
+            m_started = true;
+            m_thread = std::thread([&]{
+                this->sampleThread();
+            });
+        }
     }
     void
     TCPThroughputAdaptation::sampleThread()
@@ -122,7 +127,7 @@ namespace videocore {
             
             
             if(!m_bufferSizeSamples.empty()) {
-                const long bufferDelta = long(m_bufferSizeSamples.back()) - long(m_bufferSizeSamples.front());
+                //const long bufferDelta = long(m_bufferSizeSamples.back()) - long(m_bufferSizeSamples.front());
                 
                 bool noBuffer = true;
               
