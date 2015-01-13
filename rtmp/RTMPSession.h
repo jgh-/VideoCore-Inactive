@@ -113,6 +113,8 @@ namespace videocore
         void sendDeleteStream();
         void sendSetBufferTime(int milliseconds);
         
+        void increaseBuffer(long long size);
+        
         bool parseCurrentData();
         void handleInvoke(uint8_t* p);
         bool handleMessage(uint8_t* p, uint8_t msgTypeId);
@@ -121,13 +123,18 @@ namespace videocore
         int32_t amfPrimitiveObjectSize(uint8_t* p);
         
     private:
-        
+        JobQueue            m_networkQueue;
         JobQueue            m_jobQueue;
+        std::chrono::steady_clock::time_point m_sentKeyframe;
+        std::condition_variable m_networkCond;
+        std::mutex              m_networkMutex;
         
         RingBuffer          m_streamOutRemainder;
         Buffer              m_s1, m_c1;
         
         TCPThroughputAdaptation m_throughputSession;
+        
+        uint64_t            m_previousTs;
         
         std::deque<BufStruct> m_streamOutQueue;
         
@@ -159,7 +166,8 @@ namespace videocore
         bool            m_audioStereo;
         
         ClientState_t  m_state;
-        
+      
+        bool            m_clearing;
         bool            m_ending;
     };
 }
