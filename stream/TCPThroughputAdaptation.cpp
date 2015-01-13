@@ -138,8 +138,8 @@ namespace videocore {
                 
                 for (int i = 0 ; i < m_bufferSizeSamples.size() ; ++i) {
 
-                    const float s1 = m_bufferSizeSamples[i];
-                    if(s1>0) noBuffer = false;
+                    const float s1 = m_bufferSizeSamples[i] / 100.f;
+                   // if(s1>0) noBuffer = false;
                     
                     if ( i < m_bufferSizeSamples.size() / 2 ) {
                         frontAvg += s1;
@@ -152,13 +152,16 @@ namespace videocore {
                 frontAvg /= float(frontCount);
                 backAvg /= float(backCount);
                 
-                if(noBuffer && m_bufferSizeSamples.back() > 0) noBuffer = false;
+                frontAvg = std::floor(frontAvg);
+                backAvg = std::floor(backAvg);
+                
+                //if(noBuffer && m_bufferSizeSamples.back() > 0) noBuffer = false;
                 
                 DLog("NB: %d, FT: %f BK: %f\n", noBuffer, frontAvg, backAvg);
-                if(noBuffer && m_bufferSizeSamples.back() == 0 && (!m_hasFirstTurndown || (previousTurndownDiff > kSettlementDelay && previousIncreaseDiff > kIncreaseDelta))) {
+                if( (frontAvg > backAvg || backAvg == 0.f) && (!m_hasFirstTurndown || (previousTurndownDiff > kSettlementDelay && previousIncreaseDiff > kIncreaseDelta))) {
                     vec = 1.f;
                 }
-                else if(!noBuffer && backAvg > frontAvg) {
+                else if( frontAvg > 0 && (frontAvg * 1.1 < backAvg)) {
                     vec = -1.f;
 
                     m_previousTurndown = now;

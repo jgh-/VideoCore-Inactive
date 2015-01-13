@@ -101,7 +101,9 @@ namespace videocore {
             m_cond.notify_all();
 #else
             dispatch_async(m_queue, ^{
-                (*job)();
+                if(!this->m_exiting.load()) {
+                    (*job)();
+                }
             });
 #endif
         }

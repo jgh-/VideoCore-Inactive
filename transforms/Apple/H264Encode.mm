@@ -260,7 +260,6 @@ namespace videocore { namespace Apple {
         auto l = m_output.lock();
         if(l && data && size > 0) {
             videocore::VideoBufferMetadata md(pts, dts);
-            
             l->pushBuffer(data, size, md);
         }
 #endif

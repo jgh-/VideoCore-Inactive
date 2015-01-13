@@ -59,6 +59,8 @@ namespace videocore { namespace Apple {
         
     private:
         
+    
+        
         std::mutex             m_encodeMutex;
         std::weak_ptr<IOutput> m_output;
         void*                  m_compressionSession;
@@ -69,7 +71,6 @@ namespace videocore { namespace Apple {
         
         
         bool                   m_forceKeyframe;
-        
     };
 }
 }
