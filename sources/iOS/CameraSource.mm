@@ -207,11 +207,13 @@ namespace videocore { namespace iOS {
     CameraSource::getPreviewLayer(void** outAVCaptureVideoPreviewLayer)
     {
         if(!m_previewLayer) {
-            AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
-            AVCaptureVideoPreviewLayer* previewLayer;
-            previewLayer =  [AVCaptureVideoPreviewLayer layerWithSession:session];
-            previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
-            m_previewLayer = previewLayer;
+            @autoreleasepool {
+                AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
+                AVCaptureVideoPreviewLayer* previewLayer;
+                previewLayer = [[AVCaptureVideoPreviewLayer layerWithSession:session] retain];
+                previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+                m_previewLayer = previewLayer;
+            }
         }
         if(outAVCaptureVideoPreviewLayer) {
             *outAVCaptureVideoPreviewLayer = m_previewLayer;
