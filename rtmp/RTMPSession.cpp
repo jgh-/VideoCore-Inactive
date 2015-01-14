@@ -193,8 +193,8 @@ namespace videocore
         pushBuffer(data, size, md);
     }
     void
-    RTMPSession::increaseBuffer(long long size) {
-        m_bufferSize += size;
+    RTMPSession::increaseBuffer(int64_t size) {
+        m_bufferSize = std::max(m_bufferSize + size, 0LL);
     }
     void
     RTMPSession::write(uint8_t* data, size_t size, std::chrono::steady_clock::time_point packetTime, bool isKeyframe)
@@ -219,7 +219,7 @@ namespace videocore
                 uint8_t* p ;
                 buf->read(&p, size);
                 
-                while(tosend > 0 && !this->m_ending && (!this->m_clearing || m_sentKeyframe == packetTime)) {
+                while(tosend > 0 && !this->m_ending && (!this->m_clearing || this->m_sentKeyframe == packetTime)) {
                     this->m_clearing = false;
                     size_t sent = m_streamSession->write(p, tosend);
                     p += sent;
@@ -232,7 +232,7 @@ namespace videocore
                         l.unlock();
                     }
                 }
-                this->increaseBuffer(-size);
+                this->increaseBuffer(-int64_t(size));
             });
         }
         

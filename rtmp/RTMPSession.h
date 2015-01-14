@@ -113,7 +113,7 @@ namespace videocore
         void sendDeleteStream();
         void sendSetBufferTime(int milliseconds);
         
-        void increaseBuffer(long long size);
+        void increaseBuffer(int64_t size);
         
         bool parseCurrentData();
         void handleInvoke(uint8_t* p);
@@ -153,7 +153,7 @@ namespace videocore
         
         size_t          m_outChunkSize;
         size_t          m_inChunkSize;
-        size_t          m_bufferSize;
+        int64_t         m_bufferSize;
         
         int32_t         m_streamId;
         int32_t         m_createStreamInvoke;
