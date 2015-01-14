@@ -532,6 +532,11 @@ namespace videocore { namespace simpleApi {
                                               auto video = std::dynamic_pointer_cast<videocore::IEncoder>( bSelf->m_h264Encoder );
                                               auto audio = std::dynamic_pointer_cast<videocore::IEncoder>( bSelf->m_aacEncoder );
                                               if(video && audio && bSelf.useAdaptiveBitrate) {
+                                                  
+                                                  if([bSelf.delegate respondsToSelector:@selector(detectedThroughput:)]) {
+                                                      [bSelf.delegate detectedThroughput:predicted];
+                                                  }
+                                                  
                                                   int videoBr = 0;
                                                   
                                                   if(vector != 0) {
