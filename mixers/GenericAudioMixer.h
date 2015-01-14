@@ -38,7 +38,7 @@
 namespace videocore {
 
     struct MixWindow {
-        MixWindow(size_t size) {
+        MixWindow(size_t size) : start(std::chrono::steady_clock::now()) {
             buffer = new uint8_t[size]();
             this->size = size;
         }
