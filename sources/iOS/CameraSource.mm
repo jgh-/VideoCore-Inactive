@@ -209,7 +209,7 @@ namespace videocore { namespace iOS {
         if(!m_previewLayer) {
             AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
             AVCaptureVideoPreviewLayer* previewLayer;
-            previewLayer =  [AVCaptureVideoPreviewLayer layerWithSession:session];
+            previewLayer = [[AVCaptureVideoPreviewLayer layerWithSession:session] retain];
             previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
             m_previewLayer = previewLayer;
         }
