@@ -42,7 +42,7 @@
 #endif
 
 namespace videocore { namespace Apple {
-
+    
     static CMTimeValue s_forcedKeyframePTS = 0;
     
 #if VERSION_OK
@@ -68,7 +68,7 @@ namespace videocore { namespace Apple {
         }
         
         if(isKeyframe) {
-
+            
             // Send the SPS and PPS.
             CMFormatDescriptionRef format = CMSampleBufferGetFormatDescription(sampleBuffer);
             size_t spsSize, ppsSize;
@@ -91,11 +91,11 @@ namespace videocore { namespace Apple {
             ((H264Encode*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)sps_buf.get(),spsSize, pts.value, dts.value);
             ((H264Encode*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)pps_buf.get(),ppsSize, pts.value, dts.value);
         }
-       
+        
         char* bufferData;
         size_t size;
         CMBlockBufferGetDataPointer(block, 0, NULL, &size, &bufferData);
-
+        
         ((H264Encode*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)bufferData,size, pts.value, dts.value);
         
     }
@@ -128,8 +128,8 @@ namespace videocore { namespace Apple {
                 s_forcedKeyframePTS = pts.value;
                 
                 frameProps = CFDictionaryCreateMutable(kCFAllocatorDefault, 1,&kCFTypeDictionaryKeyCallBacks,                                                            &kCFTypeDictionaryValueCallBacks);
-            
-            
+                
+                
                 CFDictionaryAddValue(frameProps, kVTEncodeFrameOptionKey_ForceKeyFrame, kCFBooleanTrue);
             }
             
@@ -168,10 +168,10 @@ namespace videocore { namespace Apple {
         CFBooleanRef cvalue = kCFBooleanTrue;
         
         encoderSpecifications = CFDictionaryCreateMutable(
-                                                                                 kCFAllocatorDefault,
-                                                                                 3,
-                                                                                 &kCFTypeDictionaryKeyCallBacks,
-                                                                                 &kCFTypeDictionaryValueCallBacks);
+                                                          kCFAllocatorDefault,
+                                                          3,
+                                                          &kCFTypeDictionaryKeyCallBacks,
+                                                          &kCFTypeDictionaryValueCallBacks);
         
         CFDictionaryAddValue(encoderSpecifications, bkey, bvalue);
         CFDictionaryAddValue(encoderSpecifications, ckey, cvalue);
@@ -179,28 +179,33 @@ namespace videocore { namespace Apple {
         
 #endif
         VTCompressionSessionRef session = nullptr;
-        NSDictionary* pixelBufferOptions = @{ (NSString*) kCVPixelBufferPixelFormatTypeKey : //@(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange),
-                                              @(kCVPixelFormatType_32BGRA),
-                                              (NSString*) kCVPixelBufferWidthKey : @(m_frameW),
-                                              (NSString*) kCVPixelBufferHeightKey : @(m_frameH),
-                                              (NSString*) kCVPixelBufferOpenGLESCompatibilityKey : @YES,
-                                              (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}};
-        
-        err = VTCompressionSessionCreate(
-                                         kCFAllocatorDefault,
-                                         m_frameW,
-                                         m_frameH,
-                                         kCMVideoCodecType_H264,
-                                         encoderSpecifications,
-                                         (__bridge CFDictionaryRef)pixelBufferOptions,
-                                         NULL,
-                                         &vtCallback,
-                                         this,
-                                         &session);
+        @autoreleasepool {
+            
+            
+            NSDictionary* pixelBufferOptions = @{ (NSString*) kCVPixelBufferPixelFormatTypeKey : //@(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange),
+                                                  @(kCVPixelFormatType_32BGRA),
+                                                  (NSString*) kCVPixelBufferWidthKey : @(m_frameW),
+                                                  (NSString*) kCVPixelBufferHeightKey : @(m_frameH),
+                                                  (NSString*) kCVPixelBufferOpenGLESCompatibilityKey : @YES,
+                                                  (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}};
+            
+            err = VTCompressionSessionCreate(
+                                             kCFAllocatorDefault,
+                                             m_frameW,
+                                             m_frameH,
+                                             kCMVideoCodecType_H264,
+                                             encoderSpecifications,
+                                             (__bridge CFDictionaryRef)pixelBufferOptions,
+                                             NULL,
+                                             &vtCallback,
+                                             this,
+                                             &session);
+            
+        }
         
         if(err == noErr) {
             m_compressionSession = session;
-
+            
             const int32_t v = m_fps * 2; // 2-second kfi
             
             CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
@@ -214,19 +219,19 @@ namespace videocore { namespace Apple {
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_ExpectedFrameRate, ref);
             CFRelease(ref);
         }
-  
+        
         if(err == noErr) {
             CFBooleanRef allowFrameReodering = useBaseline ? kCFBooleanFalse : kCFBooleanFalse;
             err = VTSessionSetProperty(session , kVTCompressionPropertyKey_AllowFrameReordering, allowFrameReodering);
         }
-
+        
         if(err == noErr) {
             const int v = m_bitrate;
             CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_AverageBitRate, ref);
             CFRelease(ref);
         }
-
+        
         if(err == noErr) {
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue);
         }
@@ -263,7 +268,7 @@ namespace videocore { namespace Apple {
             l->pushBuffer(data, size, md);
         }
 #endif
-
+        
     }
     void
     H264Encode::requestKeyframe()
@@ -278,7 +283,7 @@ namespace videocore { namespace Apple {
             return;
         }
         m_bitrate = bitrate;
-
+        
         if(m_compressionSession) {
             m_encodeMutex.lock();
             
@@ -297,7 +302,7 @@ namespace videocore { namespace Apple {
             
             if(ret == noErr && ref) {
                 SInt32 br = 0;
-            
+                
                 CFNumberGetValue(ref, kCFNumberSInt32Type, &br);
                 
                 m_bitrate = br;
