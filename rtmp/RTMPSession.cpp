@@ -86,9 +86,10 @@ namespace videocore
             sendDeleteStream();
         }
         m_ending = true;
+        m_jobQueue.mark_exiting();
         m_jobQueue.enqueue_sync([]() {});
-        m_networkQueue.enqueue_sync([](){});
-        
+        m_networkQueue.mark_exiting();
+        m_networkQueue.enqueue_sync([]() {});
     }
     void
     RTMPSession::setSessionParameters(videocore::IMetadata &parameters)

@@ -130,6 +130,8 @@ namespace videocore {
         m_exiting = true;
         m_mixThreadCond.notify_all();
         m_mixThread.join();
+        m_mixQueue.mark_exiting();
+        m_mixQueue.enqueue_sync([]() {});
     }
     void
     GenericAudioMixer::setMinimumBufferDuration(const double duration)

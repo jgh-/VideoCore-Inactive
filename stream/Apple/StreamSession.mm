@@ -101,8 +101,8 @@ namespace videocore {
         StreamSession::disconnect()
         {
             if(m_outputStream) {
-                [NSOS(m_outputStream) release];
                 [NSOS(m_outputStream) close];
+                [NSOS(m_outputStream) release];
                 m_outputStream = nullptr;
             }
             if(m_inputStream) {
