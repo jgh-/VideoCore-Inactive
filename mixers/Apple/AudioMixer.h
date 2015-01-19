@@ -29,6 +29,7 @@
 #include <iostream>
 #include <videocore/mixers/GenericAudioMixer.h>
 #include <AudioToolbox/AudioToolbox.h>
+#include <unordered_map>
 
 namespace videocore { namespace Apple {
     /*
@@ -79,6 +80,13 @@ namespace videocore { namespace Apple {
                                AudioBufferList* ioData,
                                AudioStreamPacketDescription** ioPacketDesc,
                                void* inUserData );
+        
+    private:
+        
+        using ConverterInst = struct { AudioStreamBasicDescription asbdIn, asbdOut; AudioConverterRef converter; };
+        
+        std::unordered_map<uint64_t, ConverterInst> m_converters;
+        
         
     };
 }

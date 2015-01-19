@@ -30,6 +30,7 @@
 #include <iostream>
 #include <videocore/mixers/IVideoMixer.hpp>
 #include <videocore/system/JobQueue.hpp>
+#include <videocore/system/pixelBuffer/Apple/ApplePixelBuffer.h>
 
 #include <map>
 #include <thread>
@@ -37,9 +38,34 @@
 #include <glm/glm.hpp>
 #include <CoreVideo/CoreVideo.h>
 #include <vector>
+#include <map>
+#include <unordered_map>
 
 namespace videocore { namespace iOS {
  
+    struct SourceBuffer
+    {
+        SourceBuffer() : m_currentTexture(nullptr), m_pixelBuffers() { };
+        ~SourceBuffer() { };
+        void setBuffer(Apple::ApplePixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache, JobQueue& jobQueue, void* glContext);
+        
+        CVOpenGLESTextureRef currentTexture() const { return m_currentTexture; };
+        Apple::ApplePixelBufferRef currentBuffer() const { return m_currentBuffer; };
+        
+    private:
+        typedef struct __Buffer_ {
+            __Buffer_(Apple::ApplePixelBufferRef buf) : texture(nullptr), buffer(buf) {};
+            ~__Buffer_() { if(texture) { CFRelease(texture); } };
+                
+            Apple::ApplePixelBufferRef buffer;
+            CVOpenGLESTextureRef texture;
+            std::chrono::steady_clock::time_point time;
+        } Buffer_;
+        
+        std::map< CVPixelBufferRef, Buffer_ >   m_pixelBuffers;
+        Apple::ApplePixelBufferRef  m_currentBuffer;
+        CVOpenGLESTextureRef        m_currentTexture;
+    };
     /*
      *  Takes CVPixelBufferRef inputs and outputs a single CVPixelBufferRef that has been composited from the various sources.
      *  Sources must output VideoBufferMetadata with their buffers. This compositor uses homogeneous coordinates.
@@ -60,6 +86,7 @@ namespace videocore { namespace iOS {
         GLESVideoMixer(int frame_w,
                        int frame_h,
                        double frameDuration,
+                       CVPixelBufferPoolRef pixelBufferPool = nullptr,
                        std::function<void(void*)> excludeContext = nullptr);
         
         /*! Destructor */
@@ -132,6 +159,7 @@ namespace videocore { namespace iOS {
         std::condition_variable m_mixThreadCond;
         
         
+        CVPixelBufferPoolRef m_pixelBufferPool;
         CVPixelBufferRef m_pixelBuffer[2];
         CVOpenGLESTextureCacheRef m_textureCache;
         CVOpenGLESTextureRef      m_texture[2];
@@ -148,8 +176,9 @@ namespace videocore { namespace iOS {
         std::map<int, std::vector< std::size_t >> m_layerMap;
         
         std::map< std::size_t, glm::mat4 >          m_sourceMats;
-        std::map< std::size_t, CVPixelBufferRef >   m_sourceBuffers;
-        std::map< std::size_t, CVOpenGLESTextureRef > m_sourceTextures;
+        //std::map< std::size_t, CVPixelBufferRef >   m_sourceBuffers;
+        //std::map< std::size_t, CVOpenGLESTextureRef > m_sourceTextures;
+        std::unordered_map<std::size_t, SourceBuffer> m_sourceBuffers;
         
         std::chrono::steady_clock::time_point m_epoch;
         std::chrono::steady_clock::time_point m_nextMixTime;

@@ -27,24 +27,31 @@
 #include <tuple>
 #include <string>
 #include <boost/lexical_cast.hpp>
+#include <videocore/system/util.h>
+
 
 namespace videocore
 {
     struct IMetadata
     {
-        IMetadata(double ts) : timestampDelta(ts) {};
-        IMetadata() : timestampDelta(0.) {};
+        IMetadata(double pts, double dts) : pts(pts), dts(dts) {};
+        IMetadata(double ts) : pts(ts), dts(ts) {};
+        IMetadata() : pts(0.), dts(0.) {};
         
         virtual ~IMetadata() {};
         
         virtual const int32_t type() const = 0;
-        
-        double timestampDelta;
+        union {
+            double pts;
+            double timestampDelta __attribute__((deprecated));
+        };
+        double dts;
     };
     
     template <int32_t MetaDataType, typename... Types>
     struct MetaData : public IMetadata
     {
+        MetaData<Types...>(double pts, double dts) : IMetadata(pts, dts) {};
         MetaData<Types...>(double ts) : IMetadata(ts) {};
         MetaData<Types...>() : IMetadata() {};
         

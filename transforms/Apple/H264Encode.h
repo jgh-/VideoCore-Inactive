@@ -20,17 +20,20 @@
  
  */
 #include <videocore/transforms/IEncoder.hpp>
-#include <videocore/system/JobQueue.hpp>
 #include <videocore/system/Buffer.hpp>
 #include <deque>
+
+#include <CoreVideo/CoreVideo.h>
 
 namespace videocore { namespace Apple {
  
     class H264Encode : public IEncoder
     {
     public:
-        H264Encode( int frame_w, int frame_h, int fps, int bitrate );
+        H264Encode( int frame_w, int frame_h, int fps, int bitrate, bool useBaseline = true );
         ~H264Encode();
+        
+        CVPixelBufferPoolRef pixelBufferPool();
         
     public:
         /*! ITransform */
@@ -45,15 +48,20 @@ namespace videocore { namespace Apple {
         
         const int bitrate() const { return m_bitrate; };
         
+        void requestKeyframe();
+        
     public:
-        void compressionSessionOutput(const uint8_t* data, size_t size, uint64_t ts);
+        void compressionSessionOutput(const uint8_t* data, size_t size, uint64_t pts, uint64_t dts);
         
     private:
-        void setupCompressionSession();
-        
+        void setupCompressionSession( bool useBaseline );
+        void teardownCompressionSession();
         
     private:
         
+    
+        
+        std::mutex             m_encodeMutex;
         std::weak_ptr<IOutput> m_output;
         void*                  m_compressionSession;
         int                    m_frameW;
@@ -61,6 +69,8 @@ namespace videocore { namespace Apple {
         int                    m_fps;
         int                    m_bitrate;
         
+        
+        bool                   m_forceKeyframe;
     };
 }
 }

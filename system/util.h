@@ -22,23 +22,16 @@
  THE SOFTWARE.
  
  */
-#ifndef videocore_IOutput_hpp
-#define videocore_IOutput_hpp
-#include <chrono>
-#include <cstdlib>
-#include <videocore/transforms/IMetadata.hpp>
 
-namespace videocore
-{
-    
-    class IOutput
-    {
-    public:
-        virtual void setEpoch(const std::chrono::steady_clock::time_point epoch) {};
-        virtual void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata) = 0;
-        virtual ~IOutput() {};
-    };
-    
-}
+#ifndef __videocore_util_h
+#define __videocore_util_h
+
+
+#ifdef DEBUG
+#define DLog(...) printf(__VA_ARGS__);
+#else
+#define DLog(...) {}
+#endif
+
 
 #endif

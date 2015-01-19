@@ -22,23 +22,33 @@
  THE SOFTWARE.
  
  */
-#ifndef videocore_IOutput_hpp
-#define videocore_IOutput_hpp
-#include <chrono>
-#include <cstdlib>
-#include <videocore/transforms/IMetadata.hpp>
+#ifndef __videocore__IThroughputAdaptation__
+#define __videocore__IThroughputAdaptation__
 
-namespace videocore
-{
+#include <functional>
+#include <videocore/system/util.h>
+
+namespace videocore {
     
-    class IOutput
-    {
+    using ThroughputCallback = std::function<void(float vector, float predicted)>;
+    
+    
+    class IThroughputAdaptation {
     public:
-        virtual void setEpoch(const std::chrono::steady_clock::time_point epoch) {};
-        virtual void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata) = 0;
-        virtual ~IOutput() {};
+        virtual ~IThroughputAdaptation() {};
+        
+        virtual void setThroughputCallback(ThroughputCallback callback) = 0;
+        
+        virtual void addSentBytesSample(size_t bytesSent) = 0;
+        
+        virtual void addBufferSizeSample(size_t bufferSize) = 0;
+        
+        virtual void addBufferDurationSample(int64_t bufferDuration) = 0;
+        
+        virtual void reset() = 0;
+        
+        virtual void start() = 0;
     };
-    
 }
 
 #endif

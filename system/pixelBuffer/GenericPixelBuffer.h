@@ -22,23 +22,42 @@
  THE SOFTWARE.
  
  */
-#ifndef videocore_IOutput_hpp
-#define videocore_IOutput_hpp
-#include <chrono>
-#include <cstdlib>
-#include <videocore/transforms/IMetadata.hpp>
+#ifndef videocore_GenericPixelBuffer_h
+#define videocore_GenericPixelBuffer_h
 
-namespace videocore
-{
-    
-    class IOutput
-    {
-    public:
-        virtual void setEpoch(const std::chrono::steady_clock::time_point epoch) {};
-        virtual void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata) = 0;
-        virtual ~IOutput() {};
-    };
-    
+#include <videocore/system/pixelBuffer/IPixelBuffer.hpp>
+
+#include <vector>
+#include <memory>
+#include <stdint.h>
+ 
+namespace videocore {
+
+	class GenericPixelBuffer : public IPixelBuffer {
+
+	public: 
+		GenericPixelBuffer(int width, int height, PixelBufferFormatType pixelFormat);
+		~GenericPixelBuffer() {};
+
+	public:
+		const int   width() const  { return m_width; };
+		const int   height() const { return m_height; };
+		const void* baseAddress() const { return &(*m_buffer)[0]; };
+		
+	    const PixelBufferFormatType pixelFormat() const { return m_pixelFormat; };
+		
+		void  lock(bool readOnly = false) {};
+		void  unlock(bool readOnly = false) {};
+
+	private:
+
+		std::shared_ptr<std::vector<uint8_t>> m_buffer;
+
+		int  m_width;
+		int  m_height;
+
+		PixelBufferFormatType  m_pixelFormat;
+
+	};
 }
-
 #endif

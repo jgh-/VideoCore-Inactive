@@ -1,3 +1,4 @@
+
 /*
  
  Video Core
@@ -22,23 +23,36 @@
  THE SOFTWARE.
  
  */
-#ifndef videocore_IOutput_hpp
-#define videocore_IOutput_hpp
-#include <chrono>
-#include <cstdlib>
-#include <videocore/transforms/IMetadata.hpp>
 
-namespace videocore
-{
-    
-    class IOutput
+#include <videocore/system/pixelBuffer/Apple/ApplePixelBuffer.h>
+
+namespace videocore { namespace Apple {
+ 
+    ApplePixelBuffer::ApplePixelBuffer(CVPixelBufferRef pb, bool temporary)
+    : m_state(kVCPixelBufferStateAvailable),
+    m_locked(false),
+    m_pixelBuffer(CVPixelBufferRetain(pb)),
+    m_temporary(temporary)
     {
-    public:
-        virtual void setEpoch(const std::chrono::steady_clock::time_point epoch) {};
-        virtual void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata) = 0;
-        virtual ~IOutput() {};
-    };
+        m_pixelFormat = (PixelBufferFormatType)CVPixelBufferGetPixelFormatType(pb);
+    }
+    ApplePixelBuffer::~ApplePixelBuffer()
+    {
+        CVPixelBufferRelease(m_pixelBuffer);
+    }
+    
+    void
+    ApplePixelBuffer::lock(bool readonly)
+    {
+        m_locked = true;
+        CVPixelBufferLockBaseAddress( (CVPixelBufferRef)cvBuffer(), readonly ? kCVPixelBufferLock_ReadOnly : 0 );
+    }
+    void
+    ApplePixelBuffer::unlock(bool readonly)
+    {
+        m_locked = false;
+        CVPixelBufferUnlockBaseAddress( (CVPixelBufferRef)cvBuffer(), readonly ? kCVPixelBufferLock_ReadOnly : 0 );
+    }
     
 }
-
-#endif
+}

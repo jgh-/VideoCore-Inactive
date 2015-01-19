@@ -45,6 +45,8 @@
 
     int _currentBuffer;
     
+    BOOL _paused;
+    
     CVPixelBufferRef _currentRef[2];
     CVOpenGLESTextureCacheRef _cache;
     CVOpenGLESTextureRef _texture[2];
@@ -94,15 +96,19 @@
 
         __block VCPreviewView* bSelf = self;
         
+        _paused = NO;
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             [bSelf setupGLES];
         });
-        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(notification:) name:UIApplicationDidEnterBackgroundNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(notification:) name:UIApplicationWillEnterForegroundNotification object:nil];
     }
     return self;
 }
 - (void) dealloc
 {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     if(_texture[0]) {
         CFRelease(_texture[0]);
     }
@@ -141,11 +147,19 @@
     self.backgroundColor = [UIColor blackColor];
     [self generateGLESBuffers];
 }
-
+- (void) notification: (NSNotification*) notification {
+    if([notification.name isEqualToString:UIApplicationDidEnterBackgroundNotification]) {
+        _paused = YES;
+    } else if([notification.name isEqualToString:UIApplicationWillEnterForegroundNotification]) {
+        _paused = NO;
+    }
+}
 #pragma mark - Public Methods
 
 - (void) drawFrame:(CVPixelBufferRef)pixelBuffer
 {
+    
+    if(_paused) return;
     
     bool updateTexture = false;
     
@@ -166,8 +180,9 @@
     }
     int currentBuffer = _currentBuffer;
     __block VCPreviewView* bSelf = self;
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
+        
         EAGLContext* current = [EAGLContext currentContext];
         [EAGLContext setCurrentContext:bSelf.context];
         
@@ -231,7 +246,9 @@
         glDrawArrays(GL_TRIANGLES, 0, 6);
         GL_ERRORS(__LINE__)
         glBindRenderbuffer(GL_RENDERBUFFER, bSelf->_renderBuffer);
-        [self.context presentRenderbuffer:GL_RENDERBUFFER];
+        if(!bSelf->_paused) {
+            [self.context presentRenderbuffer:GL_RENDERBUFFER];
+        }
         [EAGLContext setCurrentContext:current];
         CVOpenGLESTextureCacheFlush(_cache,0);
     });

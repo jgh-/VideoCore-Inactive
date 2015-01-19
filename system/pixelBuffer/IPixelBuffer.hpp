@@ -22,51 +22,49 @@
  THE SOFTWARE.
  
  */
-#ifndef videocore_IStream_hpp
-#define videocore_IStream_hpp
+#ifndef videocore_IPixelBuffer_hpp
+#define videocore_IPixelBuffer_hpp
 
-#include <cstddef>
-#include <functional>
-#include <string>
-
-#include <videocore/system/util.h>
+#include <stdint.h>
 
 namespace videocore {
-    
+
     enum {
-        
-        kStreamStatusConnected = 1,
-        kStreamStatusWriteBufferHasSpace = 1 << 1,
-        kStreamStatusReadBufferHasBytes = 1 << 2,
-        kStreamStatusErrorEncountered = 1 << 3,
-        kStreamStatusEndStream = 1 << 4
-        
-    } ;
-    typedef long StreamStatus_t;
+		kVCPixelBufferFormat32BGRA = 'bgra',
+		kVCPixelBufferFormat32RGBA = 'rgba',
+		kVCPixelBufferFormatL565 = 'L565',
+		kCVPixelBufferFormat420v = '420v',
+	} PixelBufferFormatType_;
     
-    class IStreamSession;
+    typedef uint32_t PixelBufferFormatType;
     
-    typedef std::function<void(videocore::IStreamSession&, StreamStatus_t)> StreamSessionCallback_t;
+    typedef enum {
+        kVCPixelBufferStateAvailable,
+        kVCPixelBufferStateDequeued,
+        kVCPixelBufferStateEnqueued,
+        kVCPixelBufferStateAcquired
+    } PixelBufferState;
     
-    class IStreamSession
-    {
-    public:
-        virtual ~IStreamSession() {};
+	class IPixelBuffer {
+	public:
+		virtual ~IPixelBuffer() {};
+
+		virtual const int   width() const = 0;
+		virtual const int   height() const = 0;
+
+		virtual const PixelBufferFormatType pixelFormat() const = 0;
+
+		virtual const void* baseAddress() const = 0;
+
+		virtual void  lock(bool readOnly = false) = 0;
+		virtual void  unlock(bool readOnly = false) = 0;
         
-        virtual void connect(std::string host, int port, StreamSessionCallback_t ) = 0;
-        virtual void disconnect() = 0;
-        virtual size_t write(uint8_t* buffer, size_t size) = 0;
-        virtual size_t read(uint8_t* buffer, size_t size) = 0;
-        virtual const StreamStatus_t status() const = 0;
+        virtual void setState(const PixelBufferState state) = 0;
+        virtual const PixelBufferState state() const = 0;
         
-        virtual int unsent() = 0;
-        virtual int unread() = 0;
-        
-    private:
-        virtual void setStatus(StreamStatus_t,bool clear = false) = 0;
-    };
-    
+        virtual const bool isTemporary() const = 0; /* mark if the pixel buffer needs to disappear soon */
+        virtual void setTemporary(const bool temporary) = 0;
+	};
 }
 
-
-#endif
+ #endif

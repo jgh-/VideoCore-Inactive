@@ -41,35 +41,6 @@ namespace videocore { namespace iOS {
     {
     public:
         
-        /*!
-         *  Deprecated. Please see videocore::AspectTransform
-         */
-        enum AspectMode
-        {
-            kAspectFit,  /*!< An aspect mode which shrinks the incoming video to fit in the supplied boundaries. */
-            kAspectFill  /*!< An aspect mode which scales the video to fill the supplied boundaries and maintain aspect ratio. */
-        } __attribute__ ((deprecated));
-        
-    public:
-        
-        /*!
-         *  Constructor. Deprecated. Replaced by videocore::PositionTransform and videocore::AspectTransform.
-         * 
-         *  \param x the x position of the source output in the video
-         *  \param y the y position of the source output in the video
-         *  \param w the width of the source output
-         *  \param h the height of the source output
-         *  \param videow the width of the video
-         *  \param videoh the height of the video
-         *  \param aspect Unused.
-         */
-        CameraSource(float x,
-                     float y,
-                     float w,
-                     float h,
-                     float videow,
-                     float videoh,
-                     float aspect) __attribute__ ((deprecated));
         
         /*! Constructor */
         CameraSource();
@@ -94,19 +65,29 @@ namespace videocore { namespace iOS {
          *  \param useFront Start with the front-facing camera
          *  \param useInterfaceOrientation whether to use interface or device orientation as reference for video capture orientation
          */
-        void setupCamera(int fps = 15, bool useFront = true, bool useInterfaceOrientation = false);
-        /*!
-         * Set the aspect mode. The default is kAspectFit. Deprecated. Use the AspectTransform instead.
-         *
-         * \param aspectMode Set the aspect mode to use.
-         *
-         */
-        void setAspectMode( AspectMode aspectMode ) __attribute__ ((deprecated));
+        void setupCamera(int fps = 15, bool useFront = true, bool useInterfaceOrientation = false, NSString* sessionPreset = nil);
+
         
         /*!
          *  Toggle the camera between front and back-facing cameras.
          */
         void toggleCamera();
+
+        /*!
+         * If the orientation is locked, we ignore device / interface
+         * orientation changes.
+         *
+         * \return `true` is returned if the orientation is locked
+         */
+        bool orientationLocked();
+        
+        /*!
+         * Lock the camera orientation so that device / interface
+         * orientation changes are ignored.
+         *
+         *  \param orientationLocked  Bool indicating whether to lock the orientation.
+         */
+        void setOrientationLocked(bool orientationLocked);
         
         /*!
          *  Attempt to turn the torch mode on or off.
@@ -162,12 +143,10 @@ namespace videocore { namespace iOS {
         void* m_callbackSession;
         void* m_previewLayer;
         
-        AspectMode m_aspectMode;
         int  m_fps;
-        bool m_isFirst;
-        bool m_usingDeprecatedMethods;
         bool m_torchOn;
         bool m_useInterfaceOrientation;
+        bool m_orientationLocked;
 
     };
     

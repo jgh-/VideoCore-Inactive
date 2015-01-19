@@ -25,12 +25,38 @@
 #ifndef videocore_Buffer_h
 #define videocore_Buffer_h
 
-#import <CoreFoundation/CFByteOrder.h> // TODO: Remove Apple framework reliance in this code.
-
+#include <memory>
 #include <vector>
 #include <string>
 #include <stdint.h>
 #include <mutex>
+
+#ifdef __APPLE__
+#import <CoreFoundation/CFByteOrder.h> // TODO: Remove Apple framework reliance in this code.
+
+#define double_swap CFConvertFloat64HostToSwapped
+#else
+#include <byteswap.h>
+inline double double_swap(double value){
+    union v {
+        double       f;
+        uint64_t     i;
+    };
+    
+    union v val;
+    
+    val.f = value;
+    val.i = bswap_64(val.i);
+    
+    return val.f;
+}
+
+#define CFConvertDoubleSwappedToHost double_swap
+
+typedef double CFSwappedFloat64;
+
+#endif
+
 
 
 typedef enum
@@ -127,22 +153,30 @@ static inline void put_string(std::vector<uint8_t>& data, std::string string) {
     }
     put_buff(data, (const uint8_t*)string.c_str(), string.length());
 }
-static inline std::string get_string(uint8_t* buf) {
+
+static inline std::string get_string(uint8_t* buf, int& bufsize) {
     int len = 0;
     if(*buf++ == kAMFString) {
         len = get_be16(buf);
         buf+=2;
+        bufsize = 2 + len;
     } else {
         len = get_be32(buf);
         buf+=4;
+        bufsize = 4 + len;
     }
+    
     std::string val((const char*)buf,len);
     return val;
+}
+static inline std::string get_string(uint8_t* buf) {
+    int buflen = 0;
+    return get_string(buf, buflen);
 }
 static inline void put_double(std::vector<uint8_t>& data, double val) {
     put_byte(data, kAMFNumber);
     
-    CFSwappedFloat64 buf = CFConvertFloat64HostToSwapped(val);
+    CFSwappedFloat64 buf = double_swap(val);
     
     put_buff(data, (uint8_t*)&buf, sizeof(CFSwappedFloat64));
 }
@@ -220,6 +254,8 @@ namespace videocore {
        
         virtual size_t resize(size_t size) {
             if(size > 0) {
+                m_buffer.reset();
+                
                 m_buffer.reset(new uint8_t[size]);
             } else {
                 m_buffer.reset();
@@ -241,6 +277,28 @@ namespace videocore {
         {
             
         };
+        
+        size_t writePosition() const {
+            return m_write;
+        };
+        
+        size_t advanceWrite(size_t offset) {
+            m_mutex.lock();
+            
+            if(offset > m_size) offset = m_size;
+            
+            size_t start = m_write;
+            size_t end = std::min(start+offset, m_total);
+            size_t sz = (end-start);
+            m_write += sz;
+            if(sz < offset) {
+                m_write = (offset - sz);
+            }
+            m_mutex.unlock();
+            
+            return offset;
+        }
+        
         size_t put(uint8_t* data, size_t size) {
             m_mutex.lock();
             if(m_size+size > m_total) size=(m_total-m_size);
@@ -294,9 +352,16 @@ namespace videocore {
             m_mutex.lock();
             if(size>m_size) size = m_size;
             if(size>0) {
+                size_t start = m_read;
+                size_t end = std::min(start+size, m_total);
+                size = (end-start);
+                
                 *buf = &m_buffer[m_read];
                 if( advance )  {
                     m_read+=size;
+                    if(m_read == end) {
+                        m_read = 0;
+                    }
                     m_size-=size;
                 }
             } else {

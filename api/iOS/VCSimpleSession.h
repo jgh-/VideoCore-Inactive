@@ -31,7 +31,10 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
+#import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
+
+@class VCSimpleSession;
 
 typedef NS_ENUM(NSInteger, VCSessionState)
 {
@@ -50,9 +53,12 @@ typedef NS_ENUM(NSInteger, VCCameraState)
     VCCameraStateBack
 };
 
-@protocol VCSessionDelegate
+@protocol VCSessionDelegate <NSObject>
 @required
 - (void) connectionStatusChanged: (VCSessionState) sessionState;
+@optional
+- (void) didAddCameraSource:(VCSimpleSession*)session;
+- (void) detectedThroughput: (NSInteger) throughputInBytesPerSecond;
 @end
 
 @interface VCSimpleSession : NSObject
@@ -66,6 +72,7 @@ typedef NS_ENUM(NSInteger, VCCameraState)
 @property (nonatomic, assign) int               fps;            // Change will not take place until the next RTMP Session
 @property (nonatomic, assign, readonly) BOOL    useInterfaceOrientation;
 @property (nonatomic, assign) VCCameraState cameraState;
+@property (nonatomic, assign) BOOL          orientationLocked;
 @property (nonatomic, assign) BOOL          torch;
 @property (nonatomic, assign) float         videoZoomFactor;
 @property (nonatomic, assign) int           audioChannelCount;
@@ -92,9 +99,18 @@ typedef NS_ENUM(NSInteger, VCCameraState)
            useInterfaceOrientation:(BOOL)useInterfaceOrientation;
 
 // -----------------------------------------------------------------------------
+- (instancetype) initWithVideoSize:(CGSize)videoSize
+                         frameRate:(int)fps
+                           bitrate:(int)bps
+           useInterfaceOrientation:(BOOL)useInterfaceOrientation
+                       cameraState:(VCCameraState) cameraState;
+
+// -----------------------------------------------------------------------------
 - (void) startRtmpSessionWithURL:(NSString*) rtmpUrl
                     andStreamKey:(NSString*) streamKey;
 
 - (void) endRtmpSession;
+
+- (void) getCameraPreviewLayer: (AVCaptureVideoPreviewLayer**) previewLayer;
 
 @end

@@ -18,7 +18,7 @@ VideoCore is a project inteded to be an audio and video manipulation and streami
 Create a `Podfile` with the contents
 ``` ruby
 platform :ios, '6.0'
-pod 'VideoCore', '~> 0.1.10'
+pod 'VideoCore', '~> 0.2.0'
 ```
 Next, run `pod install` and open the `xcworkspace` file that is created.
 
@@ -102,6 +102,19 @@ videocore::Apple::StreamSession : videocore::IStreamSession
 
 ##Version History
 
+* 0.2.2
+    * Fix video streaking bug when adaptative bitrate is enabled
+    * Increase the aggressiveness of the adaptative bitrate algorithm
+    * Add internal pixel buffer format
+    * 
+* 0.2.0
+    * Removes deprecated functions
+    * Adds Main Profile video
+    * Improves adaptive bitrate algorithm
+* 0.1.12 
+    * Bugfixes
+    * Red5 support
+    * Improved Adaptive Bitrate algorithm
 * 0.1.10
 	* Bugfixes
 	* Adaptive Bitrate introduced

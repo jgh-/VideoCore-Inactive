@@ -56,6 +56,9 @@
 
 #include <sstream>
 
+
+static const int kMinVideoBitrate = 32000;
+
 namespace videocore { namespace simpleApi {
 
     using PixelBufferCallback = std::function<void(const uint8_t* const data,
@@ -112,6 +115,7 @@ namespace videocore { namespace simpleApi {
     
     CGSize _videoSize;
     int    _bitrate;
+    
     int    _fps;
     int    _bpsCeiling;
     int    _estimatedThroughput;
@@ -124,6 +128,7 @@ namespace videocore { namespace simpleApi {
 
     VCCameraState _cameraState;
     VCSessionState _rtmpSessionState;
+    BOOL   _orientationLocked;
     BOOL   _torch;
     
     BOOL _useAdaptiveBitrate;
@@ -144,6 +149,7 @@ namespace videocore { namespace simpleApi {
 @dynamic bitrate;
 @dynamic fps;
 @dynamic useInterfaceOrientation;
+@dynamic orientationLocked;
 @dynamic torch;
 @dynamic cameraState;
 @dynamic rtmpSessionState;
@@ -198,6 +204,17 @@ namespace videocore { namespace simpleApi {
 {
     return _useInterfaceOrientation;
 }
+- (BOOL) orientationLocked
+{
+    return _orientationLocked;
+}
+- (void) setOrientationLocked:(BOOL)orientationLocked
+{
+    _orientationLocked = orientationLocked;
+    if(m_cameraSource) {
+        m_cameraSource->setOrientationLocked(orientationLocked);
+    }
+}
 - (BOOL) torch
 {
     return _torch;
@@ -224,7 +241,9 @@ namespace videocore { namespace simpleApi {
 - (void) setRtmpSessionState:(VCSessionState)rtmpSessionState
 {
     _rtmpSessionState = rtmpSessionState;
-    [self.delegate connectionStatusChanged:rtmpSessionState];
+    if(self.delegate) {
+        [self.delegate connectionStatusChanged:rtmpSessionState];
+    }
 }
 - (VCSessionState) rtmpSessionState
 {
@@ -350,7 +369,8 @@ namespace videocore { namespace simpleApi {
         [self initInternalWithVideoSize:videoSize
                               frameRate:fps
                                 bitrate:bps
-                useInterfaceOrientation:NO];
+                useInterfaceOrientation:NO
+         cameraState:VCCameraStateBack];
         
     }
     return self;
@@ -366,15 +386,37 @@ namespace videocore { namespace simpleApi {
         [self initInternalWithVideoSize:videoSize
                               frameRate:fps
                                 bitrate:bps
-                useInterfaceOrientation:useInterfaceOrientation];
+                useInterfaceOrientation:useInterfaceOrientation
+                            cameraState:VCCameraStateBack];
     }
     return self;
 }
+
+- (instancetype) initWithVideoSize:(CGSize)videoSize
+                         frameRate:(int)fps
+                           bitrate:(int)bps
+           useInterfaceOrientation:(BOOL)useInterfaceOrientation
+                       cameraState:(VCCameraState) cameraState
+{
+    if (( self = [super init] ))
+    {
+        [self initInternalWithVideoSize:videoSize
+                              frameRate:fps
+                                bitrate:bps
+                useInterfaceOrientation:useInterfaceOrientation
+                            cameraState:cameraState];
+    }
+    return self;
+}
+
+
+
 
 - (void) initInternalWithVideoSize:(CGSize)videoSize
                          frameRate:(int)fps
                            bitrate:(int)bps
            useInterfaceOrientation:(BOOL)useInterfaceOrientation
+                       cameraState:(VCCameraState) cameraState
 {
     self.bitrate = bps;
     self.videoSize = videoSize;
@@ -388,7 +430,7 @@ namespace videocore { namespace simpleApi {
     _previewView = [[VCPreviewView alloc] init];
     self.videoZoomFactor = 1.f;
     
-    _cameraState = VCCameraStateBack;
+    _cameraState = cameraState;
     _exposurePOI = _focusPOI = CGPointMake(0.5f, 0.5f);
     _continuousExposure = _continuousAutofocus = YES;
     
@@ -399,8 +441,6 @@ namespace videocore { namespace simpleApi {
     dispatch_async(_graphManagementQueue, ^{
         [bSelf setupGraph];
     });
-    
-
 }
 
 - (void) dealloc
@@ -426,93 +466,126 @@ namespace videocore { namespace simpleApi {
 - (void) startRtmpSessionWithURL:(NSString *)rtmpUrl
                     andStreamKey:(NSString *)streamKey
 {
+
+    __block VCSimpleSession* bSelf = self;
+    
+    dispatch_async(_graphManagementQueue, ^{
+        [bSelf startSessionInternal:rtmpUrl streamKey:streamKey];
+    });
+}
+- (void) startSessionInternal: (NSString*) rtmpUrl
+                    streamKey: (NSString*) streamKey
+{
     std::stringstream uri ;
     uri << (rtmpUrl ? [rtmpUrl UTF8String] : "") << "/" << (streamKey ? [streamKey UTF8String] : "");
-
+    
     m_outputSession.reset(
-            new videocore::RTMPSession ( uri.str(),
-                                        [=](videocore::RTMPSession& session,
-                                            ClientState_t state) {
-                                            
-                                            printf("ClientState: %d\n", state);
-
-        switch(state) {
-
-            case kClientStateConnected:
-                self.rtmpSessionState = VCSessionStateStarting;
-                break;
-            case kClientStateSessionStarted:
-            {
-                self.rtmpSessionState = VCSessionStateStarted;
-                
-                __block VCSimpleSession* bSelf = self;
-                dispatch_async(_graphManagementQueue, ^{
-                    [bSelf addEncodersAndPacketizers];
-                });
-                
-            }
-                break;
-            case kClientStateError:
-                self.rtmpSessionState = VCSessionStateError;
-                break;
-            case kClientStateNotConnected:
-                self.rtmpSessionState = VCSessionStateEnded;
-                break;
-            default:
-                break;
-
-        }
-
-    }) );
+                          new videocore::RTMPSession ( uri.str(),
+                                                      [=](videocore::RTMPSession& session,
+                                                          ClientState_t state) {
+                                                          
+                                                          DLog("ClientState: %d\n", state);
+                                                          
+                                                          switch(state) {
+                                                                  
+                                                              case kClientStateConnected:
+                                                                  self.rtmpSessionState = VCSessionStateStarting;
+                                                                  break;
+                                                              case kClientStateSessionStarted:
+                                                              {
+                                                                  
+                                                                  __block VCSimpleSession* bSelf = self;
+                                                                  dispatch_async(_graphManagementQueue, ^{
+                                                                      [bSelf addEncodersAndPacketizers];
+                                                                  });
+                                                              }
+                                                                  self.rtmpSessionState = VCSessionStateStarted;
+                                                                  
+                                                                  break;
+                                                              case kClientStateError:
+                                                                  self.rtmpSessionState = VCSessionStateError;
+                                                                  [self endRtmpSession];
+                                                                  self->m_outputSession.reset();
+                                                                  break;
+                                                              case kClientStateNotConnected:
+                                                                  self.rtmpSessionState = VCSessionStateEnded;
+                                                                  [self endRtmpSession];
+                                                                  break;
+                                                              default:
+                                                                  break;
+                                                                  
+                                                          }
+                                                          
+                                                      }) );
     VCSimpleSession* bSelf = self;
     
     _bpsCeiling = _bitrate;
     
     if ( self.useAdaptiveBitrate ) {
-        _bitrate = 100000;
+        _bitrate = 500000;
     }
     
-    m_outputSession->setBandwidthCallback([=](int vector, int predicted)
+    m_outputSession->setBandwidthCallback([=](float vector, float predicted)
                                           {
+                                              
                                               bSelf->_estimatedThroughput = predicted;
-                                              if(bSelf.useAdaptiveBitrate && bSelf->m_h264Encoder) {
-                                                  auto enc = std::dynamic_pointer_cast<videocore::IEncoder>(bSelf->m_h264Encoder);
+                                              auto video = std::dynamic_pointer_cast<videocore::IEncoder>( bSelf->m_h264Encoder );
+                                              auto audio = std::dynamic_pointer_cast<videocore::IEncoder>( bSelf->m_aacEncoder );
+                                              if(video && audio && bSelf.useAdaptiveBitrate) {
                                                   
-                                                  if(vector < 0) {
-                                                      int ceiling = enc->bitrate();
-                                                      float mult = 0.5;
-                                                      if(self->_bpsCeiling > 0) {
-                                                          mult = 0.75;
-                                                      }
-                                                      printf("Setting bitrate to %f\n", enc->bitrate() * mult);
-                                                      enc->setBitrate(enc->bitrate() * mult);
-                                                      //self->_bpsCeiling = ceiling;
-                                                  } else if (vector > 0) {
-                                                      int target = enc->bitrate() * 1.1;
-                                                      
-                                                      if(self->_bpsCeiling > 0) {
-                                                          target = MIN(target, self->_bpsCeiling);
-                                                      }
-                                                      if(target != self->_bpsCeiling) {
-                                                          printf("Setting bitrate to %d\n", target);
-                                                          enc->setBitrate(target);
-                                                          
-                                                      }
+                                                  if([bSelf.delegate respondsToSelector:@selector(detectedThroughput:)]) {
+                                                      [bSelf.delegate detectedThroughput:predicted];
                                                   }
                                                   
-                                              }
+                                                  int videoBr = 0;
+                                                  
+                                                  if(vector != 0) {
+                                                      
+                                                      vector = vector < 0 ? -1 : 1 ;
+                                                      
+                                                      videoBr = video->bitrate();
+                                                      
+                                                      if (audio) {
+                                                          
+                                                          if ( videoBr > 500000 ) {
+                                                              audio->setBitrate(128000);
+                                                          } else if (videoBr <= 500000 && videoBr > 250000) {
+                                                              audio->setBitrate(96000);
+                                                          } else {
+                                                              audio->setBitrate(80000);
+                                                          }
+                                                      }
+                                                      
+                                                      
+                                                      if(videoBr > 1152000) {
+                                                          video->setBitrate(std::min(int((videoBr / 384000 + vector )) * 384000, bSelf->_bpsCeiling) );
+                                                      }
+                                                      else if( videoBr > 512000 ) {
+                                                          video->setBitrate(std::min(int((videoBr / 128000 + vector )) * 128000, bSelf->_bpsCeiling) );
+                                                      }
+                                                      else if( videoBr > 128000 ) {
+                                                          video->setBitrate(std::min(int((videoBr / 64000 + vector )) * 64000, bSelf->_bpsCeiling) );
+                                                      }
+                                                      else {
+                                                          video->setBitrate(std::max(std::min(int((videoBr / 32000 + vector )) * 32000, bSelf->_bpsCeiling), kMinVideoBitrate) );
+                                                      }
+                                                      DLog("\n(%f) AudioBR: %d VideoBR: %d (%f)\n", vector, audio->bitrate(), video->bitrate(), predicted);
+                                                  } /* if(vector != 0) */
+                                                  
+                                              } /* if(video && audio && m_adaptiveBREnabled) */
+                                              
                                               
                                           });
     
     videocore::RTMPSessionParameters_t sp ( 0. );
-
+    
     sp.setData(self.videoSize.width,
                self.videoSize.height,
                1. / static_cast<double>(self.fps),
                self.bitrate,
                self.audioSampleRate,
                (self.audioChannelCount == 2));
-
+    
     m_outputSession->setSessionParameters(sp);
 }
 - (void) endRtmpSession
@@ -526,9 +599,15 @@ namespace videocore { namespace simpleApi {
 
     m_outputSession.reset();
 
+    _bitrate = _bpsCeiling;
+    
     self.rtmpSessionState = VCSessionStateEnded;
 }
-
+- (void) getCameraPreviewLayer:(AVCaptureVideoPreviewLayer **)previewLayer {
+    if(m_cameraSource) {
+        m_cameraSource->getPreviewLayer((void**)previewLayer);
+    }
+}
 // -----------------------------------------------------------------------------
 //  Private Methods
 // -----------------------------------------------------------------------------
@@ -592,6 +671,7 @@ namespace videocore { namespace simpleApi {
     {
         // Add camera source
         m_cameraSource = std::make_shared<videocore::iOS::CameraSource>();
+        m_cameraSource->setOrientationLocked(self.orientationLocked);
         auto aspectTransform = std::make_shared<videocore::AspectTransform>(self.videoSize.width,self.videoSize.height,videocore::AspectTransform::kAspectFit);
 
         auto positionTransform = std::make_shared<videocore::PositionTransform>(self.videoSize.width/2, self.videoSize.height/2,
@@ -599,7 +679,7 @@ namespace videocore { namespace simpleApi {
                                                                                 self.videoSize.width, self.videoSize.height
                                                                                 );
 
-        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,false,self.useInterfaceOrientation);
+        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,(self.cameraState == VCCameraStateFront),self.useInterfaceOrientation);
 
         m_cameraSource->setContinuousAutofocus(true);
         m_cameraSource->setContinuousExposure(true);
@@ -609,6 +689,11 @@ namespace videocore { namespace simpleApi {
         positionTransform->setOutput(m_videoMixer);
         m_aspectTransform = aspectTransform;
         m_positionTransform = positionTransform;
+        
+        // Inform delegate that camera source has been added
+        if ([_delegate respondsToSelector:@selector(didAddCameraSource:)]) {
+            [_delegate didAddCameraSource:self];
+        }
     }
     {
         // Add mic source
@@ -623,13 +708,14 @@ namespace videocore { namespace simpleApi {
     {
         // Add encoders
 
-        m_aacEncoder = std::make_shared<videocore::iOS::AACEncode>(self.audioSampleRate, self.audioChannelCount);
+        m_aacEncoder = std::make_shared<videocore::iOS::AACEncode>(self.audioSampleRate, self.audioChannelCount, 96000);
         if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
             // If >= iOS 8.0 use the VideoToolbox encoder that does not write to disk.
             m_h264Encoder = std::make_shared<videocore::Apple::H264Encode>(self.videoSize.width,
                                                                            self.videoSize.height,
                                                                            self.fps,
-                                                                           self.bitrate);
+                                                                           self.bitrate,
+                                                                           false);
         } else {
             m_h264Encoder =std::make_shared<videocore::iOS::H264Encode>(self.videoSize.width,
                                                                         self.videoSize.height,
@@ -648,8 +734,8 @@ namespace videocore { namespace simpleApi {
         
     }
     {
-        m_h264Packetizer = std::make_shared<videocore::rtmp::H264Packetizer>();
-        m_aacPacketizer = std::make_shared<videocore::rtmp::AACPacketizer>(self.audioSampleRate, self.audioChannelCount);
+        m_h264Packetizer = std::make_shared<videocore::rtmp::H264Packetizer>(500);
+        m_aacPacketizer = std::make_shared<videocore::rtmp::AACPacketizer>(self.audioSampleRate, self.audioChannelCount,500);
 
         m_h264Split->setOutput(m_h264Packetizer);
         m_aacSplit->setOutput(m_aacPacketizer);

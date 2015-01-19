@@ -25,6 +25,7 @@
 
 #include <videocore/sources/iOS/CameraSource.h>
 #include <videocore/mixers/IVideoMixer.hpp>
+#include <videocore/system/pixelBuffer/Apple/ApplePixelBuffer.h>
 
 #import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
@@ -62,7 +63,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 - (void) orientationChanged: (NSNotification*) notification
 {
     auto source = m_source.lock();
-    if(source) {
+    if(source && !source->orientationLocked()) {
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
             source->reorientCamera();
         });
@@ -71,26 +72,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 @end
 namespace videocore { namespace iOS {
     
-    CameraSource::CameraSource(float x,
-                               float y,
-                               float w,
-                               float h,
-                               float vw,
-                               float vh,
-                               float aspect)
-    : m_size({x,y,w,h,vw,vh,w/h}),
-    m_targetSize(m_size),
-    m_captureDevice(NULL),
-    m_isFirst(true),
-    m_callbackSession(NULL),
-    m_aspectMode(kAspectFit),
-    m_fps(15),
-    m_usingDeprecatedMethods(true),
-    m_previewLayer(nullptr),
-    m_torchOn(false),
-    m_useInterfaceOrientation(false)
-    {
-    }
+
     
     CameraSource::CameraSource()
     :
@@ -98,7 +80,7 @@ namespace videocore { namespace iOS {
     m_callbackSession(nullptr),
     m_previewLayer(nullptr),
     m_matrix(glm::mat4(1.f)),
-    m_usingDeprecatedMethods(false),
+    m_orientationLocked(false),
     m_torchOn(false),
     m_useInterfaceOrientation(false)
     {}
@@ -120,7 +102,7 @@ namespace videocore { namespace iOS {
     }
     
     void
-    CameraSource::setupCamera(int fps, bool useFront, bool useInterfaceOrientation)
+    CameraSource::setupCamera(int fps, bool useFront, bool useInterfaceOrientation, NSString* sessionPreset)
     {
         m_fps = fps;
         m_useInterfaceOrientation = useInterfaceOrientation;
@@ -140,8 +122,10 @@ namespace videocore { namespace iOS {
                             bThis->m_captureDevice = d;
                             NSError* error;
                             [d lockForConfiguration:&error];
-                            [d setActiveVideoMinFrameDuration:CMTimeMake(1, fps)];
-                            [d setActiveVideoMaxFrameDuration:CMTimeMake(1, fps)];
+                            if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
+                                [d setActiveVideoMinFrameDuration:CMTimeMake(1, fps)];
+                                [d setActiveVideoMaxFrameDuration:CMTimeMake(1, fps)];
+                            }
                             [d unlockForConfiguration];
                         }
                     }
@@ -149,26 +133,9 @@ namespace videocore { namespace iOS {
                     AVCaptureSession* session = [[AVCaptureSession alloc] init];
                     AVCaptureDeviceInput* input;
                     AVCaptureVideoDataOutput* output;
-                    
-                    NSString* preset = AVCaptureSessionPresetHigh;
-                    /**! TO BE REMOVED 0.2.0 **/
-                    if(bThis->m_usingDeprecatedMethods) {
-                        int mult = ceil(double(bThis->m_targetSize.h) / 270.0) * 270 ;
-                        switch(mult) {
-                            case 270:
-                                preset = AVCaptureSessionPresetLow;
-                                break;
-                            case 540:
-                                preset = AVCaptureSessionPresetMedium;
-                                break;
-                            default:
-                                preset = AVCaptureSessionPresetHigh;
-                                break;
-                        }
-                        session.sessionPreset = preset;
+                    if(sessionPreset) {
+                        session.sessionPreset = (NSString*)sessionPreset;
                     }
-                    /**! END TO BE REMOVED SECTION **/
-                    
                     bThis->m_captureSession = session;
                     
                     input = [AVCaptureDeviceInput deviceInputWithDevice:((AVCaptureDevice*)m_captureDevice) error:nil];
@@ -176,12 +143,24 @@ namespace videocore { namespace iOS {
                     output = [[AVCaptureVideoDataOutput alloc] init] ;
                     
                     output.videoSettings = @{(NSString*)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA) };
+                    
+                    if(!SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
+                        AVCaptureConnection* conn = [output connectionWithMediaType:AVMediaTypeVideo];
+                        if([conn isVideoMinFrameDurationSupported]) {
+                            [conn setVideoMinFrameDuration:CMTimeMake(1, fps)];
+                        }
+                        if([conn isVideoMaxFrameDurationSupported]) {
+                            [conn setVideoMaxFrameDuration:CMTimeMake(1, fps)];
+                        }
+                    }
                     if(!bThis->m_callbackSession) {
                         bThis->m_callbackSession = [[sbCallback alloc] init];
                         [((sbCallback*)bThis->m_callbackSession) setSource:shared_from_this()];
                     }
+                    dispatch_queue_t camQueue = dispatch_queue_create("com.videocore.camera", 0);
                     
-                    [output setSampleBufferDelegate:((sbCallback*)bThis->m_callbackSession) queue:dispatch_get_global_queue(0, 0)];
+                    [output setSampleBufferDelegate:((sbCallback*)bThis->m_callbackSession) queue:camQueue];
+                    
                     
                     if([session canAddInput:input]) {
                         [session addInput:input];
@@ -195,43 +174,46 @@ namespace videocore { namespace iOS {
                     
                     [session startRunning];
                     
-                    if(bThis->m_useInterfaceOrientation) {
-                        [[NSNotificationCenter defaultCenter] addObserver:((id)bThis->m_callbackSession) selector:@selector(orientationChanged:) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
-                    } else {
-                        [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
-                        [[NSNotificationCenter defaultCenter] addObserver:((id)bThis->m_callbackSession) selector:@selector(orientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
+                    if(!bThis->m_orientationLocked) {
+                        if(bThis->m_useInterfaceOrientation) {
+                            [[NSNotificationCenter defaultCenter] addObserver:((id)bThis->m_callbackSession) selector:@selector(orientationChanged:) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
+                        } else {
+                            [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+                            [[NSNotificationCenter defaultCenter] addObserver:((id)bThis->m_callbackSession) selector:@selector(orientationChanged:) name:UIDeviceOrientationDidChangeNotification object:nil];
+                        }
                     }
                     [output release];
                 }
             }
         };
         @autoreleasepool {
-            AVAuthorizationStatus auth = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
-            
-            if(auth == AVAuthorizationStatusAuthorized || !SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
+            if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
+                AVAuthorizationStatus auth = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
+                
+                if(auth == AVAuthorizationStatusAuthorized || !SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
+                    permissions(true);
+                }
+                else if(auth == AVAuthorizationStatusNotDetermined) {
+                    [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:permissions];
+                }
+            } else {
                 permissions(true);
-            }
-            else if(auth == AVAuthorizationStatusNotDetermined) {
-                [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:permissions];
             }
             
         }
     }
-    void
-    CameraSource::setAspectMode(AspectMode aspectMode)
-    {
-        m_aspectMode = aspectMode;
-        m_isFirst = true;           // Force the transformation matrix to be re-generated.
-    }
+
     void
     CameraSource::getPreviewLayer(void** outAVCaptureVideoPreviewLayer)
     {
         if(!m_previewLayer) {
-            AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
-            AVCaptureVideoPreviewLayer* previewLayer;
-            previewLayer =  [AVCaptureVideoPreviewLayer layerWithSession:session];
-            previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
-            m_previewLayer = previewLayer;
+            @autoreleasepool {
+                AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
+                AVCaptureVideoPreviewLayer* previewLayer;
+                previewLayer = [[AVCaptureVideoPreviewLayer layerWithSession:session] retain];
+                previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+                m_previewLayer = previewLayer;
+            }
         }
         if(outAVCaptureVideoPreviewLayer) {
             *outAVCaptureVideoPreviewLayer = m_previewLayer;
@@ -249,6 +231,16 @@ namespace videocore { namespace iOS {
         }
         return nil;
         
+    }
+    bool
+    CameraSource::orientationLocked()
+    {
+        return m_orientationLocked;
+    }
+    void
+    CameraSource::setOrientationLocked(bool orientationLocked)
+    {
+        m_orientationLocked = orientationLocked;
     }
     bool
     CameraSource::setTorch(bool torchOn)
@@ -285,33 +277,33 @@ namespace videocore { namespace iOS {
         if(!m_captureSession) return;
         
         AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
-        
-        [session beginConfiguration];
-        
-        AVCaptureInput* currentCameraInput = [session.inputs objectAtIndex:0];
-        
-        [session removeInput:currentCameraInput];
-        
-        AVCaptureDevice *newCamera = nil;
-        if(((AVCaptureDeviceInput*)currentCameraInput).device.position == AVCaptureDevicePositionBack)
-        {
-            newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionFront);
+        if(session) {
+            [session beginConfiguration];
+            
+            AVCaptureInput* currentCameraInput = [session.inputs objectAtIndex:0];
+            
+            [session removeInput:currentCameraInput];
+            
+            AVCaptureDevice *newCamera = nil;
+            if(((AVCaptureDeviceInput*)currentCameraInput).device.position == AVCaptureDevicePositionBack)
+            {
+                newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionFront);
+            }
+            else
+            {
+                newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionBack);
+            }
+            
+            AVCaptureDeviceInput *newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:newCamera error:nil];
+            
+            [session addInput:newVideoInput];
+            
+            [session commitConfiguration];
+            
+            [newVideoInput release];
+            
+            reorientCamera();
         }
-        else
-        {
-            newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionBack);
-        }
-        
-        AVCaptureDeviceInput *newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:newCamera error:nil];
-        
-        [session addInput:newVideoInput];
-        
-        [session commitConfiguration];
-        
-        [newVideoInput release];
-        
-        reorientCamera();
-        
     }
     
     void
@@ -368,9 +360,7 @@ namespace videocore { namespace iOS {
                 }
             }
         }
-        if(reorient) {
-            m_isFirst = true;
-        }
+
         //[session commitConfiguration];
         if(m_torchOn) {
             setTorch(m_torchOn);
@@ -381,7 +371,7 @@ namespace videocore { namespace iOS {
     {
         m_output = output;
         
-        auto mixer = std::static_pointer_cast<IVideoMixer>(output);
+        //auto mixer = std::static_pointer_cast<IVideoMixer>(output);
         
     }
     void
@@ -390,45 +380,15 @@ namespace videocore { namespace iOS {
         auto output = m_output.lock();
         if(output) {
             
-            /**! TO BE REMOVED FOR 0.2.0 **/
-            if(m_usingDeprecatedMethods && m_isFirst) {
-                
-                m_isFirst = false;
-                
-                m_size.w = float(CVPixelBufferGetWidth(pixelBufferRef));
-                m_size.h = float(CVPixelBufferGetHeight(pixelBufferRef));
-                
-                const float wfac = m_targetSize.w / m_size.w;
-                const float hfac = m_targetSize.h / m_size.h;
-                
-                const float mult = (m_aspectMode == kAspectFit ? (wfac < hfac) : (wfac > hfac)) ? wfac : hfac;
-                
-                m_size.w *= mult;
-                m_size.h *= mult;
-                
-                glm::mat4 mat(1.f);
-                
-                mat = glm::translate(mat,
-                                     glm::vec3((m_size.x / m_targetSize.vw) * 2.f - 1.f,   // The compositor uses normalized device co-ordinates.
-                                               (m_size.y / m_targetSize.vh) * 2.f - 1.f,   // i.e. [ -1 .. 1 ]
-                                               0.f));
-                
-                mat = glm::scale(mat,
-                                 glm::vec3(m_size.w / m_targetSize.vw, //
-                                           m_size.h / m_targetSize.vh, // size is a percentage for scaling.
-                                           1.f));
-                
-                m_matrix = mat;
-            }
-            /**! END SECTION TO BE REMOVED **/
-            
             VideoBufferMetadata md(1.f / float(m_fps));
             
             md.setData(1, m_matrix, shared_from_this());
             
-            CVPixelBufferRetain(pixelBufferRef);
-            output->pushBuffer((uint8_t*)pixelBufferRef, sizeof(pixelBufferRef), md);
-            CVPixelBufferRelease(pixelBufferRef);
+            auto pixelBuffer = std::make_shared<Apple::ApplePixelBuffer>(pixelBufferRef, true);
+            
+            pixelBuffer->setState(kVCPixelBufferStateEnqueued);
+            output->pushBuffer((uint8_t*)&pixelBuffer, sizeof(pixelBuffer), md);
+            
         }
     }
     
