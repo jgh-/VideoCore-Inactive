@@ -25,7 +25,7 @@
 #ifndef __videocore__StreamSession__
 #define __videocore__StreamSession__
 
-#include "IStreamSession.hpp"
+#include <videocore/stream/IStreamSession.hpp>
 
 namespace videocore {
     namespace Apple {

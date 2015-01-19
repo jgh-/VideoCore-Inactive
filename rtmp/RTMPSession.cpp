@@ -26,6 +26,8 @@
 
 #ifdef __APPLE__
 #include <videocore/stream/Apple/StreamSession.h>
+#else
+#include <videocore/stream/Sockets/StreamSession.h>
 #endif
 
 #include <boost/tokenizer.hpp>
@@ -44,6 +46,8 @@ namespace videocore
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
+#else
+        m_streamSession.reset(new Sockets::StreamSession());
 #endif
         
         
@@ -86,9 +90,10 @@ namespace videocore
             sendDeleteStream();
         }
         m_ending = true;
+        m_jobQueue.mark_exiting();
         m_jobQueue.enqueue_sync([]() {});
-        m_networkQueue.enqueue_sync([](){});
-        
+        m_networkQueue.mark_exiting();
+        m_networkQueue.enqueue_sync([]() {});
     }
     void
     RTMPSession::setSessionParameters(videocore::IMetadata &parameters)
@@ -836,7 +841,7 @@ namespace videocore
                 sendHeaderPacket();
                 
                 sendSetChunkSize(getpagesize());
-                sendSetBufferTime(2500);
+                //sendSetBufferTime(2500);
                 
                 setClientState(kClientStateSessionStarted);
                 m_throughputSession.start();

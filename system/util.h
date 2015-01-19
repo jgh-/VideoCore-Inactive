@@ -28,14 +28,15 @@
 
 
 #ifdef DEBUG
-#ifdef __APPLE__
-#define DLog(fmt, ...) printf(fmt, ##__VA_ARGS__);
-#else 
-#define DLog(fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "TEST", fmt, ##__VA_ARGS__)
-#endif // __APPLE__
+#	if defined(__APPLE__)
+#		define DLog(fmt, ...) printf(fmt, ##__VA_ARGS__);
+#	elif defined(__ANDROID__)
+#		include <android/log.h>
+#		define DLog(fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "TEST", fmt, ##__VA_ARGS__)
+#	endif // __APPLE__
 #else
-#define DLog(fmt, ...) {}
-#endif
+#	define DLog(fmt, ...) {}
+#endif // DEBUG
 
 
 #endif

@@ -53,7 +53,7 @@
 namespace videocore {
     namespace Apple {
         
-        StreamSession::StreamSession() : m_status(0)
+        StreamSession::StreamSession() : m_status(0), m_runLoop(nullptr), m_outputStream(nullptr), m_inputStream(nullptr)
         {
             m_streamCallback = [[NSStreamCallback alloc] init];
             SCB(m_streamCallback).session = this;
@@ -85,9 +85,14 @@ namespace videocore {
 
                 dispatch_queue_t queue = dispatch_queue_create("com.videocore.network", 0);
                 
-                dispatch_async(queue, ^{
-                    this->startNetwork();
-                });
+                if(m_inputStream && m_outputStream) {
+                    dispatch_async(queue, ^{
+                        this->startNetwork();
+                    });
+                }
+                else {
+                    nsStreamCallback(nullptr, NSStreamEventErrorOccurred);
+                }
             }
 
         }
@@ -95,11 +100,22 @@ namespace videocore {
         void
         StreamSession::disconnect()
         {
-            [NSIS(m_inputStream) close];
-            [NSOS(m_outputStream) close];
-            [NSIS(m_inputStream) release];
-            [NSOS(m_outputStream) release];
-            CFRunLoopStop([NSRL(m_runLoop) getCFRunLoop]);
+            if(m_outputStream) {
+                [NSOS(m_outputStream) close];
+                [NSOS(m_outputStream) release];
+                m_outputStream = nullptr;
+            }
+            if(m_inputStream) {
+                [NSIS(m_inputStream) close];
+                [NSIS(m_inputStream) release];
+                m_inputStream = nullptr;
+            }
+
+            if(m_runLoop) {
+                CFRunLoopStop([NSRL(m_runLoop) getCFRunLoop]);
+                [(id)m_runLoop release];
+                m_runLoop = nullptr;
+            }
         }
         int
         StreamSession::unsent()
@@ -188,8 +204,9 @@ namespace videocore {
             }
             if(event & NSStreamEventErrorOccurred) {
                 setStatus(kStreamStatusErrorEncountered, true);
-                NSLog(@"Status: %d\n", (int)((NSStream*)stream).streamStatus);
-                NSLog(@"Error: %@", ((NSStream*)stream).streamError);
+                if(stream) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"com.videocore.stream.error" object:((NSStream*)stream).streamError];
+                }
             }
         }
         
@@ -204,6 +221,7 @@ namespace videocore {
             [NSOS(m_outputStream) open];
             [NSIS(m_inputStream) open];
 
+            [(id)m_runLoop retain];
             [NSRL(m_runLoop) run];
         }
         

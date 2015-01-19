@@ -93,6 +93,9 @@ namespace videocore {
             dispatch_release(m_queue);
 #endif
         }
+        void mark_exiting() {
+            m_exiting = true;
+        }
         void enqueue(std::function<void()> job) {
             enqueue(std::make_shared<Job>(job));
         }

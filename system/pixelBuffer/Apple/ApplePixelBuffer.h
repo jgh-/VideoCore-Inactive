@@ -56,6 +56,7 @@ namespace videocore { namespace Apple {
         const PixelBufferState state() const { return m_state; };
         
         const bool isTemporary() const { return m_temporary; };
+        void setTemporary(const bool temporary) { m_temporary = temporary; };
         
     public:
         const CVPixelBufferRef cvBuffer() const { return m_pixelBuffer; };

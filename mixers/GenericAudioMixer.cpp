@@ -130,6 +130,8 @@ namespace videocore {
         m_exiting = true;
         m_mixThreadCond.notify_all();
         m_mixThread.join();
+        m_mixQueue.mark_exiting();
+        m_mixQueue.enqueue_sync([]() {});
     }
     void
     GenericAudioMixer::setMinimumBufferDuration(const double duration)
@@ -382,7 +384,7 @@ namespace videocore {
             auto hash = std::hash<std::shared_ptr<ISource>>()(s);
             
             gain = std::max(0.f, std::min(1.f, gain));
-            gain = std::pow(gain, 4.f);
+            gain = powf(gain, kE);
             m_inGain[hash] = gain;
 
         }

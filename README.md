@@ -102,6 +102,11 @@ videocore::Apple::StreamSession : videocore::IStreamSession
 
 ##Version History
 
+* 0.2.2
+    * Fix video streaking bug when adaptative bitrate is enabled
+    * Increase the aggressiveness of the adaptative bitrate algorithm
+    * Add internal pixel buffer format
+    * 
 * 0.2.0
     * Removes deprecated functions
     * Adds Main Profile video

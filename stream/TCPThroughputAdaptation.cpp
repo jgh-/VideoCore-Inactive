@@ -33,7 +33,7 @@ namespace videocore {
     static const float kPI_2 = M_PI_2;
     static const float kWeight = 0.75f;
     static const int   kPivotSamples = 5;
-    static const int   kMeasurementDelay = 5; // seconds - represents the time between measurements when increasing or decreasing bitrate
+    static const int   kMeasurementDelay = 2; // seconds - represents the time between measurements when increasing or decreasing bitrate
     static const int   kSettlementDelay  = 30; // seconds - represents time to wait after a bitrate decrease before attempting to increase again
     static const int   kIncreaseDelta    = 10; // seconds - number of seconds to wait between increase vectors (after initial ramp up)
     

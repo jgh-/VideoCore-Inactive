@@ -174,7 +174,7 @@ namespace videocore { namespace iOS {
             for ( auto it = this->m_pixelBuffers.begin() ; it != m_pixelBuffers.end() ; ) {
                 
                 if ( (it->second.buffer->isTemporary()) && it->second.buffer->cvBuffer() != this->m_currentBuffer->cvBuffer() ) {
-                    // Buffer hasn't been used in more than 1s or is temporary, release it.
+                    // Buffer is temporary, release it.
                     it = this->m_pixelBuffers.erase(it);
                 } else {
                     ++ it;
@@ -252,8 +252,9 @@ namespace videocore { namespace iOS {
             
             [(id)m_glesCtx release];
         });
+        m_glJobQueue.mark_exiting();
+        m_glJobQueue.enqueue_sync([](){});
         m_mixThread.join();
-        
         
         [(id)m_callbackSession release];
     }
