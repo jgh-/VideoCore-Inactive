@@ -175,8 +175,6 @@ namespace videocore {
             auto lSource = inSource.lock();
             if(lSource) {
                 
-                const auto cMixTime = std::chrono::steady_clock::now();
-                
                 auto ret = resample(data, size, inMeta);
             
                 if(ret->size() == 0) {
@@ -185,7 +183,7 @@ namespace videocore {
                 }
 
                 m_mixQueue.enqueue([=]() {
-                    auto mixTime = cMixTime;
+                    auto mixTime = std::chrono::steady_clock::now();//cMixTime;
                     
                     const float g = 0.70710678118f; // 1 / sqrt(2)
                     
@@ -200,32 +198,16 @@ namespace videocore {
                     }
                     
                     MixWindow* window = this->m_currentWindow;
-                    int oldBufferTraverseCount = 0;
-                    
                     
                     size_t startOffset = 0;
                     size_t bytesLeft = ret->size();
                 
                     auto diff = std::chrono::duration_cast<std::chrono::microseconds>(mixTime - window->start).count();
-                    
-                    while(oldBufferTraverseCount < kWindowBufferCount && diff < 0) {
-                
-                        if (diff < 0 && oldBufferTraverseCount < kWindowBufferCount ) {
-                            window = window->prev;
-                            oldBufferTraverseCount++;
-                            diff = std::chrono::duration_cast<std::chrono::microseconds>(mixTime - window->start).count();
-                        }
-                    } ;
-                    
-                    if(diff < 0) {
-                       // DLog("Buffer still too far in the past! %lld [enqueue:%lld]", diff, std::chrono::duration_cast<std::chrono::microseconds>(now - cMixTime).count());
-                        mixTime = window->start;
-                    }
-                    else if(diff > 0) {
+
+                    if(diff > 0) {
                         startOffset = size_t((float(diff) / 1.0e6f) * m_outFrequencyInHz * m_bytesPerSample) & ~(m_bytesPerSample-1);
                         
                         while ( startOffset >= window->size ) {
-                            //DLog("startOffset >= window->size :: %zu >= %zu", startOffset, window->size);
                             startOffset = (startOffset - window->size);
                             window = window->next;
                             
@@ -235,10 +217,8 @@ namespace videocore {
                     
                     uint8_t* p ;
                     ret->read(&p, bytesLeft);
+
                     
-                    if((window->size - startOffset) < bytesLeft) {
-                       // DLog("window[%zu] offset[%zu] buffer[%zu] diff[%lld]", window->size, startOffset, bytesLeft, diff);
-                    }
                     while(bytesLeft > 0) {
                         size_t toCopy = std::min(window->size - startOffset, bytesLeft);
 
@@ -415,11 +395,7 @@ namespace videocore {
 
             now = std::chrono::steady_clock::now();
             
-            if( now >= m_nextMixTime) {
-
-                //DLog("now-m_nextMixTime: %lld", std::chrono::duration_cast<std::chrono::microseconds>(now - m_nextMixTime).count());
-                
-                m_nextMixTime += us;
+            if( now >= m_currentWindow->start+us) {
                 
                 MixWindow* currentWindow = m_currentWindow;
                 int backBufferCount = 0;
@@ -431,7 +407,8 @@ namespace videocore {
                 }
                 m_currentWindow = currentWindow->next;
                 m_currentWindow->start = currentWindow->start + us;
-
+                m_currentWindow->next->start = m_currentWindow->start + us;
+                
                 AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(window->start - m_epoch).count() );
                 std::shared_ptr<videocore::ISource> blank;
                     
@@ -445,7 +422,7 @@ namespace videocore {
                
             }
             if(!m_exiting.load()) {
-                m_mixThreadCond.wait_until(l, m_nextMixTime);
+                m_mixThreadCond.wait_until(l, m_currentWindow->start+us);
             }
         }
         DLog("Exiting audio mixer...\n");
