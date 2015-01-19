@@ -382,7 +382,7 @@ namespace videocore {
             auto hash = std::hash<std::shared_ptr<ISource>>()(s);
             
             gain = std::max(0.f, std::min(1.f, gain));
-            gain = powf(gain, 4);
+            gain = std::pow(gain, 4.f);
             m_inGain[hash] = gain;
 
         }

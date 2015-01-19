@@ -26,13 +26,16 @@
 #ifndef videocore_JobQueue_hpp
 #define videocore_JobQueue_hpp
 
+#include <pthread.h>
+
 #ifdef __APPLE__
 #include <dispatch/dispatch.h>
 #define _USE_GCD 1
 #else
 #define _USE_GCD 0
-#include <sys/prctl.h>
-#define pthread_setname_np(thread_name) prctl(PR_SET_NAME, thread_name)
+inline void pthread_setname_np(const char* name) {
+    pthread_setname_np(pthread_self(), name);
+}
 #endif
 #include <condition_variable>
 #include <atomic>
@@ -42,7 +45,7 @@
 #include <functional>
 #include <chrono>
 #include <iostream>
-#include <pthread.h>
+
 
 namespace videocore {
     

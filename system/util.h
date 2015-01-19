@@ -28,9 +28,13 @@
 
 
 #ifdef DEBUG
-#define DLog(...) printf(__VA_ARGS__);
+#ifdef __APPLE__
+#define DLog(fmt, ...) printf(fmt, ##__VA_ARGS__);
+#else 
+#define DLog(fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "TEST", fmt, ##__VA_ARGS__)
+#endif // __APPLE__
 #else
-#define DLog(...) {}
+#define DLog(fmt, ...) {}
 #endif
 
 

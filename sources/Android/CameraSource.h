@@ -24,6 +24,9 @@
  */
 #ifndef videocore_Android_CameraSource_h
 #define videocore_Android_CameraSource_h
+#include <vector>
+#include <memory>
+
 #include <videocore/sources/ISource.hpp>
 
 #include <OMXAL/OpenMAXAL.h>

@@ -29,6 +29,8 @@
 #include <videocore/mixers/IMixer.hpp>
 #include <videocore/transforms/IMetadata.hpp>
 
+#include <cmath>
+
 namespace videocore {
 
 
