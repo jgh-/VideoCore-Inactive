@@ -17,6 +17,7 @@ namespace videocore { namespace Sockets {
 		int
 		StreamSession::resolveHostName(std::string name, struct in_addr* host)
 		{
+			DLog("resolving %s\n", name.c_str());
 			int res = 0;
 			struct addrinfo* addr;
 
@@ -25,6 +26,7 @@ namespace videocore { namespace Sockets {
 				memcpy(host, &((struct sockaddr_in*) addr->ai_addr)->sin_addr, sizeof(struct in_addr));
 				freeaddrinfo(addr);
 			}
+			DLog("result=%d\n", res);
 			return res;
 		}
 
@@ -39,10 +41,12 @@ namespace videocore { namespace Sockets {
 
 			bool canConnect = false;
 			
-
+			DLog("Connecting to %s:%d\n", host.c_str(), port);
 			if(resolveHostName(host, &(address.sin_addr)) != 0) {
 				// Couldn't resolve hostname.
+				DLog("Couldn't resolve hostname, could be an IP\n");
 				if(inet_pton(PF_INET, host.c_str(), &(address.sin_addr)) == 1) { 
+					DLog("Got IP\n");
 					canConnect = true;
 				} else {
 					setStatus(kStreamStatusErrorEncountered, true);
@@ -51,15 +55,23 @@ namespace videocore { namespace Sockets {
 				canConnect = true;
 			}
 			if(canConnect) {
+				DLog("Connecting...\n");
 				int sd = socket(AF_INET, SOCK_STREAM, 0);
-				if(::connect(sd, (struct sockaddr*)&address, sizeof(address)) != 0) {
-					setStatus(kStreamStatusErrorEncountered, true);
+				if( sd > 0 ) {
+					if(::connect(sd, (struct sockaddr*)&address, sizeof(address)) != 0) {
+						setStatus(kStreamStatusErrorEncountered, true);
+						DLog("Error %d (%d)\n", errno, sd);
+					} else {
+						m_sd = sd;
+						DLog("Conected, starting network\n");
+						m_network = std::thread([&]() {
+							this->network();
+						});
+						setStatus(kStreamStatusConnected | kStreamStatusWriteBufferHasSpace, true);
+					}
 				} else {
-					m_sd = sd;
-					m_network = std::thread([&]() {
-						this->network();
-					});
-					setStatus(kStreamStatusConnected | kStreamStatusWriteBufferHasSpace, true);
+					DLog("::socket(%d) error(%d)\n", sd, errno);
+					setStatus(kStreamStatusErrorEncountered, true);
 				}
 			}
 		}
