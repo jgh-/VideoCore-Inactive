@@ -173,8 +173,8 @@ namespace videocore { namespace iOS {
             //const auto currentBuffer = this->m_currentBuffer->cvBuffer();
             for ( auto it = this->m_pixelBuffers.begin() ; it != m_pixelBuffers.end() ; ) {
                 
-                if ( (it->second.buffer->isTemporary() || (now - it->second.time > std::chrono::milliseconds(1000)) ) && it->second.buffer->cvBuffer() != this->m_currentBuffer->cvBuffer() ) {
-                    // Buffer hasn't been used in more than 1s or is temporary, release it.
+                if ( (it->second.buffer->isTemporary()) && it->second.buffer->cvBuffer() != this->m_currentBuffer->cvBuffer() ) {
+                    // Buffer is temporary, release it.
                     it = this->m_pixelBuffers.erase(it);
                 } else {
                     ++ it;
