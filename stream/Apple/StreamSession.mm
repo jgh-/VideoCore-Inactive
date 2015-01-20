@@ -129,7 +129,7 @@ namespace videocore {
             
             return unread;
         }
-        size_t
+        ssize_t
         StreamSession::write(uint8_t *buffer, size_t size)
         {
             NSInteger ret = 0;
@@ -148,10 +148,10 @@ namespace videocore {
             return ret;
         }
         
-        size_t
+        ssize_t
         StreamSession::read(uint8_t *buffer, size_t size)
         {
-            size_t ret = 0;
+            ssize_t ret = 0;
             
             ret = [NSIS(m_inputStream) read:buffer maxLength:size];
             

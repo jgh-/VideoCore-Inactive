@@ -88,20 +88,30 @@ namespace videocore { namespace Sockets {
 		StreamSession::network() {
 			uint8_t buf[4096];
 			while(!m_exiting) {
-				size_t ret = ::read(m_sd, buf, 4096);
-				m_ringBuffer.put(buf, ret);
-				setStatus(kStreamStatusReadBufferHasBytes, false);
+				ssize_t ret = ::read(m_sd, buf, 4096);
+				if(ret > 0) {
+					m_ringBuffer.put(buf, ret);
+					setStatus(kStreamStatusReadBufferHasBytes, false);
+				} else if ( ret < 0 ) {
+					setStatus(kStreamStatusErrorEncountered, false);
+				}
 			}
 		}
 
-		size_t
+		ssize_t
 		StreamSession::write(uint8_t* buffer, size_t size) {
-			return ::write(m_sd, buffer, size);
+			ssize_t ret = ::write(m_sd, buffer, size);
+
+			if( ret < 0 ) {
+				setStatus(kStreamStatusErrorEncountered, false);
+			}
+
+			return ret;
 		}
 
-		size_t
+		ssize_t
 		StreamSession::read(uint8_t* buffer, size_t size) {
-			size_t ret = m_ringBuffer.get(buffer, size);
+			ssize_t ret = m_ringBuffer.get(buffer, size);
 			if ( ret < size ) {
 				m_status ^= kStreamStatusReadBufferHasBytes;
 			}

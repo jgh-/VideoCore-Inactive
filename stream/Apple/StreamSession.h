@@ -39,8 +39,8 @@ namespace videocore {
             void connect(std::string host, int port, StreamSessionCallback_t);
             void disconnect();
             
-            size_t write(uint8_t* buffer, size_t size);
-            size_t read(uint8_t* buffer, size_t size);
+            ssize_t write(uint8_t* buffer, size_t size);
+            ssize_t read(uint8_t* buffer, size_t size);
             
             int unsent();
             int unread();

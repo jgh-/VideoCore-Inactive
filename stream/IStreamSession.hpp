@@ -55,8 +55,8 @@ namespace videocore {
         
         virtual void connect(std::string host, int port, StreamSessionCallback_t ) = 0;
         virtual void disconnect() = 0;
-        virtual size_t write(uint8_t* buffer, size_t size) = 0;
-        virtual size_t read(uint8_t* buffer, size_t size) = 0;
+        virtual ssize_t write(uint8_t* buffer, size_t size) = 0;
+        virtual ssize_t read(uint8_t* buffer, size_t size) = 0;
         virtual const StreamStatus_t status() const = 0;
         
         virtual int unsent() = 0;
