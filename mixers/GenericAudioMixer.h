@@ -148,6 +148,7 @@ namespace videocore {
         
         std::vector<std::shared_ptr<MixWindow>>                m_windows;
         MixWindow*                            m_currentWindow;
+        MixWindow*                            m_outgoingWindow;
         
         JobQueue                              m_mixQueue;
         
