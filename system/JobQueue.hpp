@@ -46,6 +46,11 @@
 
 namespace videocore {
     
+    typedef enum {
+        kJobQueuePriorityDefault,
+        kJobQueuePriorityHigh,
+        kJobQueuePriorityLow
+    } JobQueuePriority;
     struct Job {
         Job(std::function<void()> job) : m_isSynchronous(false) , m_job(job), m_dispatchDate(std::chrono::steady_clock::now()), m_done(false) {} ;
         
@@ -68,7 +73,7 @@ namespace videocore {
     class JobQueue
     {
     public:
-        JobQueue(std::string name = "") : m_exiting(false)
+        JobQueue(std::string name = "", JobQueuePriority priority = kJobQueuePriorityDefault) : m_exiting(false)
         {
 #if !_USE_GCD
             m_thread = std::thread([&]() { thread(); });
@@ -77,6 +82,19 @@ namespace videocore {
             }
 #else
             m_queue = dispatch_queue_create(name.c_str(), 0);
+            int p = 0;
+            switch (priority) {
+                case kJobQueuePriorityDefault:
+                    p = DISPATCH_QUEUE_PRIORITY_DEFAULT;
+                    break;
+                case kJobQueuePriorityHigh:
+                    p = DISPATCH_QUEUE_PRIORITY_HIGH;
+                    break;
+                case kJobQueuePriorityLow:
+                    p = DISPATCH_QUEUE_PRIORITY_LOW;
+                    break;
+            }
+            dispatch_set_target_queue(m_queue, dispatch_get_global_queue(p, 0 ));
 #endif
         }
         ~JobQueue()
