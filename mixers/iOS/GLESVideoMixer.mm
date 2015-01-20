@@ -106,7 +106,7 @@ namespace videocore { namespace iOS {
     // -------------------------------------------------------------------------
     
     void
-    SourceBuffer::setBuffer(Apple::ApplePixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache, JobQueue& m_glJobQueue, void* m_glesCtx)
+    SourceBuffer::setBuffer(Apple::PixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache, JobQueue& m_glJobQueue, void* m_glesCtx)
     {
         
         bool flush = false;
@@ -450,7 +450,7 @@ namespace videocore { namespace iOS {
         
         //CVPixelBufferRef inPixelBuffer = (CVPixelBufferRef)data;
         
-        auto inPixelBuffer = *(Apple::ApplePixelBufferRef*)data ;
+        auto inPixelBuffer = *(Apple::PixelBufferRef*)data ;
         
         m_sourceBuffers[h].setBuffer(inPixelBuffer, this->m_textureCache, m_glJobQueue, m_glesCtx);
         auto it = std::find(this->m_layerMap[zIndex].begin(), this->m_layerMap[zIndex].end(), h);
