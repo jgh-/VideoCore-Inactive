@@ -276,13 +276,16 @@ namespace videocore { namespace iOS {
         
         if(!m_captureSession) return;
         
+        NSError* error;
         AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
         if(session) {
             [session beginConfiguration];
+            [(AVCaptureDevice*)m_captureDevice lockForConfiguration: &error];
             
             AVCaptureInput* currentCameraInput = [session.inputs objectAtIndex:0];
             
             [session removeInput:currentCameraInput];
+            [(AVCaptureDevice*)m_captureDevice unlockForConfiguration];
             
             AVCaptureDevice *newCamera = nil;
             if(((AVCaptureDeviceInput*)currentCameraInput).device.position == AVCaptureDevicePositionBack)
@@ -295,9 +298,11 @@ namespace videocore { namespace iOS {
             }
             
             AVCaptureDeviceInput *newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:newCamera error:nil];
-            
+            [newCamera lockForConfiguration:&error];
             [session addInput:newVideoInput];
             
+            m_captureDevice = newCamera;
+            [newCamera unlockForConfiguration];
             [session commitConfiguration];
             
             [newVideoInput release];
