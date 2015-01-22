@@ -398,14 +398,14 @@ namespace videocore {
         
         m_nextMixTime = start + us;
         m_currentWindow->start = start;
-
+        m_currentWindow->next->start = start + us;
         
         while(!m_exiting.load()) {
             std::unique_lock<std::mutex> l(m_mixMutex);
 
             auto now = std::chrono::steady_clock::now();
             
-            if( now >= (m_currentWindow->next->start) ) {
+            if( now >= m_nextMixTime ) {
 
                 m_nextMixTime += us;
                 
@@ -420,6 +420,7 @@ namespace videocore {
                     
                 md.setData(m_outFrequencyInHz, m_outBitsPerChannel, m_outChannelCount, 0, 0, (int)currentWindow->size, false, false, blank);
                 auto out = m_output.lock();
+                
                 if(out && m_outgoingWindow) {
                     out->pushBuffer(m_outgoingWindow->buffer, m_outgoingWindow->size, md);
                     m_outgoingWindow->clear();
@@ -430,7 +431,7 @@ namespace videocore {
                 
             }
             if(!m_exiting.load()) {
-                m_mixThreadCond.wait_until(l, m_currentWindow->next->start);
+                m_mixThreadCond.wait_until(l, m_nextMixTime);
             }
         }
         DLog("Exiting audio mixer...\n");
