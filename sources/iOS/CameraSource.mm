@@ -25,7 +25,7 @@
 
 #include <videocore/sources/iOS/CameraSource.h>
 #include <videocore/mixers/IVideoMixer.hpp>
-#include <videocore/system/pixelBuffer/Apple/ApplePixelBuffer.h>
+#include <videocore/system/pixelBuffer/Apple/PixelBuffer.h>
 
 #import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
@@ -276,13 +276,16 @@ namespace videocore { namespace iOS {
         
         if(!m_captureSession) return;
         
+        NSError* error;
         AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
         if(session) {
             [session beginConfiguration];
+            [(AVCaptureDevice*)m_captureDevice lockForConfiguration: &error];
             
             AVCaptureInput* currentCameraInput = [session.inputs objectAtIndex:0];
             
             [session removeInput:currentCameraInput];
+            [(AVCaptureDevice*)m_captureDevice unlockForConfiguration];
             
             AVCaptureDevice *newCamera = nil;
             if(((AVCaptureDeviceInput*)currentCameraInput).device.position == AVCaptureDevicePositionBack)
@@ -295,9 +298,11 @@ namespace videocore { namespace iOS {
             }
             
             AVCaptureDeviceInput *newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:newCamera error:nil];
-            
+            [newCamera lockForConfiguration:&error];
             [session addInput:newVideoInput];
             
+            m_captureDevice = newCamera;
+            [newCamera unlockForConfiguration];
             [session commitConfiguration];
             
             [newVideoInput release];
@@ -384,7 +389,7 @@ namespace videocore { namespace iOS {
             
             md.setData(1, m_matrix, shared_from_this());
             
-            auto pixelBuffer = std::make_shared<Apple::ApplePixelBuffer>(pixelBufferRef, true);
+            auto pixelBuffer = std::make_shared<Apple::PixelBuffer>(pixelBufferRef, true);
             
             pixelBuffer->setState(kVCPixelBufferStateEnqueued);
             output->pushBuffer((uint8_t*)&pixelBuffer, sizeof(pixelBuffer), md);

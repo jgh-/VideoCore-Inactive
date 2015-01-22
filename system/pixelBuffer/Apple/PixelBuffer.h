@@ -22,8 +22,8 @@
  THE SOFTWARE.
  
  */
-#ifndef videocore_ApplePixelBuffer_hpp
-#define videocore_ApplePixelBuffer_hpp
+#ifndef videocore_PixelBuffer_hpp
+#define videocore_PixelBuffer_hpp
 
 #include <CoreVideo/CoreVideo.h>
 #include <videocore/system/pixelBuffer/IPixelBuffer.hpp>
@@ -32,15 +32,15 @@
 namespace videocore { namespace Apple {
  
     
-    class ApplePixelBuffer : public IPixelBuffer
+    class PixelBuffer : public IPixelBuffer
     {
         
     public:
         
-        ApplePixelBuffer(CVPixelBufferRef pb, bool temporary = false);
-        ~ApplePixelBuffer();
+        PixelBuffer(CVPixelBufferRef pb, bool temporary = false);
+        ~PixelBuffer();
         
-        static const size_t hash(std::shared_ptr<ApplePixelBuffer> buf) { return std::hash<std::shared_ptr<ApplePixelBuffer>>()(buf); };
+        static const size_t hash(std::shared_ptr<PixelBuffer> buf) { return std::hash<std::shared_ptr<PixelBuffer>>()(buf); };
         
     public:
         const int   width() const  { return (int)CVPixelBufferGetWidth(m_pixelBuffer); };
@@ -71,7 +71,7 @@ namespace videocore { namespace Apple {
         bool m_temporary;
     };
     
-    typedef std::shared_ptr<videocore::Apple::ApplePixelBuffer> ApplePixelBufferRef;
+    typedef std::shared_ptr<PixelBuffer> PixelBufferRef;
     
 }
 }
