@@ -25,10 +25,15 @@
 #ifndef videocore_GLESUtil_h
 #define videocore_GLESUtil_h
 
+#ifdef __APPLE__
 #import <OpenGLES/ES2/gl.h>
 #import <OpenGLES/ES2/glext.h>
 #import <OpenGLES/ES3/gl.h>
-
+#else
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#endif
+ 
 #define BUFFER_OFFSET(i) ((void*)(i))
 #ifdef DEBUG
 #define GL_ERRORS(line) { GLenum glerr; while((glerr = glGetError())) {\

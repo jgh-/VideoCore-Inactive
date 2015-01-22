@@ -63,7 +63,7 @@ namespace videocore { namespace Android {
     }
 
     android_native_buffer_t*
-    GraphicBuffer::getNativeBuffer()
+    GraphicBuffer::getNativeBuffer() const
     {
     	return fGraphicsBufferGetNativeBuffer(m_buffer);
     }

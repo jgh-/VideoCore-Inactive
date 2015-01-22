@@ -38,12 +38,12 @@ namespace videocore { namespace Android {
 
 		android::status_t lock(uint32_t usage, void** addr);
 		android::status_t unlock();
-		android_native_buffer_t* getNativeBuffer();
+		android_native_buffer_t* getNativeBuffer() const;
 
 		const uint32_t getWidth() const { return m_width; };
 		const uint32_t getHeight() const { return m_height; };
 		const android::PixelFormat getPixelFormat() const { return m_format; };
-		
+
     private: 
         static void setup();
         static bool s_isSetup;

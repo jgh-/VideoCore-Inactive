@@ -315,8 +315,6 @@ namespace videocore { namespace iOS {
         for(int i = 0 ; i < 2 ; ++i) {
             CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, this->m_textureCache, this->m_pixelBuffer[i], NULL, GL_TEXTURE_2D, GL_RGBA, m_frameW, m_frameH, GL_BGRA, GL_UNSIGNED_BYTE, 0, &m_texture[i]);
             
-            this->m_prog = build_program(s_vs_mat, s_fs);
-            
             glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_texture[i]));
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -326,7 +324,7 @@ namespace videocore { namespace iOS {
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_texture[i]), 0);
             
         }
-        
+        this->m_prog = build_program(s_vs_mat, s_fs);
         
         GL_FRAMEBUFFER_STATUS(__LINE__);
         
