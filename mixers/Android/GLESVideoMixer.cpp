@@ -36,7 +36,15 @@
 // Convenience macro to dispatch an OpenGL ES job to the created videocore::JobQueue
 #define PERF_GL(x, dispatch) do {\
 m_glJobQueue.dispatch([=](){\
+	EGLContext _ctx_current = eglGetCurrentContext();\
+	EGLDisplay _dsp_current = eglGetCurrentDisplay();\
+	EGLSurface _rsf_current = eglGetCurrentSurface(EGL_READ);\
+	EGLSurface _dsf_current = eglGetCurrentSurface(EGL_DRAW);\
+	if(m_context) {\
+		eglMakeCurrent(m_display, m_surface, m_surface, m_context);\
+	}\
 x ;\
+	eglMakeCurrent(_dsp_current, _dsf_current, _rsf_current, _ctx_current);\
 });\
 } while(0);
 // Dispatch and execute synchronously
@@ -59,7 +67,7 @@ namespace videocore { namespace Android {
     // -------------------------------------------------------------------------
     
     void
-    SourceBuffer::setBuffer(Android::PixelBufferRef ref, JobQueue& m_glJobQueue)
+    SourceBuffer::setBuffer(Android::PixelBufferRef ref, JobQueue& m_glJobQueue, void* m_display, void* m_surface, void* m_context)
     {
         
         bool flush = false;
@@ -175,8 +183,12 @@ namespace videocore { namespace Android {
         PERF_GL_sync({
             glDeleteProgram(m_prog);
             glDeleteFramebuffers(2, m_fbo);
+            glDeleteRenderbuffers(2, m_rbo);
             glDeleteBuffers(1, &m_vbo);
            	
+           	for( int i = 0 ; i < 2 ; ++ i ) {
+           		eglDestroyImageKHR(m_display, m_texture[i]);
+           	}
             //GLuint textures[2] ;
             //textures[0] = CVOpenGLESTextureGetName(m_texture[0]);
             //textures[1] = CVOpenGLESTextureGetName(m_texture[1]);
@@ -216,8 +228,6 @@ namespace videocore { namespace Android {
         if(ret == EGL_FALSE) {
         	DLog("eglInitialize failed!\n");
         }
-        //DLog("Binding API\n");
-        //eglBindAPI(EGL_OPENGL_ES_API);
 
         const EGLint configAttribs[] = {
     		 EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
@@ -251,10 +261,11 @@ namespace videocore { namespace Android {
         glGenFramebuffers(2, this->m_fbo);
         glGenRenderbuffers(2, this->m_rbo);
         for ( int i = 0 ; i < 2 ; ++ i ) {
-        	m_pixelBuffer[i].reset(new GraphicBuffer(m_frameW, m_frameH, android::PIXEL_FORMAT_RGBA_8888, android::GraphicBuffer::USAGE_SW_READ_OFTEN |
+        	GraphicBuffer* buffer = new GraphicBuffer(m_frameW, m_frameH, android::PIXEL_FORMAT_RGBA_8888, android::GraphicBuffer::USAGE_SW_READ_OFTEN |
         																								  android::GraphicBuffer::USAGE_HW_RENDER | 
-        																								  android::GraphicBuffer::USAGE_HW_VIDEO_ENCODER));
-        	EGLImageKHR image = eglCreateImageKHR(eglGetCurrentDisplay(), EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_ANDROID, m_pixelBuffer[i]->getNativeBuffer(), eglImgAttrs );
+        																								  android::GraphicBuffer::USAGE_HW_VIDEO_ENCODER);
+        	m_pixelBuffer[i].reset(new PixelBuffer(buffer));
+        	EGLImageKHR image = eglCreateImageKHR(m_display, EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_ANDROID, buffer->getNativeBuffer(), eglImgAttrs );
         	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[i]);
         	glBindRenderbuffer(GL_RENDERBUFFER, m_rbo[i]);
         	glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER, image);
@@ -386,7 +397,7 @@ namespace videocore { namespace Android {
         
         auto inPixelBuffer = *(Android::PixelBufferRef*)data ;
         
-        m_sourceBuffers[h].setBuffer(inPixelBuffer, m_glJobQueue);
+        m_sourceBuffers[h].setBuffer(inPixelBuffer, m_glJobQueue, m_display, m_surface, m_context);
         auto it = std::find(this->m_layerMap[zIndex].begin(), this->m_layerMap[zIndex].end(), h);
         if(it == this->m_layerMap[zIndex].end()) {
             this->m_layerMap[zIndex].push_back(h);
@@ -438,8 +449,6 @@ namespace videocore { namespace Android {
                 
                 m_mixing = true;
                 PERF_GL_async({
-                    //glPushGroupMarkerEXT(0, "Videocore.Mix");
-                    //CVPixelBufferLockBaseAddress(this->m_pixelBuffer[current_fb], 0);
                     
                     glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[current_fb]);
                     

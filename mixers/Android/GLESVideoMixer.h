@@ -53,7 +53,7 @@ namespace videocore { namespace Android {
     {
         SourceBuffer() : m_currentTexture(0), m_pixelBuffers() { };
         ~SourceBuffer() { };
-        void setBuffer(Android::PixelBufferRef ref, JobQueue& jobQueue);
+        void setBuffer(Android::PixelBufferRef ref, JobQueue& jobQueue, void* display, void* surface, void* context);
         
         GLuint                  currentTexture() const { return m_currentTexture; };
         Android::PixelBufferRef currentBuffer() const { return m_currentBuffer; };
@@ -142,7 +142,7 @@ namespace videocore { namespace Android {
         std::mutex  m_mutex;
         std::condition_variable m_mixThreadCond;
        
-        std::unique_ptr<GraphicBuffer> m_pixelBuffer[2];
+        std::unique_ptr<PixelBuffer> m_pixelBuffer[2];
         EGLImageKHR			           m_texture[2];
 
         unsigned  				  m_vbo, 
