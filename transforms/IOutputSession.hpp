@@ -37,7 +37,7 @@ namespace videocore {
      *  \param estimatedAvailableBandwidth  An estimate of the available bandwidth [Bytes per second]. This may not be accurate.
      *
      */
-    using BandwidthCallback = std::function<void(float rateVector, float estimatedAvailableBandwidth)>;
+    using BandwidthCallback = std::function<void(float rateVector, float estimatedAvailableBandwidth, int immediateThroughput)>;
     
     class IOutputSession : public IOutput
     {

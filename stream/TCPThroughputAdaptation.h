@@ -70,12 +70,14 @@ namespace videocore {
         std::vector<int64_t> m_bufferDurationSamples;
         
         std::deque<float> m_bwSamples;
+        std::deque<int> m_buffGrowth;
         std::deque<float> m_turnSamples;
         std::vector<float> m_bwWeights;
         
         ThroughputCallback m_callback;
         
         int  m_bwSampleCount;
+        int  m_negSampleCount;
         
         float m_previousVector;
         

@@ -30,7 +30,7 @@
 
 namespace videocore {
     
-    using ThroughputCallback = std::function<void(float vector, float predicted)>;
+    using ThroughputCallback = std::function<void(float bitrateRecommendedVector, float predictedBytesPerSecond, int immediateBytesPerSecond)>;
     
     
     class IThroughputAdaptation {
