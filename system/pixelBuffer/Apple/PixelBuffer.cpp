@@ -24,11 +24,11 @@
  
  */
 
-#include <videocore/system/pixelBuffer/Apple/ApplePixelBuffer.h>
+#include <videocore/system/pixelBuffer/Apple/PixelBuffer.h>
 
 namespace videocore { namespace Apple {
  
-    ApplePixelBuffer::ApplePixelBuffer(CVPixelBufferRef pb, bool temporary)
+    PixelBuffer::PixelBuffer(CVPixelBufferRef pb, bool temporary)
     : m_state(kVCPixelBufferStateAvailable),
     m_locked(false),
     m_pixelBuffer(CVPixelBufferRetain(pb)),
@@ -36,19 +36,19 @@ namespace videocore { namespace Apple {
     {
         m_pixelFormat = (PixelBufferFormatType)CVPixelBufferGetPixelFormatType(pb);
     }
-    ApplePixelBuffer::~ApplePixelBuffer()
+    PixelBuffer::~PixelBuffer()
     {
         CVPixelBufferRelease(m_pixelBuffer);
     }
     
     void
-    ApplePixelBuffer::lock(bool readonly)
+    PixelBuffer::lock(bool readonly)
     {
         m_locked = true;
         CVPixelBufferLockBaseAddress( (CVPixelBufferRef)cvBuffer(), readonly ? kCVPixelBufferLock_ReadOnly : 0 );
     }
     void
-    ApplePixelBuffer::unlock(bool readonly)
+    PixelBuffer::unlock(bool readonly)
     {
         m_locked = false;
         CVPixelBufferUnlockBaseAddress( (CVPixelBufferRef)cvBuffer(), readonly ? kCVPixelBufferLock_ReadOnly : 0 );

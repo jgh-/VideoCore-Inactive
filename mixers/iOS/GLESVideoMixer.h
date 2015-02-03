@@ -30,7 +30,7 @@
 #include <iostream>
 #include <videocore/mixers/IVideoMixer.hpp>
 #include <videocore/system/JobQueue.hpp>
-#include <videocore/system/pixelBuffer/Apple/ApplePixelBuffer.h>
+#include <videocore/system/pixelBuffer/Apple/PixelBuffer.h>
 
 #include <map>
 #include <thread>
@@ -47,23 +47,23 @@ namespace videocore { namespace iOS {
     {
         SourceBuffer() : m_currentTexture(nullptr), m_pixelBuffers() { };
         ~SourceBuffer() { };
-        void setBuffer(Apple::ApplePixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache, JobQueue& jobQueue, void* glContext);
+        void setBuffer(Apple::PixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache, JobQueue& jobQueue, void* glContext);
         
         CVOpenGLESTextureRef currentTexture() const { return m_currentTexture; };
-        Apple::ApplePixelBufferRef currentBuffer() const { return m_currentBuffer; };
+        Apple::PixelBufferRef currentBuffer() const { return m_currentBuffer; };
         
     private:
         typedef struct __Buffer_ {
-            __Buffer_(Apple::ApplePixelBufferRef buf) : texture(nullptr), buffer(buf) {};
+            __Buffer_(Apple::PixelBufferRef buf) : texture(nullptr), buffer(buf) {};
             ~__Buffer_() { if(texture) { CFRelease(texture); } };
                 
-            Apple::ApplePixelBufferRef buffer;
+            Apple::PixelBufferRef buffer;
             CVOpenGLESTextureRef texture;
             std::chrono::steady_clock::time_point time;
         } Buffer_;
         
         std::map< CVPixelBufferRef, Buffer_ >   m_pixelBuffers;
-        Apple::ApplePixelBufferRef  m_currentBuffer;
+        Apple::PixelBufferRef  m_currentBuffer;
         CVOpenGLESTextureRef        m_currentTexture;
     };
     /*

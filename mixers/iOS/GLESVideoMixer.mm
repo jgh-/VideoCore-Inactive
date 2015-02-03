@@ -106,12 +106,18 @@ namespace videocore { namespace iOS {
     // -------------------------------------------------------------------------
     
     void
-    SourceBuffer::setBuffer(Apple::ApplePixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache, JobQueue& m_glJobQueue, void* m_glesCtx)
+    SourceBuffer::setBuffer(Apple::PixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache, JobQueue& m_glJobQueue, void* m_glesCtx)
     {
         
         bool flush = false;
         auto it = m_pixelBuffers.find(ref->cvBuffer());
         const auto now = std::chrono::steady_clock::now();
+        
+        if(m_currentBuffer) {
+            m_currentBuffer->setState(kVCPixelBufferStateAvailable);
+        }
+        ref->setState(kVCPixelBufferStateAcquired);
+        
         if(it == m_pixelBuffers.end()) {
             PERF_GL_async({
                 
@@ -145,9 +151,7 @@ namespace videocore { namespace iOS {
                     
                     auto iit = this->m_pixelBuffers.emplace(ref->cvBuffer(), ref).first;
                     iit->second.texture = texture;
-                    if(this->m_currentBuffer) {
-                        this->m_currentBuffer->setState(kVCPixelBufferStateAvailable);
-                    }
+                    
                     this->m_currentBuffer = ref;
                     this->m_currentTexture = texture;
                     iit->second.time = now;
@@ -158,16 +162,12 @@ namespace videocore { namespace iOS {
             });
             flush = true;
         } else {
-            if(m_currentBuffer) {
-                m_currentBuffer->setState(kVCPixelBufferStateAvailable);
-            }
+
             m_currentBuffer = ref;
             m_currentTexture = it->second.texture;
             it->second.time = now;
             
         }
-        
-        ref->setState(kVCPixelBufferStateAcquired);
         
         PERF_GL_async({
             //const auto currentBuffer = this->m_currentBuffer->cvBuffer();
@@ -450,7 +450,7 @@ namespace videocore { namespace iOS {
         
         //CVPixelBufferRef inPixelBuffer = (CVPixelBufferRef)data;
         
-        auto inPixelBuffer = *(Apple::ApplePixelBufferRef*)data ;
+        auto inPixelBuffer = *(Apple::PixelBufferRef*)data ;
         
         m_sourceBuffers[h].setBuffer(inPixelBuffer, this->m_textureCache, m_glJobQueue, m_glesCtx);
         auto it = std::find(this->m_layerMap[zIndex].begin(), this->m_layerMap[zIndex].end(), h);
