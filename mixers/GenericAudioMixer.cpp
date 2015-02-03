@@ -405,8 +405,9 @@ namespace videocore {
 
             auto now = std::chrono::steady_clock::now();
             
-            if( now >= m_nextMixTime ) {
-
+            if( now >= m_currentWindow->next->start ) {
+                
+                auto currentTime = m_nextMixTime;
                 m_nextMixTime += us;
                 
                 MixWindow* currentWindow = m_currentWindow;
@@ -415,7 +416,7 @@ namespace videocore {
                 nextWindow->start = currentWindow->start + us;
                 nextWindow->next->start = nextWindow->start + us;
                 
-                AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(currentWindow->start - m_epoch).count() );
+                AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_epoch).count() );
                 std::shared_ptr<videocore::ISource> blank;
                     
                 md.setData(m_outFrequencyInHz, m_outBitsPerChannel, m_outChannelCount, 0, 0, (int)currentWindow->size, false, false, blank);
@@ -431,7 +432,7 @@ namespace videocore {
                 
             }
             if(!m_exiting.load()) {
-                m_mixThreadCond.wait_until(l, m_nextMixTime);
+                m_mixThreadCond.wait_until(l, m_currentWindow->next->start);
             }
         }
         DLog("Exiting audio mixer...\n");

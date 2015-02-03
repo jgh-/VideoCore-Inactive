@@ -112,6 +112,12 @@ namespace videocore { namespace iOS {
         bool flush = false;
         auto it = m_pixelBuffers.find(ref->cvBuffer());
         const auto now = std::chrono::steady_clock::now();
+        
+        if(m_currentBuffer) {
+            m_currentBuffer->setState(kVCPixelBufferStateAvailable);
+        }
+        ref->setState(kVCPixelBufferStateAcquired);
+        
         if(it == m_pixelBuffers.end()) {
             PERF_GL_async({
                 
@@ -145,9 +151,7 @@ namespace videocore { namespace iOS {
                     
                     auto iit = this->m_pixelBuffers.emplace(ref->cvBuffer(), ref).first;
                     iit->second.texture = texture;
-                    if(this->m_currentBuffer) {
-                        this->m_currentBuffer->setState(kVCPixelBufferStateAvailable);
-                    }
+                    
                     this->m_currentBuffer = ref;
                     this->m_currentTexture = texture;
                     iit->second.time = now;
@@ -158,16 +162,12 @@ namespace videocore { namespace iOS {
             });
             flush = true;
         } else {
-            if(m_currentBuffer) {
-                m_currentBuffer->setState(kVCPixelBufferStateAvailable);
-            }
+
             m_currentBuffer = ref;
             m_currentTexture = it->second.texture;
             it->second.time = now;
             
         }
-        
-        ref->setState(kVCPixelBufferStateAcquired);
         
         PERF_GL_async({
             //const auto currentBuffer = this->m_currentBuffer->cvBuffer();
