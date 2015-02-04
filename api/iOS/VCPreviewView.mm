@@ -42,7 +42,7 @@
     GLuint _fbo;
     GLuint _vao;
     GLuint _matrixPos;
-
+    
     int _currentBuffer;
     
     BOOL _paused;
@@ -50,7 +50,7 @@
     CVPixelBufferRef _currentRef[2];
     CVOpenGLESTextureCacheRef _cache;
     CVOpenGLESTextureRef _texture[2];
-
+    
 }
 @property (nonatomic, strong) EAGLContext* context;
 @property (nonatomic) CAEAGLLayer* glLayer;
@@ -68,43 +68,49 @@
 {
     self = [super initWithFrame:frame];
     if (self) {
-
+        
         
     }
     return self;
 }
 - (instancetype) init {
     if ((self = [super init])) {
-        // Initialization code
-        self.glLayer = (CAEAGLLayer*)self.layer;
-       
-        NSLog(@"Creating context");
-        _context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
-        
-        if(!self.context) {
-            NSLog(@"Context creation failed");
-        } else {
-            NSLog(@"Context creation succeeded");
-        }
-        self.autoresizingMask = 0xFF;
-        
-        _currentRef [0] = _currentRef[1] = nil;
-        _texture[0] = _texture[1] = nil;
-        _shaderProgram = 0;
-        _renderBuffer = 0;
-        _currentBuffer = 1;
-
-        __block VCPreviewView* bSelf = self;
-        
-        _paused = NO;
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [bSelf setupGLES];
-        });
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(notification:) name:UIApplicationDidEnterBackgroundNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(notification:) name:UIApplicationWillEnterForegroundNotification object:nil];
+        [self initInternal];
     }
     return self;
+}
+- (void) awakeFromNib {
+    [self initInternal];
+}
+- (void) initInternal {
+    // Initialization code
+    self.glLayer = (CAEAGLLayer*)self.layer;
+    
+    NSLog(@"Creating context");
+    _context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+    
+    if(!self.context) {
+        NSLog(@"Context creation failed");
+    } else {
+        NSLog(@"Context creation succeeded");
+    }
+    self.autoresizingMask = 0xFF;
+    
+    _currentRef [0] = _currentRef[1] = nil;
+    _texture[0] = _texture[1] = nil;
+    _shaderProgram = 0;
+    _renderBuffer = 0;
+    _currentBuffer = 1;
+    
+    __block VCPreviewView* bSelf = self;
+    
+    _paused = NO;
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [bSelf setupGLES];
+    });
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(notification:) name:UIApplicationDidEnterBackgroundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(notification:) name:UIApplicationWillEnterForegroundNotification object:nil];
 }
 - (void) dealloc
 {
@@ -173,14 +179,14 @@
         if(_currentRef[_currentBuffer]){
             CVPixelBufferRelease(_currentRef[_currentBuffer]);
         }
-            
+        
         _currentRef[_currentBuffer] = CVPixelBufferRetain(pixelBuffer);
         updateTexture = true;
         
     }
     int currentBuffer = _currentBuffer;
     __block VCPreviewView* bSelf = self;
-
+    
     dispatch_async(dispatch_get_main_queue(), ^{
         
         EAGLContext* current = [EAGLContext currentContext];
@@ -252,7 +258,7 @@
         [EAGLContext setCurrentContext:current];
         CVOpenGLESTextureCacheFlush(_cache,0);
     });
-   
+    
 }
 #pragma mark - Private Methods
 

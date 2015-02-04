@@ -1,10 +1,14 @@
 #include <videocore/filters/FilterFactory.h>
+#include <videocore/filters/Basic/BasicVideoFilterBGRA.h>
 
 namespace videocore {
-
-    //std::map<std::string, std::unique_ptr<IFilter>> FilterFactory::s_filters ;
     std::map<std::string, InstantiateFilter>* FilterFactory::s_registration = nullptr ;
     
+    FilterFactory::FilterFactory() {
+        {
+            filters::BasicVideoFilterBGRA b;
+        }
+    }
     IFilter*
     FilterFactory::filter(std::string name) {
         IFilter* filter = nullptr;
@@ -23,7 +27,7 @@ namespace videocore {
         
         return filter;
     }
-
+    
     void
     FilterFactory::_register(std::string name, InstantiateFilter instantiation)
     {

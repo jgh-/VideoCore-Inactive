@@ -12,7 +12,7 @@ namespace videocore {
     
     class FilterFactory {
     public:
-        FilterFactory() {};
+        FilterFactory();
         ~FilterFactory() {};
         
         IFilter* filter(std::string name);
