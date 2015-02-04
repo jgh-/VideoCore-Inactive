@@ -86,6 +86,7 @@ namespace videocore { namespace filters {
                 glEnableVertexAttribArray(attrtex);
                 glVertexAttribPointer(attrpos, BUFFER_SIZE_POSITION, GL_FLOAT, GL_FALSE, BUFFER_STRIDE, BUFFER_OFFSET_POSITION);
                 glVertexAttribPointer(attrtex, BUFFER_SIZE_POSITION, GL_FLOAT, GL_FALSE, BUFFER_STRIDE, BUFFER_OFFSET_TEXTURE);
+                m_initialized = true;
             }
                 break;
             case GL_3:
