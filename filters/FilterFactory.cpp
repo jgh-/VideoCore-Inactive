@@ -12,7 +12,7 @@ namespace videocore {
         auto it = m_filters.find(name) ;
         if( it != m_filters.end() ) {
             filter = it->second.get();
-        } else {
+        } else if (FilterFactory::s_registration != nullptr) {
             auto iit = FilterFactory::s_registration->find(name);
             
             if(iit != FilterFactory::s_registration->end()) {

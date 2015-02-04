@@ -513,7 +513,7 @@ namespace videocore { namespace iOS {
                                 }
                                 currentFilter = m_sourceFilters[*it];
                                 
-                                if(!currentFilter->initialized()) {
+                                if(currentFilter && !currentFilter->initialized()) {
                                     currentFilter->initialize();
                                 }
                             }
@@ -530,7 +530,7 @@ namespace videocore { namespace iOS {
                              glEnable(GL_BLEND);
                              glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                              }*/
-                            if(texture) {
+                            if(texture && currentFilter) {
                                 currentFilter->incomingMatrix(this->m_sourceMats[*it]);
                                 currentFilter->bind();
                                 glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));

@@ -102,7 +102,7 @@ namespace videocore { namespace iOS {
         /*! IVideoMixer::setSourceFilter */
         void setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter *filter);
         
-        const FilterFactory& filterFactory() const { return m_filterFactory; };
+        FilterFactory& filterFactory() { return m_filterFactory; };
         
         /*! IOutput::pushBuffer */
         void pushBuffer(const uint8_t* const data,

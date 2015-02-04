@@ -685,6 +685,8 @@ namespace videocore { namespace simpleApi {
         m_cameraSource->setContinuousExposure(true);
         
         m_cameraSource->setOutput(aspectTransform);
+        
+        m_videoMixer->setSourceFilter(m_cameraSource, dynamic_cast<videocore::IVideoFilter*>(m_videoMixer->filterFactory().filter("com.videocore.filters.bgra")));
         aspectTransform->setOutput(positionTransform);
         positionTransform->setOutput(m_videoMixer);
         m_aspectTransform = aspectTransform;
