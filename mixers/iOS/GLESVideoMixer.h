@@ -99,6 +99,11 @@ namespace videocore { namespace iOS {
         /*! IMixer::unregisterSource */
         void unregisterSource(std::shared_ptr<ISource> source);
         
+        /*! IVideoMixer::setSourceFilter */
+        void setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter *filter);
+        
+        const FilterFactory& filterFactory() const { return m_filterFactory; };
+        
         /*! IOutput::pushBuffer */
         void pushBuffer(const uint8_t* const data,
                         size_t size,
@@ -147,6 +152,7 @@ namespace videocore { namespace iOS {
         
     private:
         
+        FilterFactory m_filterFactory;
         JobQueue m_glJobQueue;
         
         double m_bufferDuration;
@@ -176,8 +182,7 @@ namespace videocore { namespace iOS {
         std::map<int, std::vector< std::size_t >> m_layerMap;
         
         std::map< std::size_t, glm::mat4 >          m_sourceMats;
-        //std::map< std::size_t, CVPixelBufferRef >   m_sourceBuffers;
-        //std::map< std::size_t, CVOpenGLESTextureRef > m_sourceTextures;
+        std::unordered_map<std::size_t, IVideoFilter*>   m_sourceFilters;
         std::unordered_map<std::size_t, SourceBuffer> m_sourceBuffers;
         
         std::chrono::steady_clock::time_point m_epoch;

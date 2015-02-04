@@ -22,36 +22,26 @@
  THE SOFTWARE.
  
  */
+#ifndef videocore_IFilter_hpp
+#define videocore_IFilter_hpp
+#include <string>
 
-#ifndef videocore_ISource_hpp
-#define videocore_ISource_hpp
-
-#include <videocore/transforms/IOutput.hpp>
-#include <videocore/filters/IFilter.hpp>
-
-namespace videocore
-{
-    /*!
-     *  ISource interface.  Defines the interface for sources of data into a graph.
-     */
-    class ISource
-    {
-    public:
-        /*!
-         *  Set the output for the source.
-         *
-         *  \param output a component that conforms to the videocore::IOutput interface and is compatible with the
-         *                data being vended by the source.
-         */
-        virtual void setOutput(std::shared_ptr<IOutput> output) = 0;
-        
-        virtual void setFilter(std::shared_ptr<IFilter>) {} ;
-        virtual IFilter* const filter() { return nullptr; };
-        
-        /*! Virtual destructor */
-        virtual ~ISource() {};
-    };
+namespace videocore {
     
+    
+    class IFilter {
+    
+    public:
+        virtual ~IFilter() {} ;
+        
+        virtual void initialize() = 0;
+        virtual bool initialized() const = 0;
+        
+        virtual void bind() = 0;
+        virtual void unbind() = 0;
+        
+        virtual std::string const name() = 0;
+    };
 }
 
 #endif

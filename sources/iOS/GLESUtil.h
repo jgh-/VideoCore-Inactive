@@ -30,6 +30,12 @@
 #import <OpenGLES/ES3/gl.h>
 
 #define BUFFER_OFFSET(i) ((void*)(i))
+#define BUFFER_OFFSET_POSITION BUFFER_OFFSET(0)
+#define BUFFER_OFFSET_TEXTURE  BUFFER_OFFSET(8)
+#define BUFFER_SIZE_POSITION 2
+#define BUFFER_SIZE_TEXTURE  2
+#define BUFFER_STRIDE (sizeof(float) * 4)
+
 #ifdef DEBUG
 #define GL_ERRORS(line) { GLenum glerr; while((glerr = glGetError())) {\
 switch(glerr)\

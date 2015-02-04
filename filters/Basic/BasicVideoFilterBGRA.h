@@ -22,36 +22,42 @@
  THE SOFTWARE.
  
  */
+#ifndef videocore_BasicVideoFilterBGRA_h
+#define videocore_BasicVideoFilterBGRA_h
+#include <videocore/filters/IVideoFilter.hpp>
 
-#ifndef videocore_ISource_hpp
-#define videocore_ISource_hpp
-
-#include <videocore/transforms/IOutput.hpp>
-#include <videocore/filters/IFilter.hpp>
-
-namespace videocore
-{
-    /*!
-     *  ISource interface.  Defines the interface for sources of data into a graph.
-     */
-    class ISource
-    {
-    public:
-        /*!
-         *  Set the output for the source.
-         *
-         *  \param output a component that conforms to the videocore::IOutput interface and is compatible with the
-         *                data being vended by the source.
-         */
-        virtual void setOutput(std::shared_ptr<IOutput> output) = 0;
+namespace videocore {
+    namespace filters {
+        class BasicVideoFilterBGRA : public IVideoFilter {
+            
+        public:
+            BasicVideoFilterBGRA();
+            ~BasicVideoFilterBGRA();
         
-        virtual void setFilter(std::shared_ptr<IFilter>) {} ;
-        virtual IFilter* const filter() { return nullptr; };
-        
-        /*! Virtual destructor */
-        virtual ~ISource() {};
-    };
-    
+        public:
+            virtual void initialize();
+            virtual bool initialized() const { return m_initialized; };
+            virtual std::string const name() { return "com.videocore.filters.bgra"; };
+            virtual void bind();
+            virtual void unbind();
+            
+        public:
+            
+            const char * const vertexKernel() const ;
+            const char * const pixelKernel() const ;
+            
+        private:
+            static bool registerFilter();
+            static bool s_registered;
+        private:
+
+            unsigned int m_vao;
+            unsigned int m_uMatrix;
+            bool m_initialized;
+            bool m_bound;
+            
+        };
+    }
 }
 
-#endif
+#endif /* defined(videocore_BasicVideoFilterBGRA_h) */

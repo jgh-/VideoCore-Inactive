@@ -26,7 +26,7 @@
 
 #include <videocore/mixers/iOS/GLESVideoMixer.h>
 #include <videocore/sources/iOS/GLESUtil.h>
-
+#include <videocore/filters/FilterFactory.h>
 
 #import <Foundation/Foundation.h>
 #import <OpenGLES/EAGL.h>
@@ -208,9 +208,6 @@ namespace videocore { namespace iOS {
     m_paused(false),
     m_glJobQueue("com.videocore.composite")
     {
-        
-        
-        
         PERF_GL_sync({
             
             this->setupGLES(excludeContext);
@@ -232,10 +229,10 @@ namespace videocore { namespace iOS {
         m_mixThreadCond.notify_all();
         DLog("GLESVideoMixer::~GLESVideoMixer()");
         PERF_GL_sync({
-            glDeleteProgram(m_prog);
+            //glDeleteProgram(m_prog);
             glDeleteFramebuffers(2, m_fbo);
             glDeleteBuffers(1, &m_vbo);
-            glDeleteVertexArraysOES(1, &m_vao);
+            //glDeleteVertexArraysOES(1, &m_vao);
             GLuint textures[2] ;
             textures[0] = CVOpenGLESTextureGetName(m_texture[0]);
             textures[1] = CVOpenGLESTextureGetName(m_texture[1]);
@@ -315,8 +312,6 @@ namespace videocore { namespace iOS {
         for(int i = 0 ; i < 2 ; ++i) {
             CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, this->m_textureCache, this->m_pixelBuffer[i], NULL, GL_TEXTURE_2D, GL_RGBA, m_frameW, m_frameH, GL_BGRA, GL_UNSIGNED_BYTE, 0, &m_texture[i]);
             
-            this->m_prog = build_program(s_vs_mat, s_fs);
-            
             glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_texture[i]));
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -334,20 +329,6 @@ namespace videocore { namespace iOS {
         glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(s_vbo), s_vbo, GL_STATIC_DRAW);
         
-        glUseProgram(this->m_prog);
-        glGenVertexArraysOES(1, &this->m_vao);
-        glBindVertexArrayOES(this->m_vao);
-        
-        this->m_uMat = glGetUniformLocation(this->m_prog, "uMat");
-        
-        int attrpos = glGetAttribLocation(this->m_prog, "aPos");
-        int attrtex = glGetAttribLocation(this->m_prog, "aCoord");
-        int unitex = glGetUniformLocation(this->m_prog, "uTex0");
-        glUniform1i(unitex, 0);
-        glEnableVertexAttribArray(attrpos);
-        glEnableVertexAttribArray(attrtex);
-        glVertexAttribPointer(attrpos, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, BUFFER_OFFSET(0));
-        glVertexAttribPointer(attrtex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, BUFFER_OFFSET(8));
         glDisable(GL_BLEND);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_SCISSOR_TEST);
@@ -514,11 +495,28 @@ namespace videocore { namespace iOS {
                     glBindVertexArrayOES(this->m_vao);
                     glUseProgram(this->m_prog);
                     
+                    IVideoFilter* currentFilter = nil;
+                    
                     for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i) {
                         
                         for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {
                            // CVPixelBufferLockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly); // Lock, read-only.
                             CVOpenGLESTextureRef texture = NULL;
+                            auto filterit = m_sourceFilters.find(*it);
+                            if(filterit == m_sourceFilters.end()) {
+                                IFilter* filter = m_filterFactory.filter("com.videocore.filters.bgra");
+                                m_sourceFilters[*it] = dynamic_cast<IVideoFilter*>(filter);
+                            }
+                            if(currentFilter != m_sourceFilters[*it]) {
+                                if(currentFilter) {
+                                    currentFilter->unbind();
+                                }
+                                currentFilter = m_sourceFilters[*it];
+                                
+                                if(!currentFilter->initialized()) {
+                                    currentFilter->initialize();
+                                }
+                            }
                             
                             auto iTex = this->m_sourceBuffers.find(*it);
                             if(iTex == this->m_sourceBuffers.end()) continue;
@@ -533,7 +531,8 @@ namespace videocore { namespace iOS {
                              glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                              }*/
                             if(texture) {
-                                glUniformMatrix4fv(m_uMat, 1, GL_FALSE, &this->m_sourceMats[*it][0][0]);
+                                currentFilter->incomingMatrix(this->m_sourceMats[*it]);
+                                currentFilter->bind();
                                 glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
                                 glDrawArrays(GL_TRIANGLES, 0, 6);
                             } else {
@@ -574,6 +573,12 @@ namespace videocore { namespace iOS {
     GLESVideoMixer::mixPaused(bool paused)
     {
         m_paused = paused;
+    }
+    
+    void
+    GLESVideoMixer::setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter *filter) {
+        auto h = hash(source);
+        m_sourceFilters[h] = filter;
     }
 }
 }
