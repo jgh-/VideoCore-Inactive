@@ -525,7 +525,7 @@ namespace videocore { namespace simpleApi {
         _bitrate = 500000;
     }
     
-    m_outputSession->setBandwidthCallback([=](float vector, float predicted)
+    m_outputSession->setBandwidthCallback([=](float vector, float predicted, int inst)
                                           {
                                               
                                               bSelf->_estimatedThroughput = predicted;

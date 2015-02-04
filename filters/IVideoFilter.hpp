@@ -57,17 +57,16 @@ namespace videocore {
         
     public:
         
-        void incomingMatrix(glm::mat4 matrix) {  m_matrix = matrix; };
+        void incomingMatrix(glm::mat4& matrix) {  m_matrix = matrix; };
         void imageDimensions(float w, float h) { m_dimensions.w = w; m_dimensions.h = h; };
         
         void setFilterLanguage(FilterLanguage language) { m_language = language ; };
         void setProgram(int program) { m_program = program; };
         const int program() const { return m_program; };
-        
-    protected:
-        
+   
+     protected:
         IVideoFilter() : m_program(0), m_matrix(1.f), m_dimensions({ 1.f, 1.f }), m_language(GL_ES2_3) {};
-        
+      
         glm::mat4 m_matrix;
         struct { float w, h ; } m_dimensions;
         int m_program;

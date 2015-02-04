@@ -36,16 +36,25 @@ namespace videocore {
         
         public:
             virtual void initialize();
-            virtual bool initialized();
+            virtual bool initialized() const { return m_initialized; };
+            virtual std::string const name() { return "com.videocore.filters.bgra"; };
+            virtual void bind();
+            virtual void unbind();
             
-            virtual void apply();
-        
         public:
             
             const char * const vertexKernel() const ;
             const char * const pixelKernel() const ;
             
         private:
+            static bool registerFilter();
+            static bool s_registered;
+        private:
+
+            unsigned int m_vao;
+            unsigned int m_uMatrix;
+            bool m_initialized;
+            bool m_bound;
             
         };
     }

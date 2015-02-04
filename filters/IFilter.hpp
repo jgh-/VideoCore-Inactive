@@ -24,7 +24,7 @@
  */
 #ifndef videocore_IFilter_hpp
 #define videocore_IFilter_hpp
-
+#include <string>
 
 namespace videocore {
     
@@ -35,10 +35,12 @@ namespace videocore {
         virtual ~IFilter() {} ;
         
         virtual void initialize() = 0;
-        virtual bool initialized() = 0;
+        virtual bool initialized() const = 0;
         
-        virtual void apply() = 0;
+        virtual void bind() = 0;
+        virtual void unbind() = 0;
         
+        virtual std::string const name() = 0;
     };
 }
 
