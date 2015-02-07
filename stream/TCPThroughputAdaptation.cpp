@@ -30,13 +30,13 @@
 
 namespace videocore {
     
-    static const float kPI_2 = M_PI_2;
+    //static const float kPI_2 = M_PI_2;
     static const float kWeight = 0.75f;
     static const int   kPivotSamples = 5;
     static const int   kMeasurementDelay = 2; // seconds - represents the time between measurements when increasing or decreasing bitrate
     static const int   kSettlementDelay  = 30; // seconds - represents time to wait after a bitrate decrease before attempting to increase again
     static const int   kIncreaseDelta    = 10; // seconds - number of seconds to wait between increase vectors (after initial ramp up)
-    static const int   kNegativeSampleThreshold = 0; // number of negative samples in a row to call for a decrease
+    //static const int   kNegativeSampleThreshold = 0; // number of negative samples in a row to call for a decrease
     
     template<typename T>
     static inline T mode(std::deque<T>& array) {
@@ -122,7 +122,7 @@ namespace videocore {
             if(m_exiting) {
                 break;
             }
-            DLog("Measuring...\n");
+            
             auto now = std::chrono::steady_clock::now();
             auto diff = now - prev;
             auto previousTurndownDiff = std::chrono::duration_cast<std::chrono::seconds>(now - m_previousTurndown).count();
@@ -151,7 +151,7 @@ namespace videocore {
             
             if(!m_bufferSizeSamples.empty()) {
                 
-                DLog("front->back");
+
                 float frontAvg = 0.f;
                 float backAvg = 0.f;
                 int frontCount = 0;

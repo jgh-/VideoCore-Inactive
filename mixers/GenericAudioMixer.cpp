@@ -70,7 +70,7 @@ static inline int16_t b24_to_b16(void* v) {
 extern std::string g_tmpFolder;
 
 static const int kMixWindowCount = 10;
-static const int kWindowBufferCount = 0;
+//static const int kWindowBufferCount = 0;
 
 static const float kE = 2.7182818284590f;
 
