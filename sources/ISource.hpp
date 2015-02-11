@@ -27,6 +27,7 @@
 #define videocore_ISource_hpp
 
 #include <videocore/transforms/IOutput.hpp>
+#include <videocore/filters/IFilter.hpp>
 
 namespace videocore
 {
@@ -43,6 +44,9 @@ namespace videocore
          *                data being vended by the source.
          */
         virtual void setOutput(std::shared_ptr<IOutput> output) = 0;
+        
+        virtual void setFilter(std::shared_ptr<IFilter>) {} ;
+        virtual IFilter* const filter() { return nullptr; };
         
         /*! Virtual destructor */
         virtual ~ISource() {};

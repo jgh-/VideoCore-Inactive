@@ -22,34 +22,26 @@
  THE SOFTWARE.
  
  */
-
-#ifndef videocore_IOutputSession_hpp
-#define videocore_IOutputSession_hpp
-
-#include <videocore/transforms/IOutput.hpp>
+#ifndef videocore_IFilter_hpp
+#define videocore_IFilter_hpp
+#include <string>
 
 namespace videocore {
-
-    /*!
-     *  Called when the graph should make an adjustment to outgoing data rates
-     *
-     *  \param rateVector   A unit vector representing the direction for change. (-1 for reduce bitrate, 0 for no change, 1 for increase bitrate)
-     *  \param estimatedAvailableBandwidth  An estimate of the available bandwidth [Bytes per second]. This may not be accurate.
-     *
-     */
-    using BandwidthCallback = std::function<void(float rateVector, float estimatedAvailableBandwidth, int immediateThroughput)>;
     
-    class IOutputSession : public IOutput
-    {
+    
+    class IFilter {
+    
     public:
+        virtual ~IFilter() {} ;
         
-        virtual void setSessionParameters(IMetadata & parameters) = 0 ;
-        virtual void setBandwidthCallback(BandwidthCallback callback) = 0;
+        virtual void initialize() = 0;
+        virtual bool initialized() const = 0;
         
-        virtual ~IOutputSession() {};
+        virtual void bind() = 0;
+        virtual void unbind() = 0;
         
+        virtual std::string const name() = 0;
     };
 }
-
 
 #endif

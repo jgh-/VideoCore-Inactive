@@ -180,16 +180,6 @@ namespace videocore {
                    NSOS(m_outputStream).streamStatus > 0 &&
                    NSIS(m_inputStream).streamStatus < 5 &&
                    NSOS(m_outputStream).streamStatus < 5) {
-                    // Connected.
-                    CFDataRef nativeSocket = (CFDataRef)CFWriteStreamCopyProperty((CFWriteStreamRef)m_outputStream, kCFStreamPropertySocketNativeHandle);
-                    CFSocketNativeHandle *sock = (CFSocketNativeHandle *)CFDataGetBytePtr(nativeSocket);
-                    m_outSocket = *sock;
-                    int v = 1;
-                    setsockopt(*sock, IPPROTO_TCP, TCP_NODELAY, &v, sizeof(int));
-                    v = 0;
-                    setsockopt(*sock, SOL_SOCKET, SO_SNDBUF, &v, sizeof(int));
-                    CFRelease(nativeSocket);
-
                     setStatus(kStreamStatusConnected, true);
                 } else return;
             }

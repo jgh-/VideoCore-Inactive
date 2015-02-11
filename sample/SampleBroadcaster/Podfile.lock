@@ -1,12 +1,12 @@
 PODS:
   - boost (1.51.0):
-    - boost/graph-includes
-    - boost/math-includes
-    - boost/numeric-includes
-    - boost/pointer_cast-includes
-    - boost/preprocessor-includes
-    - boost/shared_ptr-includes
-    - boost/string_algorithms-includes
+    - boost/graph-includes (= 1.51.0)
+    - boost/math-includes (= 1.51.0)
+    - boost/numeric-includes (= 1.51.0)
+    - boost/pointer_cast-includes (= 1.51.0)
+    - boost/preprocessor-includes (= 1.51.0)
+    - boost/shared_ptr-includes (= 1.51.0)
+    - boost/string_algorithms-includes (= 1.51.0)
   - boost/graph-includes (1.51.0)
   - boost/math-includes (1.51.0)
   - boost/numeric-includes (1.51.0)
@@ -30,4 +30,4 @@ SPEC CHECKSUMS:
   UriParser-cpp: e6df3fd87445ba4ab37a72acafb4f03bc39db524
   VideoCore: 4842dcca60f127b3c75c1e21aa1304356d911b8d
 
-COCOAPODS: 0.34.4
+COCOAPODS: 0.35.0

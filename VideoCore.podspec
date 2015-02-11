@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name                = "VideoCore"
-  s.version             = "0.2.2.1"
+  s.version             = "0.2.3.2"
   s.summary             = "An audio and video manipulation and streaming pipeline with support for RTMP."
   s.description      = <<-DESC
                           This is a work-in-progress library with the
@@ -17,13 +17,14 @@ Pod::Spec.new do |s|
   s.header_dir          = 'videocore'
   s.header_mappings_dir = '.'
 
-  s.source_files        = [ 'mixers/**/*.h*', 'mixers/**/*.cpp', 'mixers/**/*.m*',
+  s.source_files        = [ 'mixers/**/*.h*', 'mixers/**/*.cpp', 'mixers/**/*.m*', 
                             'rtmp/**/*.h*', 'rtmp/**/*.cpp', 'rtmp/**/*.m*',
                             'sources/**/*.h*', 'sources/**/*.cpp', 'sources/**/*.m*',
                             'stream/**/*.h*', 'stream/**/*.cpp', 'stream/**/*.m*',
                             'system/**/*.h*', 'system/**/*.cpp', 'system/**/*.m*',
                             'transforms/**/*.h*', 'transforms/**/*.cpp', 'transforms/**/*.m*',
-                            'api/**/*.h*', 'api/**/*.m*' ]
+                            'api/**/*.h*', 'api/**/*.m*',
+                            'filters/**/*.cpp', 'filters/**/*.h*' ]
 
   s.frameworks          = [ 'VideoToolbox', 'AudioToolbox', 'AVFoundation', 'CFNetwork', 'CoreMedia',
                             'CoreVideo', 'OpenGLES', 'Foundation', 'CoreGraphics' ]

@@ -54,6 +54,7 @@ namespace videocore
          */
         virtual void unregisterSource(std::shared_ptr<ISource> source) = 0;
         
+        
         /*! Virtual destructor */
         virtual ~IMixer() {};
         

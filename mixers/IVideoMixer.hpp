@@ -26,6 +26,9 @@
 #define videocore_IVideoMixer_hpp
 
 #include <videocore/mixers/IMixer.hpp>
+#include <videocore/filters/IVideoFilter.hpp>
+#include <videocore/filters/FilterFactory.h>
+
 #include <glm/glm.hpp>
 
 namespace videocore
@@ -41,13 +44,15 @@ namespace videocore
     /*!
      *  Specifies the properties of the incoming image buffer.
      */
-    typedef MetaData<'vide', int, glm::mat4, std::weak_ptr<ISource> > VideoBufferMetadata;
+    typedef MetaData<'vide', int, glm::mat4, std::weak_ptr<ISource>> VideoBufferMetadata;
     
     /*! IAudioMixer interface.  Defines the required interface methods for Video mixers (compositors). */
     class IVideoMixer : public IMixer
     {
     public:
         virtual ~IVideoMixer() {};
+        virtual void setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter* filter)=0;
+        virtual FilterFactory& filterFactory() = 0;
         
     };
 }

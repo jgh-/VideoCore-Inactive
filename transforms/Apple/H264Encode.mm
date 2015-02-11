@@ -290,7 +290,7 @@ namespace videocore { namespace Apple {
             int v = m_bitrate ;
             CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
             
-            VTCompressionSessionCompleteFrames((VTCompressionSessionRef)m_compressionSession, kCMTimeInvalid);
+            //VTCompressionSessionCompleteFrames((VTCompressionSessionRef)m_compressionSession, kCMTimeInvalid);
             
             OSStatus ret = VTSessionSetProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_AverageBitRate, ref);
             
@@ -311,7 +311,20 @@ namespace videocore { namespace Apple {
                 m_bitrate = v;
             }
             v = bitrate / 8;
+            CFNumberRef bytes = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &v);
+            v = 1;
+            CFNumberRef duration = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &v);
             
+            CFMutableArrayRef limit = CFArrayCreateMutable(kCFAllocatorDefault, 2, &kCFTypeArrayCallBacks);
+
+            CFArrayAppendValue(limit, bytes);
+            CFArrayAppendValue(limit, duration);
+
+            VTSessionSetProperty((VTCompressionSessionRef)m_compressionSession, kVTCompressionPropertyKey_DataRateLimits, limit);
+            CFRelease(bytes);
+            CFRelease(duration);
+            CFRelease(limit);
+
             m_encodeMutex.unlock();
             
         }

@@ -22,34 +22,42 @@
  THE SOFTWARE.
  
  */
-
-#ifndef videocore_IOutputSession_hpp
-#define videocore_IOutputSession_hpp
-
-#include <videocore/transforms/IOutput.hpp>
+#ifndef videocore_BasicVideoFilterBGRA_h
+#define videocore_BasicVideoFilterBGRA_h
+#include <videocore/filters/IVideoFilter.hpp>
 
 namespace videocore {
+    namespace filters {
+        class BasicVideoFilterBGRA : public IVideoFilter {
+            
+        public:
+            BasicVideoFilterBGRA();
+            ~BasicVideoFilterBGRA();
+        
+        public:
+            virtual void initialize();
+            virtual bool initialized() const { return m_initialized; };
+            virtual std::string const name() { return "com.videocore.filters.bgra"; };
+            virtual void bind();
+            virtual void unbind();
+            
+        public:
+            
+            const char * const vertexKernel() const ;
+            const char * const pixelKernel() const ;
+            
+        private:
+            static bool registerFilter();
+            static bool s_registered;
+        private:
 
-    /*!
-     *  Called when the graph should make an adjustment to outgoing data rates
-     *
-     *  \param rateVector   A unit vector representing the direction for change. (-1 for reduce bitrate, 0 for no change, 1 for increase bitrate)
-     *  \param estimatedAvailableBandwidth  An estimate of the available bandwidth [Bytes per second]. This may not be accurate.
-     *
-     */
-    using BandwidthCallback = std::function<void(float rateVector, float estimatedAvailableBandwidth, int immediateThroughput)>;
-    
-    class IOutputSession : public IOutput
-    {
-    public:
-        
-        virtual void setSessionParameters(IMetadata & parameters) = 0 ;
-        virtual void setBandwidthCallback(BandwidthCallback callback) = 0;
-        
-        virtual ~IOutputSession() {};
-        
-    };
+            unsigned int m_vao;
+            unsigned int m_uMatrix;
+            bool m_initialized;
+            bool m_bound;
+            
+        };
+    }
 }
 
-
-#endif
+#endif /* defined(videocore_BasicVideoFilterBGRA_h) */

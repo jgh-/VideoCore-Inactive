@@ -70,7 +70,7 @@ static inline int16_t b24_to_b16(void* v) {
 extern std::string g_tmpFolder;
 
 static const int kMixWindowCount = 10;
-static const int kWindowBufferCount = 0;
+//static const int kWindowBufferCount = 0;
 
 static const float kE = 2.7182818284590f;
 
@@ -398,15 +398,16 @@ namespace videocore {
         
         m_nextMixTime = start + us;
         m_currentWindow->start = start;
-
+        m_currentWindow->next->start = start + us;
         
         while(!m_exiting.load()) {
             std::unique_lock<std::mutex> l(m_mixMutex);
 
             auto now = std::chrono::steady_clock::now();
             
-            if( now >= (m_currentWindow->next->start) ) {
-
+            if( now >= m_currentWindow->next->start ) {
+                
+                auto currentTime = m_nextMixTime;
                 m_nextMixTime += us;
                 
                 MixWindow* currentWindow = m_currentWindow;
@@ -415,11 +416,12 @@ namespace videocore {
                 nextWindow->start = currentWindow->start + us;
                 nextWindow->next->start = nextWindow->start + us;
                 
-                AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(currentWindow->start - m_epoch).count() );
+                AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_epoch).count() );
                 std::shared_ptr<videocore::ISource> blank;
                     
                 md.setData(m_outFrequencyInHz, m_outBitsPerChannel, m_outChannelCount, 0, 0, (int)currentWindow->size, false, false, blank);
                 auto out = m_output.lock();
+                
                 if(out && m_outgoingWindow) {
                     out->pushBuffer(m_outgoingWindow->buffer, m_outgoingWindow->size, md);
                     m_outgoingWindow->clear();
