@@ -189,27 +189,13 @@ namespace videocore { namespace Android {
            	for( int i = 0 ; i < 2 ; ++ i ) {
            		eglDestroyImageKHR(m_display, m_texture[i]);
            	}
-            //GLuint textures[2] ;
-            //textures[0] = CVOpenGLESTextureGetName(m_texture[0]);
-            //textures[1] = CVOpenGLESTextureGetName(m_texture[1]);
-            //glDeleteTextures(2, textures);
-            
+
             m_sourceBuffers.clear();
-            
-            //CVPixelBufferRelease(m_pixelBuffer[0]);
-            //CVPixelBufferRelease(m_pixelBuffer[1]);
-            //CFRelease(m_texture[0]);
-            //CFRelease(m_texture[1]);
-            //CVOpenGLESTextureCacheFlush(m_textureCache, 0);
-            //CFRelease(m_textureCache);
-            
-            //[(id)m_glesCtx release];
+
         });
         m_glJobQueue.mark_exiting();
         m_glJobQueue.enqueue_sync([](){});
         m_mixThread.join();
-        
-        //[(id)m_callbackSession release];
     }
     void
     GLESVideoMixer::setupGLES(std::function<void(void*)> excludeContext)
