@@ -51,7 +51,8 @@ namespace videocore {
             static bool s_registered;
         private:
 
-            unsigned int m_vao;
+            unsigned int m_attrPos;
+            unsigned int m_attrTex;
             unsigned int m_uMatrix;
             bool m_initialized;
             bool m_bound;

@@ -102,6 +102,11 @@ namespace videocore { namespace Android {
             m_nextMixTime = epoch;
         };
 
+        /*! IVideoMixer::setSourceFilter */
+        void setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter *filter);
+        
+        FilterFactory& filterFactory() { return m_filterFactory; };
+
 	private:
 
 		/*!
@@ -132,7 +137,8 @@ namespace videocore { namespace Android {
 
     private:
         JobQueue m_glJobQueue;
-        
+        FilterFactory m_filterFactory;
+
         double m_bufferDuration;
         
         std::weak_ptr<IOutput> m_output;
@@ -160,7 +166,8 @@ namespace videocore { namespace Android {
         std::map<int, std::vector< std::size_t >> m_layerMap;
         
         std::map< std::size_t, glm::mat4 >          m_sourceMats;
-
+        
+        std::unordered_map<std::size_t, IVideoFilter*>   m_sourceFilters;
         std::unordered_map<std::size_t, SourceBuffer> m_sourceBuffers;
         
         std::chrono::steady_clock::time_point m_epoch;

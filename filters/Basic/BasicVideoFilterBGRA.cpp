@@ -1,17 +1,6 @@
-
-#include <videocore/filters/Basic/BasicVideoFilterBGRA.h>
-
-#include <TargetConditionals.h>
-
-
-#ifdef TARGET_OS_IPHONE
-
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES3/gl.h>
-#include <videocore/sources/iOS/GLESUtil.h>
 #include <videocore/filters/FilterFactory.h>
-
-#endif
+#include <videocore/filters/Basic/BasicVideoFilterBGRA.h>
+#include <videocore/system/GLESUtil.h>
 
 namespace videocore { namespace filters {
  
@@ -32,7 +21,6 @@ namespace videocore { namespace filters {
     BasicVideoFilterBGRA::~BasicVideoFilterBGRA()
     {
         glDeleteProgram(m_program);
-        glDeleteVertexArrays(1, &m_vao);
     }
     
     const char * const
@@ -75,17 +63,13 @@ namespace videocore { namespace filters {
             case GL_ES2_3:
             case GL_2: {
                 setProgram(build_program(vertexKernel(), pixelKernel()));
-                glGenVertexArrays(1, &m_vao);
-                glBindVertexArray(m_vao);
+    
                 m_uMatrix = glGetUniformLocation(m_program, "uMat");
-                int attrpos = glGetAttribLocation(m_program, "aPos");
-                int attrtex = glGetAttribLocation(m_program, "aCoord");
+                m_attrPos = glGetAttribLocation(m_program, "aPos");
+                m_attrTex = glGetAttribLocation(m_program, "aCoord");
                 int unitex = glGetUniformLocation(m_program, "uTex0");
                 glUniform1i(unitex, 0);
-                glEnableVertexAttribArray(attrpos);
-                glEnableVertexAttribArray(attrtex);
-                glVertexAttribPointer(attrpos, BUFFER_SIZE_POSITION, GL_FLOAT, GL_FALSE, BUFFER_STRIDE, BUFFER_OFFSET_POSITION);
-                glVertexAttribPointer(attrtex, BUFFER_SIZE_POSITION, GL_FLOAT, GL_FALSE, BUFFER_STRIDE, BUFFER_OFFSET_TEXTURE);
+
                 m_initialized = true;
             }
                 break;
@@ -104,7 +88,10 @@ namespace videocore { namespace filters {
                         initialize();
                     }
                     glUseProgram(m_program);
-                    glBindVertexArray(m_vao);
+                    glEnableVertexAttribArray(m_attrPos);
+                    glEnableVertexAttribArray(m_attrTex);
+                    glVertexAttribPointer(m_attrPos, BUFFER_SIZE_POSITION, GL_FLOAT, GL_FALSE, BUFFER_STRIDE, BUFFER_OFFSET_POSITION);
+                    glVertexAttribPointer(m_attrTex, BUFFER_SIZE_POSITION, GL_FLOAT, GL_FALSE, BUFFER_STRIDE, BUFFER_OFFSET_TEXTURE);
                 }
                 glUniformMatrix4fv(m_uMatrix, 1, GL_FALSE, &m_matrix[0][0]);
                 break;

@@ -443,21 +443,34 @@ namespace videocore { namespace Android {
 
                     glUseProgram(this->m_prog);
                     
-			        glEnableVertexAttribArray(m_vertexAttribPosition);
-			        glEnableVertexAttribArray(m_vertexAttribTexCoord);
-			        glVertexAttribPointer(m_vertexAttribPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, BUFFER_OFFSET(0));
-			        glVertexAttribPointer(m_vertexAttribTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, BUFFER_OFFSET(8));
+                    IVideoFilter* currentFilter = nullptr;
+                    
                     for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i) {
                         
                         for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {
-
+ 			    auto filterit = m_sourceFilters.find(*it);
+                            if(filterit == m_sourceFilters.end()) {
+                                IFilter* filter = m_filterFactory.filter("com.videocore.filters.bgra");
+                                m_sourceFilters[*it] = dynamic_cast<IVideoFilter*>(filter);
+                            }
+                            if(currentFilter != m_sourceFilters[*it]) {
+                                if(currentFilter) {
+                                    currentFilter->unbind();
+                                }
+                                currentFilter = m_sourceFilters[*it];
+                                
+                                if(currentFilter && !currentFilter->initialized()) {
+                                    currentFilter->initialize();
+                                }
+                            }
                             auto iTex = this->m_sourceBuffers.find(*it);
                             if(iTex == this->m_sourceBuffers.end()) continue;
                             
                             auto texture = iTex->second.currentTexture();
                             
-                            if(texture) {
-                                glUniformMatrix4fv(m_uMat, 1, GL_FALSE, &this->m_sourceMats[*it][0][0]);
+                            if(texture && currentFilter) {
+                                currentFilter->incomingMatrix(this->m_sourceMats[*it]);
+                                currentFilter->bind();
                                 glBindTexture(GL_TEXTURE_2D, texture);
                                 glDrawArrays(GL_TRIANGLES, 0, 6);
                             } else {
@@ -482,6 +495,10 @@ namespace videocore { namespace Android {
                 
         }
     }
-   
+    void
+    GLESVideoMixer::setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter *filter) {
+        auto h = hash(source);
+        m_sourceFilters[h] = filter;
+    }
 }
 }
