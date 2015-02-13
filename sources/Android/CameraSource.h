@@ -29,8 +29,6 @@
 
 #include <videocore/sources/ISource.hpp>
 
-#include <OMXAL/OpenMAXAL.h>
-#include <OMXAL/OpenMAXAL_Android.h>
 
 namespace videocore { namespace Android {
 
@@ -47,20 +45,9 @@ namespace videocore { namespace Android {
         void setOutput(std::shared_ptr<IOutput> output) { m_output = output; };
 
     private:
-    	static void cameraCallback(XACameraItf caller, 
-    						void* pContext, 
-    						XAuint32 eventId, 
-    						XAuint32 eventData);
-    	static void recordCallback(XARecordItf caller,
-    							   void* pContext,
-    							   XAuint32 event);
+
     private:
     	std::weak_ptr<IOutput> m_output;
-
-    	XAObjectItf m_recordObject;
-    	XAObjectItf m_cameraObject;
-    	XAObjectItf m_engineObject;
-    	XAEngineItf m_engine;
 
     	std::vector<uint8_t> m_buffer;
 	};

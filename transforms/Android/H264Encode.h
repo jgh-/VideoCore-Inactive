@@ -1,6 +1,8 @@
-#include <OMXAL/OpenMAXAL.h>
-#include <OMXAL/OpenMAXAL_Android.h>
 #include <videocore/transforms/IEncoder.hpp>
+#include <media/stagefright/MediaCodec.h>
+#include <media/stagefright/MediaSource.h>
+#include <media/stagefright/MediaWriter.h>
+#include <media/stagefright/OMXCodec.h>
 
 namespace videocore { namespace Android {
 	class H264Encode : public IEncoder {
@@ -18,6 +20,12 @@ namespace videocore { namespace Android {
         void setBitrate(int bitrate) ;
         const int bitrate() const { return m_bitrate; };
         void requestKeyframe();
+
+    private:
+
+        std::weak_ptr<IOutput> m_output;
+
+        int m_bitrate;
 
 	};
 }}
