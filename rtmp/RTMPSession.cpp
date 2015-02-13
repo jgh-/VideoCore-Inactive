@@ -99,7 +99,7 @@ namespace videocore
     RTMPSession::setSessionParameters(videocore::IMetadata &parameters)
     {
         
-        RTMPSessionParameters_t& parms = dynamic_cast<RTMPSessionParameters_t&>(parameters);
+        RTMPSessionParameters_t& parms = static_cast<RTMPSessionParameters_t&>(parameters);
         m_bitrate = parms.getData<kRTMPSessionParameterVideoBitrate>();
         m_frameDuration = parms.getData<kRTMPSessionParameterFrameDuration>();
         m_frameHeight = parms.getData<kRTMPSessionParameterHeight>();

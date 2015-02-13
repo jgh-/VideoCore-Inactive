@@ -5,6 +5,8 @@
 #include <media/stagefright/OMXCodec.h>
 
 namespace videocore { namespace Android {
+    struct ImageSource;
+
 	class H264Encode : public IEncoder {
 	public:
 		H264Encode();
@@ -22,7 +24,7 @@ namespace videocore { namespace Android {
         void requestKeyframe();
 
     private:
-
+        std::unique_ptr<ImageSource> m_imageSource;
         std::weak_ptr<IOutput> m_output;
 
         int m_bitrate;

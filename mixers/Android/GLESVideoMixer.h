@@ -148,7 +148,7 @@ namespace videocore { namespace Android {
         std::mutex  m_mutex;
         std::condition_variable m_mixThreadCond;
        
-        std::unique_ptr<PixelBuffer> m_pixelBuffer[2];
+        std::shared_ptr<PixelBuffer>   m_pixelBuffer[2];
         EGLImageKHR			           m_texture[2];
 
         unsigned  				  m_vbo, 

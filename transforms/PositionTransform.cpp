@@ -101,7 +101,7 @@ namespace videocore {
 
                 m_positionIsDirty = false;
             }
-            videocore::VideoBufferMetadata& md = dynamic_cast<videocore::VideoBufferMetadata&>(metadata);
+            videocore::VideoBufferMetadata& md = static_cast<videocore::VideoBufferMetadata&>(metadata);
             glm::mat4 & mat = md.getData<videocore::kVideoMetadataMatrix>();
             
             mat = mat * m_matrix;

@@ -364,7 +364,7 @@ namespace videocore { namespace Android {
             return;
         }
         
-        VideoBufferMetadata & md = dynamic_cast<VideoBufferMetadata&>(metadata);
+        VideoBufferMetadata & md =static_cast<VideoBufferMetadata&>(metadata);
         const int zIndex = md.getData<kVideoMetadataZIndex>();
         
         const glm::mat4 mat = md.getData<kVideoMetadataMatrix>();
@@ -451,7 +451,7 @@ namespace videocore { namespace Android {
  			    auto filterit = m_sourceFilters.find(*it);
                             if(filterit == m_sourceFilters.end()) {
                                 IFilter* filter = m_filterFactory.filter("com.videocore.filters.bgra");
-                                m_sourceFilters[*it] = dynamic_cast<IVideoFilter*>(filter);
+                                m_sourceFilters[*it] = (IVideoFilter*)(filter);
                             }
                             if(currentFilter != m_sourceFilters[*it]) {
                                 if(currentFilter) {
@@ -485,7 +485,7 @@ namespace videocore { namespace Android {
                     if(lout) {
                         
                         MetaData<'vide'> md(std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count());
-                        lout->pushBuffer((uint8_t*)this->m_pixelBuffer[!current_fb].get(), sizeof(this->m_pixelBuffer[!current_fb].get()), md);
+                        lout->pushBuffer((uint8_t*)&this->m_pixelBuffer[!current_fb], sizeof(&this->m_pixelBuffer[!current_fb]), md);
                     }
                     this->m_mixing = false;
                 });
