@@ -1,15 +1,33 @@
 #include <videocore/transforms/IEncoder.hpp>
-#include <media/stagefright/MediaCodec.h>
-#include <media/stagefright/MediaSource.h>
-#include <media/stagefright/MediaWriter.h>
-#include <media/stagefright/OMXCodec.h>
+#include <videocore/system/JobQueue.hpp>
+#include <jni.h>
 
 namespace videocore { namespace Android {
-    struct ImageSource;
 
+    struct MediaCodec {
+        jclass klass;
+        jobject obj;
+        jmethodID configure;
+        jmethodID createEncoderByType;
+        jmethodID dequeueInputBuffer;
+        jmethodID queueInputBuffer;
+        jmethodID dequeueOutputBuffer;
+        jmethodID start;
+        jmethodID stop;
+    };
+    struct MediaFormat {
+        jclass klass;
+        jobject obj;
+        jmethodID setInteger;
+        jmethodID createVideoFormat;
+    };
+    struct ByteBuffer {
+        jclass klass;
+        jobject obj;
+    };
 	class H264Encode : public IEncoder {
 	public:
-		H264Encode();
+		H264Encode( JavaVM* vm, int frame_w, int frame_h, int fps, int bitrate );
 		~H264Encode();
 
 	public:
@@ -24,10 +42,18 @@ namespace videocore { namespace Android {
         void requestKeyframe();
 
     private:
-        std::unique_ptr<ImageSource> m_imageSource;
+        MediaCodec m_codec;
+        MediaFormat m_format;
+
+        JobQueue m_queue;
         std::weak_ptr<IOutput> m_output;
+        JavaVM* m_vm;
+        JNIEnv* m_env;
 
         int m_bitrate;
+        int m_frameW;
+        int m_frameH;
+        int m_fps;
 
 	};
 }}
