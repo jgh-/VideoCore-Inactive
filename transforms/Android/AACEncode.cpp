@@ -10,13 +10,13 @@ namespace videocore { namespace Android {
 			DLog("Creating AAC encoder...\n");
 			m_mediaCodec.reset(new VCMediaCodec(vm, "audio/mp4a-latm", frequencyInHz, channelCount));
 
-			m_mediaCodec->setInt32("is-adts", 0);
-			m_mediaCodec->setInt32("bit-rate", averageBitrate);
-			
+			m_mediaCodec->setInt32("bitrate", averageBitrate);
+			m_mediaCodec->setInt32("aac-profile", 2); // AACObjectLC
 
+			DLog("Configuring AAC..\n");
 			m_mediaCodec->configure();
 			m_mediaCodec->start();
-
+			DLog("Done.\n");
 		});
 	}
 
