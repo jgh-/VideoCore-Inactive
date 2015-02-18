@@ -1,30 +1,10 @@
 #include <videocore/transforms/IEncoder.hpp>
 #include <videocore/system/JobQueue.hpp>
-#include <jni.h>
-
+#include <videocore/transforms/Android/VCMediaCodec.h>
+#include <memory>
 namespace videocore { namespace Android {
 
-    struct MediaCodec {
-        jclass klass;
-        jobject obj;
-        jmethodID configure;
-        jmethodID createEncoderByType;
-        jmethodID dequeueInputBuffer;
-        jmethodID queueInputBuffer;
-        jmethodID dequeueOutputBuffer;
-        jmethodID start;
-        jmethodID stop;
-    };
-    struct MediaFormat {
-        jclass klass;
-        jobject obj;
-        jmethodID setInteger;
-        jmethodID createVideoFormat;
-    };
-    struct ByteBuffer {
-        jclass klass;
-        jobject obj;
-    };
+   /* */
 	class H264Encode : public IEncoder {
 	public:
 		H264Encode( JavaVM* vm, int frame_w, int frame_h, int fps, int bitrate );
@@ -42,13 +22,11 @@ namespace videocore { namespace Android {
         void requestKeyframe();
 
     private:
-        MediaCodec m_codec;
-        MediaFormat m_format;
 
+        std::unique_ptr<VCMediaCodec> m_mediaCodec;
+        
         JobQueue m_queue;
         std::weak_ptr<IOutput> m_output;
-        JavaVM* m_vm;
-        JNIEnv* m_env;
 
         int m_bitrate;
         int m_frameW;
