@@ -24,6 +24,7 @@ namespace videocore { namespace Android {
         jmethodID setInteger;
         jmethodID setString;
         jmethodID createVideoFormat;
+        jmethodID createAudioFormat;
     };
     struct ByteBuffer_jni_ {
         jclass klass;

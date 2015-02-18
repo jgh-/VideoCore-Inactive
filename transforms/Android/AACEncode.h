@@ -1,5 +1,5 @@
-#ifndef __videocore_Android_H264Encode
-#define __videocore_Android_H264Encode
+#ifndef __videocore_Android_AACEncode
+#define __videocore_Android_AACEncode
 
 #include <videocore/transforms/IEncoder.hpp>
 #include <videocore/system/JobQueue.hpp>
@@ -8,10 +8,10 @@
 namespace videocore { namespace Android {
 
    /* */
-	class H264Encode : public IEncoder {
+	class AACEncode : public IEncoder {
 	public:
-		H264Encode( JavaVM* vm, int frame_w, int frame_h, int fps, int bitrate );
-		~H264Encode();
+		AACEncode( JavaVM* vm, int frequencyInHz, int channelCount, int averageBitrate );
+		~AACEncode();
 
 	public:
         /*! ITransform */
@@ -22,19 +22,17 @@ namespace videocore { namespace Android {
         /*! IEncoder */
         void setBitrate(int bitrate) ;
         const int bitrate() const { return m_bitrate; };
-        void requestKeyframe();
 
     private:
 
         std::unique_ptr<VCMediaCodec> m_mediaCodec;
-
+        
         JobQueue m_queue;
         std::weak_ptr<IOutput> m_output;
 
         int m_bitrate;
-        int m_frameW;
-        int m_frameH;
-        int m_fps;
+        int m_freq;
+        int m_channelCount;
 
 	};
 }}

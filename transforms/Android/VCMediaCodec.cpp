@@ -78,6 +78,18 @@ namespace videocore { namespace Android {
     {
     	VCMediaCodec::staticInit();
     	init();
+    	if(s_hMediaNdk) {
+    		m_pCodec = AMC_createEncoderByType(mime.c_str());
+    		m_pFmt = AMF_new();
+    		setString("mime", mime);    // The Java createVideoFormat takes mime, width, height
+    		setInt32("channel-count", channelcount);
+    		setInt32("sample-rate", samplerate);
+
+    	} else {
+    		jstring jmime = m_env->NewStringUTF(mime.c_str());
+    		m_oFmt = m_env->CallStaticObjectMethod(m_mfj.klass, m_mfj.createAudioFormat, jmime, samplerate, channelcount);
+    		m_oCodec = m_env->CallStaticObjectMethod(m_mcj.klass, m_mcj.createEncoderByType, jmime);
+    	}
     }
     VCMediaCodec::~VCMediaCodec()
     {
@@ -111,6 +123,7 @@ namespace videocore { namespace Android {
 			m_mfj.setInteger = m_env->GetMethodID(m_mfj.klass, "setInteger", "(Ljava/lang/String;I)V"); // void setInteger(String,Int)
 			m_mfj.setString = m_env->GetMethodID(m_mfj.klass, "setString", "(Ljava/lang/String;Ljava/lang/String;)V");
 			m_mfj.createVideoFormat = m_env->GetStaticMethodID(m_mfj.klass, "createVideoFormat", "(Ljava/lang/String;II)Landroid/media/MediaFormat;");
+			m_mfj.createAudioFormat = m_env->GetStaticMethodID(m_mfj.klass, "createAudioFormat", "(Ljava/lang/String;II)Landroid/media/MediaFormat;");
 
     	}
     }
