@@ -4,6 +4,7 @@
 #include <jni.h>
 #include <stdint.h>
 #include <string>
+#include <unordered_map>
 
 namespace videocore { namespace Android {
 	struct MediaCodec_jni_ {
@@ -15,6 +16,7 @@ namespace videocore { namespace Android {
         jmethodID dequeueOutputBuffer;
         jmethodID getInputBuffer;
         jmethodID getOutputBuffer;
+        jmethodID releaseOutputBuffer;
         jmethodID start;
         jmethodID stop;
         jmethodID release;
@@ -26,8 +28,13 @@ namespace videocore { namespace Android {
         jmethodID createVideoFormat;
         jmethodID createAudioFormat;
     };
-    struct ByteBuffer_jni_ {
-        jclass klass;
+    struct BufferInfo_jni_ {
+    	jclass klass;
+    	jmethodID init;
+    	jfieldID flags;
+    	jfieldID offset;
+    	jfieldID presentationTimeUs;
+    	jfieldID size;
     };
 
     /*
@@ -52,10 +59,11 @@ namespace videocore { namespace Android {
 		// Set the configuration
 		void configure();
 
-		uint8_t* dequeueInputBuffer(ssize_t* outSize);
-		uint8_t* dequeueOutputBuffer(ssize_t* outSize);
-		
-		void enqueueInputBuffer(void* buffer);
+		uint8_t* dequeueInputBuffer(size_t* outSize);
+		uint8_t* dequeueOutputBuffer(size_t* outSize);
+
+		void enqueueInputBuffer(uint8_t* buffer, size_t size);
+		void releaseOutputBuffer(uint8_t* buffer);
 
 	private:
 		static void staticInit();
@@ -64,7 +72,9 @@ namespace videocore { namespace Android {
 
 		MediaCodec_jni_  m_mcj;
 		MediaFormat_jni_ m_mfj;
-		ByteBuffer_jni_  m_bbj;
+		BufferInfo_jni_ m_bij;
+
+		std::unordered_map<uint8_t*, ssize_t> m_mapBufferIdx;
 
 		JavaVM* m_vm;
 		JNIEnv* m_env;
