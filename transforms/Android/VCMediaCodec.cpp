@@ -18,6 +18,8 @@ namespace videocore { namespace Android {
     typedef int (*amc_configure_t)(void*, const void* format, const void* surface, const void* crypto, uint32_t flags);
     typedef int (*amc_start_t)(void*);
     typedef int (*amc_stop_t)(void*);
+	typedef uint8_t* (*amc_getInputBuffer_t)(void*, size_t idx, size_t* out_size);
+	typedef uint8_t* (*amc_getOutputBuffer_t)(void*, size_t idx, size_t* out_size);
 
     static amf_setString_t AMF_setString = nullptr;
     static amf_setInt32_t AMF_setInt32 = nullptr;
@@ -29,7 +31,9 @@ namespace videocore { namespace Android {
     static amc_configure_t AMC_configure = nullptr;
     static amc_start_t AMC_start = nullptr;
     static amc_stop_t AMC_stop = nullptr;
-
+    static amc_getInputBuffer_t AMC_getInputBuffer = nullptr;
+    static amc_getOutputBuffer_t AMC_getOutputBuffer = nullptr;
+    
     void
     VCMediaCodec::staticInit() {
     	if(!s_initialized) {
@@ -40,15 +44,17 @@ namespace videocore { namespace Android {
     			// We are on >= 5.0 and can use the direct C methods
     			DLog("Able to use direct NDK Media Framework\n");
     			AMF_setString 	= (amf_setString_t)dlsym(s_hMediaNdk, "AMediaFormat_setString");
-    			AMF_setInt32 	= (amf_setInt32_t)dlsym(s_hMediaNdk, "AMediaFormat_setInt32");
-    			AMF_new 		= (amf_new_t)dlsym(s_hMediaNdk, "AMediaFormat_new");
-    			AMF_delete 		= (amf_delete_t)dlsym(s_hMediaNdk, "AMediaFormat_delete");
+    			AMF_setInt32 	= (amf_setInt32_t) dlsym(s_hMediaNdk, "AMediaFormat_setInt32");
+    			AMF_new 		= (amf_new_t)      dlsym(s_hMediaNdk, "AMediaFormat_new");
+    			AMF_delete 		= (amf_delete_t)   dlsym(s_hMediaNdk, "AMediaFormat_delete");
 
     			AMC_createEncoderByType 	= (amc_createEncoderByType_t)dlsym(s_hMediaNdk, "AMediaCodec_createEncoderByType");
-    			AMC_delete 					= (amc_delete_t)dlsym(s_hMediaNdk, "AMediaCodec_delete");
-    			AMC_configure 				= (amc_configure_t)dlsym(s_hMediaNdk, "AMediaCodec_configure");
-    			AMC_start 					= (amc_start_t)dlsym(s_hMediaNdk, "AMediaCodec_start");
-    			AMC_stop 					= (amc_stop_t)dlsym(s_hMediaNdk, "AMediaCodec_stop");
+    			AMC_delete 					= (amc_delete_t)             dlsym(s_hMediaNdk, "AMediaCodec_delete");
+    			AMC_configure 				= (amc_configure_t)          dlsym(s_hMediaNdk, "AMediaCodec_configure");
+    			AMC_start 					= (amc_start_t)              dlsym(s_hMediaNdk, "AMediaCodec_start");
+    			AMC_stop 					= (amc_stop_t)               dlsym(s_hMediaNdk, "AMediaCodec_stop");
+    			AMC_getInputBuffer 			= (amc_getInputBuffer_t)     dlsym(s_hMediaNdk, "AMediaCodec_getInputBuffer");
+    			AMC_getOutputBuffer 	 	= (amc_getOutputBuffer_t)	 dlsym(s_hMediaNdk, "AMediaCodec_getOutputBuffer");
     		} 
     	}
     }
@@ -117,6 +123,8 @@ namespace videocore { namespace Android {
 			m_mcj.start = m_env->GetMethodID(m_mcj.klass, "start", "()V");
 			m_mcj.stop = m_env->GetMethodID(m_mcj.klass, "stop", "()V");
 			m_mcj.release = m_env->GetMethodID(m_mcj.klass, "release", "()V");
+			m_mcj.getInputBuffer = m_env->GetMethodID(m_mcj.klass, "getInputBuffer", "(I)Ljava/nio/ByteBuffer;");
+			m_mcj.getOutputBuffer = m_env->GetMethodID(m_mcj.klass, "getOutputBuffer", "(I)Ljava/nio/ByteBuffer;");
 
 			// MediaFormat
 			m_mfj.klass = m_env->FindClass("android/media/MediaFormat");
@@ -174,5 +182,44 @@ namespace videocore { namespace Android {
     	} else {
     		m_env->CallVoidMethod(m_oCodec, m_mcj.configure, m_oFmt, 0, 0, 1);
     	}
+    }
+    void*
+    VCMediaCodec::dequeueInputBuffer(ssize_t* outSize) 
+    {
+    	void* ptr = nullptr;
+    	ssize_t size = 0;
+    	size_t idx = -1;
+
+    	if(s_hMediaNdk) {
+
+    	} else {
+
+    	}
+    	if(outSize) {
+    		*outSize = size;
+    	}
+    	return ptr;
+    }
+    void
+    VCMediaCodec::enqueueBuffer(void* buffer)
+    {
+
+    }
+    void*
+    VCMediaCodec::dequeueOutputBuffer(ssize_t* outSize)
+    {
+    	void* ptr = nullptr;
+    	ssize_t size;
+    	size_t idx = -1;
+
+    	if(s_hMediaNdk) {
+
+    	} else {
+    		
+    	}
+    	if(outSize) {
+    		*outSize = size;
+    	}
+    	return ptr;
     }
 }}

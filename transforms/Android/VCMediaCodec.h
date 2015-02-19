@@ -13,8 +13,8 @@ namespace videocore { namespace Android {
         jmethodID dequeueInputBuffer;
         jmethodID queueInputBuffer;
         jmethodID dequeueOutputBuffer;
-        jmethodID getInputBuffers;
-        jmethodID getOutputBuffers;
+        jmethodID getInputBuffer;
+        jmethodID getOutputBuffer;
         jmethodID start;
         jmethodID stop;
         jmethodID release;
@@ -51,6 +51,11 @@ namespace videocore { namespace Android {
 
 		// Set the configuration
 		void configure();
+
+		uint8_t* dequeueInputBuffer(ssize_t* outSize);
+		uint8_t* dequeueOutputBuffer(ssize_t* outSize);
+		
+		void enqueueInputBuffer(void* buffer);
 
 	private:
 		static void staticInit();
