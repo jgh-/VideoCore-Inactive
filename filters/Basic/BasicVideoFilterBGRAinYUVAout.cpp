@@ -26,7 +26,7 @@ namespace videocore { namespace filters {
     {
         
     }
-    BasicVideoFilterBGRAinYUVAout::BasicVideoFilterBGRAinYUVAout()
+    BasicVideoFilterBGRAinYUVAout::~BasicVideoFilterBGRAinYUVAout()
     {
         glDeleteProgram(m_program);
         glDeleteVertexArrays(1, &m_vao);
@@ -36,7 +36,7 @@ namespace videocore { namespace filters {
     BasicVideoFilterBGRAinYUVAout::vertexKernel() const
     {
         
-        KERNEL(GL_ES2_3, m_language,
+        KERNEL(GL_ES2, m_language,
                attribute vec2 aPos;
                attribute vec2 aCoord;
                varying vec2   vCoord;
@@ -54,15 +54,13 @@ namespace videocore { namespace filters {
     BasicVideoFilterBGRAinYUVAout::pixelKernel() const
     {
         
-        KERNEL(GL_ES2_3, m_language,
+        KERNEL(GL_ES2, m_language,
                precision mediump float;
                varying vec2      vCoord;
                uniform sampler2D uTex0;
-               const mat4 RGBtoYUV(0.257,  0.439, -0.148, 0.0,
-                             0.504, -0.368, -0.291, 0.0,
-                             0.098, -0.071,  0.439, 0.0,
-                             0.0625, 0.500,  0.500, 1.0 );
+
                void main(void) {
+                   
                    gl_FragData[0] = texture2D(uTex0, vCoord) * RGBtoYUV;
                }
                )
@@ -73,7 +71,8 @@ namespace videocore { namespace filters {
     BasicVideoFilterBGRAinYUVAout::initialize()
     {
         switch(m_language) {
-            case GL_ES2_3:
+            case GL_ES3:
+            case GL_ES2:
             case GL_2: {
                 setProgram(build_program(vertexKernel(), pixelKernel()));
                 glGenVertexArrays(1, &m_vao);
@@ -98,7 +97,8 @@ namespace videocore { namespace filters {
     BasicVideoFilterBGRAinYUVAout::bind()
     {
         switch(m_language) {
-            case GL_ES2_3:
+            case GL_ES3:
+            case GL_ES2:
             case GL_2:
                 if(!m_bound) {
                     if(!initialized()) {

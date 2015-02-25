@@ -136,7 +136,7 @@ static inline GLuint compile_shader(GLuint type, const char * source)
         
         log = (char*)malloc((size_t)(length));
         glGetShaderInfoLog(shader, length, &length, &log[0]);
-        DLog("%s compilation error: %s\n", (type == GL_VERTEX_SHADER ? "GL_VERTEX_SHADER" : "GL_FRAGMENT_SHADER"), log);
+        DLog("GL ES SHADER: %s compilation error: %s\n", (type == GL_VERTEX_SHADER ? "GL_VERTEX_SHADER" : "GL_FRAGMENT_SHADER"), log);
         free(log);
         
         return 0;
@@ -173,7 +173,7 @@ static inline GLuint build_program(const char * vertex, const char * fragment)
         
         glGetProgramInfoLog(p, len, &len, log);
         
-        DLog("program log: %s\n", log);
+        DLog("GL ES Program Log: %s\n", log);
         free(log);
     }
 #endif

@@ -34,13 +34,18 @@
 #include <videocore/filters/IFilter.hpp>
 #include <glm/glm.hpp>
 
-#define KERNEL(_language, _target, _kernelstr) if(_language == _target){ do { return # _kernelstr ; } while(0); }
+#define KERNEL(_language, _target, _kernelstr) if(_language == _target){ do { return \
+"const mediump mat4 RGBtoYUV = mat4(0.257,  0.439, -0.148, 0.0," \
+"0.504, -0.368, -0.291, 0.0," \
+"0.098, -0.071,  0.439, 0.0," \
+"0.0625, 0.500,  0.500, 1.0 ); " # _kernelstr ; } while(0); }
 
 
 namespace videocore {
 
     enum FilterLanguage {
-        GL_ES2_3,
+        GL_ES3,
+        GL_ES2,
         GL_2,
         GL_3
     };
@@ -57,15 +62,15 @@ namespace videocore {
         
     public:
         
-        void incomingMatrix(glm::mat4& matrix) {  m_matrix = matrix; };
-        void imageDimensions(float w, float h) { m_dimensions.w = w; m_dimensions.h = h; };
+        void setIncomingMatrix(glm::mat4& matrix) {  m_matrix = matrix; };
+        void setImageDimensions(float w, float h) { m_dimensions.w = w; m_dimensions.h = h; };
         
         void setFilterLanguage(FilterLanguage language) { m_language = language ; };
         void setProgram(int program) { m_program = program; };
         const int program() const { return m_program; };
    
      protected:
-        IVideoFilter() : m_program(0), m_matrix(1.f), m_dimensions({ 1.f, 1.f }), m_language(GL_ES2_3) {};
+        IVideoFilter() : m_program(0), m_matrix(1.f), m_dimensions({ 1.f, 1.f }), m_language(GL_ES2) {};
       
         glm::mat4 m_matrix;
         struct { float w, h ; } m_dimensions;

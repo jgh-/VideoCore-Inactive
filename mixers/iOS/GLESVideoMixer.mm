@@ -200,7 +200,7 @@ namespace videocore { namespace iOS {
                                    std::function<void(void*)> excludeContext )
     : m_bufferDuration(frameDuration),
     m_glesCtx(nullptr),
-    m_frameW(frame_w),
+    m_frameW(frame_w&~3),
     m_frameH(frame_h),
     m_exiting(false),
     m_mixing(false),
@@ -260,6 +260,7 @@ namespace videocore { namespace iOS {
     {
         if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
             m_glesCtx = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
+            //m_isES3 = true;
         }
         if(!m_glesCtx) {
             m_glesCtx = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
@@ -292,14 +293,14 @@ namespace videocore { namespace iOS {
         @autoreleasepool {
             
             if(!m_pixelBufferPool) {
-                NSDictionary* pixelBufferOptions = @{ (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
+                NSDictionary* pixelBufferOptions = @{ (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange),
                                                       (NSString*) kCVPixelBufferWidthKey : @(m_frameW),
                                                       (NSString*) kCVPixelBufferHeightKey : @(m_frameH),
                                                       (NSString*) kCVPixelBufferOpenGLESCompatibilityKey : @YES,
                                                       (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}};
                 
-                CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[0]);
-                CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[1]);
+                CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[0]);
+                CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[1]);
             }
             else {
                 CVReturn ret = CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, m_pixelBufferPool, &m_pixelBuffer[0]);
@@ -310,8 +311,8 @@ namespace videocore { namespace iOS {
         CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, (EAGLContext*)this->m_glesCtx, NULL, &this->m_textureCache);
         glGenFramebuffers(2, this->m_fbo);
         for(int i = 0 ; i < 2 ; ++i) {
-            CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, this->m_textureCache, this->m_pixelBuffer[i], NULL, GL_TEXTURE_2D, GL_RGBA, m_frameW, m_frameH, GL_BGRA, GL_UNSIGNED_BYTE, 0, &m_texture[i]);
-            
+            CVReturn ret = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, this->m_textureCache, this->m_pixelBuffer[i], NULL, GL_TEXTURE_2D, GL_BGRA, m_frameW/4, m_frameH, GL_RGBA, GL_UNSIGNED_BYTE, 0, &m_texture[i]);
+            DLog("CreateTextureFromImage(%d)", ret);
             glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_texture[i]));
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -321,9 +322,20 @@ namespace videocore { namespace iOS {
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_texture[i]), 0);
             
         }
-        
-        
         GL_FRAMEBUFFER_STATUS(__LINE__);
+        
+        glGenFramebuffers(1, &this->m_yuvaFbo);
+        glGenTextures(1, &this->m_yuvaTex);
+        glBindTexture(GL_TEXTURE_2D, this->m_yuvaTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_BGRA, m_frameW, m_frameH, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, this->m_yuvaFbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this->m_yuvaTex, 0);
+
         
         glGenBuffers(1, &this->m_vbo);
         glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
@@ -486,9 +498,12 @@ namespace videocore { namespace iOS {
                 m_mixing = true;
                 PERF_GL_async({
                     glPushGroupMarkerEXT(0, "Videocore.Mix");
-                    //CVPixelBufferLockBaseAddress(this->m_pixelBuffer[current_fb], 0);
                     
-                    glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[current_fb]);
+                    if(m_isES3) {
+                        glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[current_fb]);
+                    } else {
+                        glBindFramebuffer(GL_FRAMEBUFFER, this->m_yuvaFbo);
+                    }
                     
                     glClear(GL_COLOR_BUFFER_BIT);
                     glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
@@ -500,19 +515,19 @@ namespace videocore { namespace iOS {
                     for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i) {
                         
                         for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {
-                           // CVPixelBufferLockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly); // Lock, read-only.
                             CVOpenGLESTextureRef texture = NULL;
                             auto filterit = m_sourceFilters.find(*it);
                             if(filterit == m_sourceFilters.end()) {
-                                IFilter* filter = m_filterFactory.filter("com.videocore.filters.bgra");
+                                IVideoFilter* filter = (IVideoFilter*)m_filterFactory.filter("com.videocore.filters.bgra2yuva");
                                 m_sourceFilters[*it] = dynamic_cast<IVideoFilter*>(filter);
+                                filter->setFilterLanguage(m_isES3 ? GL_ES3 : GL_ES2);
                             }
                             if(currentFilter != m_sourceFilters[*it]) {
                                 if(currentFilter) {
                                     currentFilter->unbind();
                                 }
                                 currentFilter = m_sourceFilters[*it];
-                                
+                                currentFilter->setImageDimensions(m_frameW, m_frameH);
                                 if(currentFilter && !currentFilter->initialized()) {
                                     currentFilter->initialize();
                                 }
@@ -530,29 +545,35 @@ namespace videocore { namespace iOS {
                              glEnable(GL_BLEND);
                              glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                              }*/
+                            
                             if(texture && currentFilter) {
-                                currentFilter->incomingMatrix(this->m_sourceMats[*it]);
+                                currentFilter->setIncomingMatrix(this->m_sourceMats[*it]);
                                 currentFilter->bind();
                                 glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
                                 glDrawArrays(GL_TRIANGLES, 0, 6);
+                                
                             } else {
                                 DLog("Null texture!");
                             }
-                            //if ( iTex->second.currentBuffer() ) {
-                            //    iTex->second.currentBuffer()->setState(kVCPixelBufferStateAvailable);
-                            // }
-                            //GL_ERRORS(__LINE__);
-                           // CVPixelBufferUnlockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly);
+                            
                             /*if(this->m_sourceProperties[*it].blends) {
                              glDisable(GL_BLEND);
                              }*/
                         }
                     }
+                    if(!m_isES3) {
+                        // GL ES 2; do second render to NV12.
+                        glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[current_fb]);
+                        glBindTexture(GL_TEXTURE_2D, this->m_yuvaTex);
+                        IVideoFilter* filter = (IVideoFilter*)m_filterFactory.filter("com.videocore.filters.yuva2i420");
+                        filter->setFilterLanguage(GL_ES2);
+                        filter->setImageDimensions(m_frameW, m_frameH);
+                        currentFilter->unbind();
+                        filter->bind();
+                        glDrawArrays(GL_TRIANGLES, 0, 6);
+                    }
                     glFlush();
                     glPopGroupMarkerEXT();
-                    
-                   // if(locked[!current_fb])
-                   //     CVPixelBufferUnlockBaseAddress(this->m_pixelBuffer[!current_fb], 0);
                     
                     auto lout = this->m_output.lock();
                     if(lout) {
@@ -579,6 +600,7 @@ namespace videocore { namespace iOS {
     GLESVideoMixer::setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter *filter) {
         auto h = hash(source);
         m_sourceFilters[h] = filter;
+        filter->setFilterLanguage(m_isES3 ? GL_ES3 : GL_ES2);
     }
 }
 }

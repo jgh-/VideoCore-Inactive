@@ -1,5 +1,8 @@
 #include <videocore/filters/FilterFactory.h>
 #include <videocore/filters/Basic/BasicVideoFilterBGRA.h>
+#include <videocore/filters/Basic/BasicVideoFilterBGRAinYUVAout.h>
+#include <videocore/filters/Basic/BasicVideoFilterYUVAinNV12out.h>
+#include <videocore/filters/Basic/BasicVideoFilterYUVAinYUVPlanarOut.h>
 
 namespace videocore {
     std::map<std::string, InstantiateFilter>* FilterFactory::s_registration = nullptr ;
@@ -7,6 +10,9 @@ namespace videocore {
     FilterFactory::FilterFactory() {
         {
             filters::BasicVideoFilterBGRA b;
+            filters::BasicVideoFilterBGRAinYUVAout y;
+            filters::BasicVideoFilterYUVAinNV12out n;
+            filters::BasicVideoFilterYUVAinYUVPlanarOut p;
         }
     }
     IFilter*

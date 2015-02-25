@@ -173,7 +173,7 @@ namespace videocore { namespace iOS {
         void*       m_callbackSession;
         void*       m_glesCtx;
         unsigned    m_vbo, m_vao, m_fbo[2], m_prog, m_uMat;
-        
+        unsigned    m_yuvaFbo, m_yuvaTex;
         
         int m_frameW;
         int m_frameH;
@@ -191,6 +191,8 @@ namespace videocore { namespace iOS {
         std::atomic<bool> m_exiting;
         std::atomic<bool> m_mixing;
         std::atomic<bool> m_paused;
+        
+        bool m_isES3;
     };
     
 }
