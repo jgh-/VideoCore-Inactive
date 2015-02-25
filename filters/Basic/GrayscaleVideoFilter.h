@@ -22,22 +22,22 @@
  THE SOFTWARE.
  
  */
-#ifndef videocore_GreyscaleVideoFilter_h
-#define videocore_GreyscaleVideoFilter_h
+#ifndef videocore_GrayscaleVideoFilter_h
+#define videocore_GrayscaleVideoFilter_h
 #include <videocore/filters/IVideoFilter.hpp>
 
 namespace videocore {
     namespace filters {
-        class GreyscaleVideoFilter : public IVideoFilter {
+        class GrayscaleVideoFilter : public IVideoFilter {
             
         public:
-            GreyscaleVideoFilter();
-            ~GreyscaleVideoFilter();
+            GrayscaleVideoFilter();
+            ~GrayscaleVideoFilter();
         
         public:
             virtual void initialize();
             virtual bool initialized() const { return m_initialized; };
-            virtual std::string const name() { return "com.videocore.filters.greyscale"; };
+            virtual std::string const name() { return "com.videocore.filters.grayscale"; };
             virtual void bind();
             virtual void unbind();
             
@@ -60,4 +60,4 @@ namespace videocore {
     }
 }
 
-#endif /* defined(videocore_GreyscaleVideoFilter_h) */
+#endif /* defined(videocore_GrayscaleVideoFilter_h) */

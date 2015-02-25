@@ -1,5 +1,5 @@
 
-#include <videocore/filters/Custom/GreyscaleVideoFilter.h>
+#include <videocore/filters/Basic/GrayscaleVideoFilter.h>
 
 #include <TargetConditionals.h>
 
@@ -15,28 +15,28 @@
 
 namespace videocore { namespace filters {
  
-    bool GreyscaleVideoFilter::s_registered = GreyscaleVideoFilter::registerFilter();
+    bool GrayscaleVideoFilter::s_registered = GrayscaleVideoFilter::registerFilter();
     
     bool
-    GreyscaleVideoFilter::registerFilter()
+    GrayscaleVideoFilter::registerFilter()
     {
-        FilterFactory::_register("com.videocore.filters.greyscale", []() { return new GreyscaleVideoFilter(); });
+        FilterFactory::_register("com.videocore.filters.grayscale", []() { return new GrayscaleVideoFilter(); });
         return true;
     }
     
-    GreyscaleVideoFilter::GreyscaleVideoFilter()
+    GrayscaleVideoFilter::GrayscaleVideoFilter()
     : IVideoFilter(), m_initialized(false), m_bound(false)
     {
         
     }
-    GreyscaleVideoFilter::~GreyscaleVideoFilter()
+    GrayscaleVideoFilter::~GrayscaleVideoFilter()
     {
         glDeleteProgram(m_program);
         glDeleteVertexArrays(1, &m_vao);
     }
     
     const char * const
-    GreyscaleVideoFilter::vertexKernel() const
+    GrayscaleVideoFilter::vertexKernel() const
     {
         
         KERNEL(GL_ES2_3, m_language,
@@ -54,7 +54,7 @@ namespace videocore { namespace filters {
     }
     
     const char * const
-    GreyscaleVideoFilter::pixelKernel() const
+    GrayscaleVideoFilter::pixelKernel() const
     {
         
          KERNEL(GL_ES2_3, m_language,
@@ -71,7 +71,7 @@ namespace videocore { namespace filters {
         return nullptr;
     }
     void
-    GreyscaleVideoFilter::initialize()
+    GrayscaleVideoFilter::initialize()
     {
         switch(m_language) {
             case GL_ES2_3:
@@ -96,7 +96,7 @@ namespace videocore { namespace filters {
         }
     }
     void
-    GreyscaleVideoFilter::bind()
+    GrayscaleVideoFilter::bind()
     {
         switch(m_language) {
             case GL_ES2_3:
@@ -115,7 +115,7 @@ namespace videocore { namespace filters {
         }
     }
     void
-    GreyscaleVideoFilter::unbind()
+    GrayscaleVideoFilter::unbind()
     {
         m_bound = false;
     }

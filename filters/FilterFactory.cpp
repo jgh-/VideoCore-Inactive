@@ -1,6 +1,6 @@
 #include <videocore/filters/FilterFactory.h>
 #include <videocore/filters/Basic/BasicVideoFilterBGRA.h>
-#include <videocore/filters/Custom/GreyscaleVideoFilter.h>
+#include <videocore/filters/Basic/GrayscaleVideoFilter.h>
 
 namespace videocore {
     std::map<std::string, InstantiateFilter>* FilterFactory::s_registration = nullptr ;
@@ -8,7 +8,7 @@ namespace videocore {
     FilterFactory::FilterFactory() {
         {
             filters::BasicVideoFilterBGRA b;
-            filters::GreyscaleVideoFilter g;
+            filters::GrayscaleVideoFilter g;
         }
     }
     IFilter*
