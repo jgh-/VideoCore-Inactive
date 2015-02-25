@@ -3,6 +3,7 @@
 #include <videocore/filters/Basic/BasicVideoFilterBGRAinYUVAout.h>
 #include <videocore/filters/Basic/BasicVideoFilterYUVAinNV12out.h>
 #include <videocore/filters/Basic/BasicVideoFilterYUVAinYUVPlanarOut.h>
+#include <videocore/filters/Basic/GrayscaleVideoFilter.h>
 
 namespace videocore {
     std::map<std::string, InstantiateFilter>* FilterFactory::s_registration = nullptr ;
@@ -13,6 +14,7 @@ namespace videocore {
             filters::BasicVideoFilterBGRAinYUVAout y;
             filters::BasicVideoFilterYUVAinNV12out n;
             filters::BasicVideoFilterYUVAinYUVPlanarOut p;
+            filters::GrayscaleVideoFilter g;
         }
     }
     IFilter*
