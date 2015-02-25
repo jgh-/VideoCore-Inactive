@@ -429,17 +429,16 @@ namespace videocore { namespace iOS {
         
         const auto h = hash(source);
         
-        //CVPixelBufferRef inPixelBuffer = (CVPixelBufferRef)data;
         
         auto inPixelBuffer = *(Apple::PixelBufferRef*)data ;
-        
+
         m_sourceBuffers[h].setBuffer(inPixelBuffer, this->m_textureCache, m_glJobQueue, m_glesCtx);
+        
         auto it = std::find(this->m_layerMap[zIndex].begin(), this->m_layerMap[zIndex].end(), h);
         if(it == this->m_layerMap[zIndex].end()) {
             this->m_layerMap[zIndex].push_back(h);
         }
         this->m_sourceMats[h] = mat;
-        
     }
     void
     GLESVideoMixer::setOutput(std::shared_ptr<IOutput> output)
