@@ -53,7 +53,7 @@ namespace videocore
         virtual ~IVideoMixer() {};
         virtual void setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter* filter)=0;
         virtual FilterFactory& filterFactory() = 0;
-        
+        virtual void sync() = 0;
     };
 }
 

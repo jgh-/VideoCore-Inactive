@@ -40,7 +40,6 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
 
@@ -466,6 +465,7 @@ namespace videocore { namespace iOS {
         bool locked[2] = {false};
         
         m_nextMixTime = std::chrono::steady_clock::now();
+        auto pts = m_nextMixTime;
         
         while(!m_exiting.load())
         {
@@ -473,8 +473,12 @@ namespace videocore { namespace iOS {
             const auto now = std::chrono::steady_clock::now();
             
             if(now >= m_nextMixTime) {
+                if(!m_shouldSync) {
+                    m_nextMixTime += us;
+                } else {
+                    m_nextMixTime = m_syncPoint > m_nextMixTime ? m_syncPoint + us : m_nextMixTime + us;
+                }
                 
-                m_nextMixTime += us;
                 
                 if(m_mixing.load() || m_paused.load()) {
                     continue;
@@ -485,21 +489,13 @@ namespace videocore { namespace iOS {
                 m_mixing = true;
                 PERF_GL_async({
                     glPushGroupMarkerEXT(0, "Videocore.Mix");
-                    //CVPixelBufferLockBaseAddress(this->m_pixelBuffer[current_fb], 0);
-                    
                     glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[current_fb]);
-                    
-                    glClear(GL_COLOR_BUFFER_BIT);
-                    glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
-                    glBindVertexArrayOES(this->m_vao);
-                    glUseProgram(this->m_prog);
                     
                     IVideoFilter* currentFilter = nil;
                     
                     for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i) {
                         
                         for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {
-                           // CVPixelBufferLockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly); // Lock, read-only.
                             CVOpenGLESTextureRef texture = NULL;
                             auto filterit = m_sourceFilters.find(*it);
                             if(filterit == m_sourceFilters.end()) {
@@ -522,8 +518,6 @@ namespace videocore { namespace iOS {
                             
                             texture = iTex->second.currentTexture();
                             
-                            //DLog("Composing %p", iTex->second.currentBuffer()->cvBuffer());
-                            
                             // TODO: Add blending.
                             /*if(this->m_sourceProperties[*it].blends) {
                              glEnable(GL_BLEND);
@@ -537,11 +531,6 @@ namespace videocore { namespace iOS {
                             } else {
                                 DLog("Null texture!");
                             }
-                            //if ( iTex->second.currentBuffer() ) {
-                            //    iTex->second.currentBuffer()->setState(kVCPixelBufferStateAvailable);
-                            // }
-                            //GL_ERRORS(__LINE__);
-                           // CVPixelBufferUnlockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly);
                             /*if(this->m_sourceProperties[*it].blends) {
                              glDisable(GL_BLEND);
                              }*/
@@ -550,19 +539,20 @@ namespace videocore { namespace iOS {
                     glFlush();
                     glPopGroupMarkerEXT();
                     
-                   // if(locked[!current_fb])
-                   //     CVPixelBufferUnlockBaseAddress(this->m_pixelBuffer[!current_fb], 0);
                     
                     auto lout = this->m_output.lock();
                     if(lout) {
                         
-                        MetaData<'vide'> md(std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count());
+                        MetaData<'vide'> md(std::chrono::duration_cast<std::chrono::milliseconds>(pts - m_epoch).count());
                         lout->pushBuffer((uint8_t*)this->m_pixelBuffer[!current_fb], sizeof(this->m_pixelBuffer[!current_fb]), md);
                     }
                     this->m_mixing = false;
+        
                 });
                 current_fb = !current_fb;
+                pts += us;
             }
+            
             m_mixThreadCond.wait_until(l, m_nextMixTime);
                 
         }

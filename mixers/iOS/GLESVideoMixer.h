@@ -102,6 +102,8 @@ namespace videocore { namespace iOS {
         /*! IVideoMixer::setSourceFilter */
         void setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter *filter);
         
+        void sync() { m_syncPoint = std::chrono::steady_clock::now() ; m_shouldSync = true ; };
+        
         FilterFactory& filterFactory() { return m_filterFactory; };
         
         /*! IOutput::pushBuffer */
@@ -185,12 +187,15 @@ namespace videocore { namespace iOS {
         std::unordered_map<std::size_t, IVideoFilter*>   m_sourceFilters;
         std::unordered_map<std::size_t, SourceBuffer> m_sourceBuffers;
         
+        std::chrono::steady_clock::time_point m_syncPoint;
         std::chrono::steady_clock::time_point m_epoch;
         std::chrono::steady_clock::time_point m_nextMixTime;
         
         std::atomic<bool> m_exiting;
         std::atomic<bool> m_mixing;
         std::atomic<bool> m_paused;
+        
+        bool              m_shouldSync;
     };
     
 }
