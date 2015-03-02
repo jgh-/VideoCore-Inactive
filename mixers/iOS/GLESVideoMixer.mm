@@ -457,6 +457,7 @@ namespace videocore { namespace iOS {
     GLESVideoMixer::mixThread()
     {
         const auto us = std::chrono::microseconds(static_cast<long long>(m_bufferDuration * 1000000.));
+        const auto us_25 = std::chrono::microseconds(static_cast<long long>(m_bufferDuration * 250000.));
         
         pthread_setname_np("com.videocore.compositeloop");
         
@@ -472,7 +473,7 @@ namespace videocore { namespace iOS {
             std::unique_lock<std::mutex> l(m_mutex);
             const auto now = std::chrono::steady_clock::now();
             
-            if(now >= m_nextMixTime) {
+            if(now >= (m_nextMixTime - us_25)) {
                 if(!m_shouldSync) {
                     m_nextMixTime += us;
                 } else {
