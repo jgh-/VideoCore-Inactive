@@ -458,6 +458,7 @@ namespace videocore { namespace iOS {
     {
         const auto us = std::chrono::microseconds(static_cast<long long>(m_bufferDuration * 1000000.));
         const auto us_25 = std::chrono::microseconds(static_cast<long long>(m_bufferDuration * 250000.));
+        m_us25 = us_25;
         
         pthread_setname_np("com.videocore.compositeloop");
         
@@ -569,6 +570,14 @@ namespace videocore { namespace iOS {
     GLESVideoMixer::setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter *filter) {
         auto h = hash(source);
         m_sourceFilters[h] = filter;
+    }
+    void
+    GLESVideoMixer::sync() {
+        m_syncPoint = std::chrono::steady_clock::now();
+        m_shouldSync = true;
+        if(m_syncPoint >= (m_nextMixTime - m_us25)) {
+            m_mixThreadCond.notify_all();
+        }
     }
 }
 }
