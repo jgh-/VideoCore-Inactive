@@ -474,7 +474,7 @@ namespace videocore { namespace iOS {
             std::unique_lock<std::mutex> l(m_mutex);
             const auto now = std::chrono::steady_clock::now();
             
-            if(now >= (m_nextMixTime - us_25)) {
+            if(now >= (m_nextMixTime)) {
                 if(!m_shouldSync) {
                     m_nextMixTime += us;
                 } else {
@@ -575,7 +575,7 @@ namespace videocore { namespace iOS {
     GLESVideoMixer::sync() {
         m_syncPoint = std::chrono::steady_clock::now();
         m_shouldSync = true;
-        if(m_syncPoint >= (m_nextMixTime - m_us25)) {
+        if(m_syncPoint >= (m_nextMixTime)) {
             m_mixThreadCond.notify_all();
         }
     }
