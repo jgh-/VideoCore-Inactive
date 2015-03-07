@@ -394,7 +394,7 @@ namespace videocore {
     {
         const auto us = std::chrono::microseconds(static_cast<long long>(m_frameDuration * 1000000.)) ;
 
-        const auto start = std::chrono::steady_clock::now();
+        const auto start = m_epoch;
         
         m_nextMixTime = start + us;
         m_currentWindow->start = start;
@@ -408,6 +408,15 @@ namespace videocore {
             if( now >= m_currentWindow->next->start ) {
                 
                 auto currentTime = m_nextMixTime;
+               
+                auto ptsdiff = currentTime - m_epoch;
+                auto nowdiff = std::chrono::steady_clock::now() - m_epoch;
+                if(ptsdiff > nowdiff && ptsdiff - nowdiff > std::chrono::milliseconds(200)) {
+                    m_nextMixTime = std::chrono::steady_clock::now();
+                } else if ( ptsdiff < nowdiff && nowdiff - ptsdiff > std::chrono::milliseconds(200)) {
+                    m_nextMixTime = std::chrono::steady_clock::now();
+                }
+                
                 m_nextMixTime += us;
                 
                 MixWindow* currentWindow = m_currentWindow;

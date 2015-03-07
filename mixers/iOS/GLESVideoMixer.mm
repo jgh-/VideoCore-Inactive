@@ -467,7 +467,8 @@ namespace videocore { namespace iOS {
         bool locked[2] = {false};
         
         m_nextMixTime = std::chrono::steady_clock::now();
-        auto pts = m_nextMixTime;
+        auto pts = m_epoch;
+        
         
         while(!m_exiting.load())
         {
@@ -553,6 +554,14 @@ namespace videocore { namespace iOS {
                 });
                 current_fb = !current_fb;
                 pts += us;
+                
+                auto ptsdiff = pts - m_epoch;
+                auto nowdiff = std::chrono::steady_clock::now() - m_epoch;
+                if(ptsdiff > nowdiff && ptsdiff - nowdiff > std::chrono::milliseconds(200)) {
+                    pts = std::chrono::steady_clock::now();
+                } else if ( ptsdiff < nowdiff && nowdiff - ptsdiff > std::chrono::milliseconds(200)) {
+                    pts = std::chrono::steady_clock::now();
+                }
             }
             
             m_mixThreadCond.wait_until(l, m_nextMixTime);
