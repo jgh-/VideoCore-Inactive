@@ -103,7 +103,8 @@ namespace videocore {
     m_outBitsPerChannel(16),
     m_exiting(false),
     m_mixQueue("com.videocore.audiomix", kJobQueuePriorityHigh),
-    m_outgoingWindow(nullptr)
+    m_outgoingWindow(nullptr),
+    m_catchingUp(false)
     {
         m_bytesPerSample = outChannelCount * outBitsPerChannel / 8;
 
@@ -121,10 +122,7 @@ namespace videocore {
         m_currentWindow = m_windows[0].get();
         m_currentWindow->start = std::chrono::steady_clock::now();
 
-        m_mixThread = std::thread([this]() {
-            pthread_setname_np("com.videocore.audiomixer");
-            this->mixThread();
-        });
+
     }
     GenericAudioMixer::~GenericAudioMixer()
     {
@@ -133,6 +131,14 @@ namespace videocore {
         m_mixThread.join();
         m_mixQueue.mark_exiting();
         m_mixQueue.enqueue_sync([]() {});
+    }
+    void
+    GenericAudioMixer::start()
+    {
+        m_mixThread = std::thread([this]() {
+            pthread_setname_np("com.videocore.audiomixer");
+            this->mixThread();
+        });
     }
     void
     GenericAudioMixer::setMinimumBufferDuration(const double duration)
@@ -408,16 +414,27 @@ namespace videocore {
             if( now >= m_currentWindow->next->start ) {
                 
                 auto currentTime = m_nextMixTime;
-               
-                auto ptsdiff = currentTime - m_epoch;
+                
+                auto ptsdiff = m_nextMixTime - m_epoch;
                 auto nowdiff = std::chrono::steady_clock::now() - m_epoch;
-                if(ptsdiff > nowdiff && ptsdiff - nowdiff > std::chrono::milliseconds(200)) {
-                    m_nextMixTime = std::chrono::steady_clock::now();
-                } else if ( ptsdiff < nowdiff && nowdiff - ptsdiff > std::chrono::milliseconds(200)) {
-                    m_nextMixTime = std::chrono::steady_clock::now();
+                if(ptsdiff > nowdiff) {
+                    if(ptsdiff - nowdiff > std::chrono::milliseconds(200)) {
+                        m_catchingUp = true;
+                    } else if(ptsdiff - nowdiff <= std::chrono::milliseconds(50)) {
+                        m_catchingUp = false;
+                    }
+                } else if ( ptsdiff < nowdiff) {
+                    m_catchingUp = false;
+                    if (nowdiff - ptsdiff > std::chrono::milliseconds(200)) {
+                        m_nextMixTime = std::chrono::steady_clock::now();
+                    }
                 }
                 
-                m_nextMixTime += us;
+                if(!m_catchingUp) {
+                    m_nextMixTime += us;
+                } else {
+                    m_nextMixTime += std::chrono::milliseconds(1);
+                }
                 
                 MixWindow* currentWindow = m_currentWindow;
                 MixWindow* nextWindow = currentWindow->next;

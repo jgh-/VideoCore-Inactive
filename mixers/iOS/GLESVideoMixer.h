@@ -120,6 +120,8 @@ namespace videocore { namespace iOS {
             m_nextMixTime = epoch;
         };
         
+        void start();
+        
     public:
         
         void mixPaused(bool paused);
@@ -197,6 +199,7 @@ namespace videocore { namespace iOS {
         std::atomic<bool> m_paused;
         
         bool              m_shouldSync;
+        bool              m_catchingUp;
     };
     
 }

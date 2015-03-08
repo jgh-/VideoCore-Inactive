@@ -205,7 +205,8 @@ namespace videocore { namespace iOS {
     m_mixing(false),
     m_pixelBufferPool(pool),
     m_paused(false),
-    m_glJobQueue("com.videocore.composite")
+    m_glJobQueue("com.videocore.composite"),
+    m_catchingUp(false)
     {
         PERF_GL_sync({
             
@@ -214,7 +215,6 @@ namespace videocore { namespace iOS {
         });
         m_zRange.first = INT_MAX;
         m_zRange.second = INT_MIN;
-        m_mixThread = std::thread([this](){ this->mixThread(); });
         
         m_callbackSession = [[GLESObjCCallback alloc] init];
         [(GLESObjCCallback*)m_callbackSession setMixer:this];
@@ -253,6 +253,10 @@ namespace videocore { namespace iOS {
         m_mixThread.join();
         
         [(id)m_callbackSession release];
+    }
+    void
+    GLESVideoMixer::start() {
+        m_mixThread = std::thread([this](){ this->mixThread(); });
     }
     void
     GLESVideoMixer::setupGLES(std::function<void(void*)> excludeContext)
@@ -553,14 +557,26 @@ namespace videocore { namespace iOS {
         
                 });
                 current_fb = !current_fb;
-                pts += us;
                 
                 auto ptsdiff = pts - m_epoch;
                 auto nowdiff = std::chrono::steady_clock::now() - m_epoch;
-                if(ptsdiff > nowdiff && ptsdiff - nowdiff > std::chrono::milliseconds(200)) {
-                    pts = std::chrono::steady_clock::now();
-                } else if ( ptsdiff < nowdiff && nowdiff - ptsdiff > std::chrono::milliseconds(200)) {
-                    pts = std::chrono::steady_clock::now();
+                if(ptsdiff > nowdiff) {
+                    if(ptsdiff - nowdiff > std::chrono::milliseconds(200)) {
+                        m_catchingUp = true;
+                    } else if(ptsdiff - nowdiff <= std::chrono::milliseconds(50)) {
+                        m_catchingUp = false;
+                    }
+                } else if ( ptsdiff < nowdiff) {
+                    m_catchingUp = false;
+                    if (nowdiff - ptsdiff > std::chrono::milliseconds(200)) {
+                        pts = std::chrono::steady_clock::now();
+                    }
+                }
+                
+                if(!m_catchingUp) {
+                    pts += us;
+                } else {
+                    pts += std::chrono::milliseconds(1);
                 }
             }
             
