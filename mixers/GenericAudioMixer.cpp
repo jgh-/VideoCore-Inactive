@@ -402,7 +402,7 @@ namespace videocore {
 
         const auto start = m_epoch;
         
-        m_nextMixTime = start + us;
+        m_nextMixTime = start;
         m_currentWindow->start = start;
         m_currentWindow->next->start = start + us;
         
