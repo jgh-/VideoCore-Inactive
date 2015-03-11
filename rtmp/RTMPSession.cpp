@@ -837,7 +837,7 @@ namespace videocore
                 sendHeaderPacket();
                 
                 sendSetChunkSize(getpagesize());
-                
+               // sendSetBufferTime(0);
                 setClientState(kClientStateSessionStarted);
                 
                 m_throughputSession.start();
