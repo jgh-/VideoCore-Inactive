@@ -415,32 +415,14 @@ namespace videocore {
                 
                 auto currentTime = m_nextMixTime;
                 
-                auto ptsdiff = m_nextMixTime - m_epoch;
-                auto nowdiff = std::chrono::steady_clock::now() - m_epoch;
-                if(ptsdiff > nowdiff) {
-                    if(ptsdiff - nowdiff > std::chrono::milliseconds(200)) {
-                        m_catchingUp = true;
-                    } else if(ptsdiff - nowdiff <= std::chrono::milliseconds(50)) {
-                        m_catchingUp = false;
-                    }
-                } else if ( ptsdiff < nowdiff) {
-                    m_catchingUp = false;
-                    if (nowdiff - ptsdiff > std::chrono::milliseconds(200)) {
-                        m_nextMixTime = std::chrono::steady_clock::now();
-                    }
-                }
-                
-                if(!m_catchingUp) {
-                    m_nextMixTime += us;
-                } else {
-                    m_nextMixTime += std::chrono::milliseconds(1);
-                }
                 
                 MixWindow* currentWindow = m_currentWindow;
                 MixWindow* nextWindow = currentWindow->next;
                 
                 nextWindow->start = currentWindow->start + us;
                 nextWindow->next->start = nextWindow->start + us;
+                
+                m_nextMixTime = currentWindow->start;
                 
                 AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_epoch).count() );
                 std::shared_ptr<videocore::ISource> blank;

@@ -470,9 +470,7 @@ namespace videocore { namespace iOS {
         
         bool locked[2] = {false};
         
-        m_nextMixTime = std::chrono::steady_clock::now();
-        auto pts = m_epoch;
-        
+        m_nextMixTime = m_epoch;
         
         while(!m_exiting.load())
         {
@@ -480,6 +478,8 @@ namespace videocore { namespace iOS {
             const auto now = std::chrono::steady_clock::now();
             
             if(now >= (m_nextMixTime)) {
+                
+                auto currentTime = m_nextMixTime;
                 if(!m_shouldSync) {
                     m_nextMixTime += us;
                 } else {
@@ -550,7 +550,7 @@ namespace videocore { namespace iOS {
                     auto lout = this->m_output.lock();
                     if(lout) {
                         
-                        MetaData<'vide'> md(std::chrono::duration_cast<std::chrono::milliseconds>(pts - m_epoch).count());
+                        MetaData<'vide'> md(std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_epoch).count());
                         lout->pushBuffer((uint8_t*)this->m_pixelBuffer[!current_fb], sizeof(this->m_pixelBuffer[!current_fb]), md);
                     }
                     this->m_mixing = false;
@@ -558,7 +558,7 @@ namespace videocore { namespace iOS {
                 });
                 current_fb = !current_fb;
                 
-                auto ptsdiff = pts - m_epoch;
+                /*auto ptsdiff = pts - m_epoch;
                 auto nowdiff = std::chrono::steady_clock::now() - m_epoch;
                 if(ptsdiff > nowdiff) {
                     if(ptsdiff - nowdiff > std::chrono::milliseconds(200)) {
@@ -577,7 +577,7 @@ namespace videocore { namespace iOS {
                     pts += us;
                 } else {
                     pts += std::chrono::milliseconds(1);
-                }
+                }*/
             }
             
             m_mixThreadCond.wait_until(l, m_nextMixTime);
@@ -600,9 +600,9 @@ namespace videocore { namespace iOS {
     GLESVideoMixer::sync() {
         m_syncPoint = std::chrono::steady_clock::now();
         m_shouldSync = true;
-        if(m_syncPoint >= (m_nextMixTime)) {
-            m_mixThreadCond.notify_all();
-        }
+        //if(m_syncPoint >= (m_nextMixTime)) {
+        //    m_mixThreadCond.notify_all();
+        //}
     }
 }
 }
