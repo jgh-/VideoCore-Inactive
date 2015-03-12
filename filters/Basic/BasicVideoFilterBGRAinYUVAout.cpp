@@ -26,7 +26,7 @@ namespace videocore { namespace filters {
     {
         
     }
-    BasicVideoFilterBGRAinYUVAout::BasicVideoFilterBGRAinYUVAout()
+    BasicVideoFilterBGRAinYUVAout::~BasicVideoFilterBGRAinYUVAout()
     {
         glDeleteProgram(m_program);
         glDeleteVertexArrays(1, &m_vao);
