@@ -757,6 +757,9 @@ namespace videocore { namespace simpleApi {
     m_audioMixer->setEpoch(epoch);
     m_videoMixer->setEpoch(epoch);
 
+    m_audioMixer->start();
+    m_videoMixer->start();
+    
     m_h264Packetizer->setOutput(m_outputSession);
     m_aacPacketizer->setOutput(m_outputSession);
 
