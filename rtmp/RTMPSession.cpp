@@ -44,8 +44,9 @@ namespace videocore
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
+        m_networkWaitSemaphore = dispatch_semaphore_create(0);
 #endif
-        
+      
         
         boost::char_separator<char> sep("/");
         boost::tokenizer<boost::char_separator<char>> uri_tokens(uri, sep);
@@ -85,11 +86,15 @@ namespace videocore
         if(m_state == kClientStateConnected) {
             sendDeleteStream();
         }
+
         m_ending = true;
         m_jobQueue.mark_exiting();
         m_jobQueue.enqueue_sync([]() {});
         m_networkQueue.mark_exiting();
         m_networkQueue.enqueue_sync([]() {});
+#ifdef __APPLE__
+        dispatch_release(m_networkWaitSemaphore);
+#endif
     }
     void
     RTMPSession::setSessionParameters(videocore::IMetadata &parameters)
@@ -200,8 +205,6 @@ namespace videocore
     void
     RTMPSession::write(uint8_t* data, size_t size, std::chrono::steady_clock::time_point packetTime, bool isKeyframe)
     {
-        //static std::chrono::steady_clock::time_point previousTimePoint = std::chrono::steady_clock::now();
-        
         if(size > 0) {
             std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(size);
             buf->put(data, size);
@@ -227,10 +230,14 @@ namespace videocore
                     tosend -= sent;
                     this->m_throughputSession.addSentBytesSample(sent);
                     if( sent == 0 ) {
+#ifdef __APPLE__
+                        dispatch_semaphore_wait(m_networkWaitSemaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)));
+#else
                         std::unique_lock<std::mutex> l(m_networkMutex);
                         m_networkCond.wait_until(l, std::chrono::steady_clock::now() + std::chrono::milliseconds(1000));
                         
                         l.unlock();
+#endif
                     }
                 }
                 this->increaseBuffer(-int64_t(size));
@@ -324,12 +331,14 @@ namespace videocore
         if(status & kStreamStatusWriteBufferHasSpace) {
             if(m_state < kClientStateHandshakeComplete) {
                 handshake();
-            } else { /*if (!m_ending) {
-                      m_jobQueue.enqueue([this]() {
-                      this->write(nullptr, 0);
-                      }); */
+            } else {
+                
+#ifdef __APPLE__
+                dispatch_semaphore_signal(m_networkWaitSemaphore);
+#else 
                 m_networkMutex.unlock();
                 m_networkCond.notify_one();
+#endif
             }
         }
         if(status & kStreamStatusEndStream) {

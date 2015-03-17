@@ -126,8 +126,13 @@ namespace videocore
         JobQueue            m_networkQueue;
         JobQueue            m_jobQueue;
         std::chrono::steady_clock::time_point m_sentKeyframe;
+        
+#ifdef __APPLE__
+        dispatch_semaphore_t    m_networkWaitSemaphore;
+#else
         std::condition_variable m_networkCond;
         std::mutex              m_networkMutex;
+#endif
         
         RingBuffer          m_streamOutRemainder;
         Buffer              m_s1, m_c1;
