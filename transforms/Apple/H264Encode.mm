@@ -242,6 +242,9 @@ namespace videocore { namespace Apple {
             
             err = VTSessionSetProperty(session, kVTCompressionPropertyKey_ProfileLevel, profileLevel);
         }
+        if(!useBaseline) {
+            VTSessionSetProperty(session, kVTCompressionPropertyKey_H264EntropyMode, kVTH264EntropyMode_CABAC);
+        }
         if(err == noErr) {
             VTCompressionSessionPrepareToEncodeFrames(session);
         }
