@@ -63,8 +63,8 @@ namespace videocore { namespace iOS {
         } Buffer_;
         
         std::map< CVPixelBufferRef, Buffer_ >   m_pixelBuffers;
-        Apple::PixelBufferRef  m_currentBuffer;
-        CVOpenGLESTextureRef        m_currentTexture;
+        Apple::PixelBufferRef                   m_currentBuffer;
+        CVOpenGLESTextureRef                    m_currentTexture;
     };
     /*
      *  Takes CVPixelBufferRef inputs and outputs a single CVPixelBufferRef that has been composited from the various sources.

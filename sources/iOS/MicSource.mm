@@ -30,6 +30,23 @@
 
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
+
+@implementation InterruptionHandler
+
+- (void) handleInterruption:(NSNotification*)notification
+{
+    NSDictionary* userInfo = notification.userInfo;
+    
+    if([userInfo[AVAudioSessionInterruptionTypeKey] intValue] == AVAudioSessionInterruptionTypeBegan) {
+        _source->interruptionBegan();
+    } else {
+        _source->interruptionEnded();
+    }
+}
+
+@end
+        
+        
 static std::weak_ptr<videocore::iOS::MicSource> s_micSource;
 
 static OSStatus handleInputBuffer(void *inRefCon,
@@ -116,6 +133,11 @@ namespace videocore { namespace iOS {
                 AudioUnitSetProperty(bThis->m_audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &desc, sizeof(desc));
                 AudioUnitSetProperty(bThis->m_audioUnit, kAudioOutputUnitProperty_SetInputCallback, kAudioUnitScope_Global, 1, &cb, sizeof(cb));
                 
+                m_interruptionHandler = [[InterruptionHandler alloc] init];
+                m_interruptionHandler->_source = this;
+                
+                [[NSNotificationCenter defaultCenter] addObserver:m_interruptionHandler selector:@selector(handleInterruption:) name:AVAudioSessionInterruptionNotification object:nil];
+                
                 AudioUnitInitialize(bThis->m_audioUnit);
                 OSStatus ret = AudioOutputUnitStart(bThis->m_audioUnit);
                 if(ret != noErr) {
@@ -132,12 +154,10 @@ namespace videocore { namespace iOS {
 
     }
     MicSource::~MicSource() {
-        //auto output = m_output.lock();
-        //if(output) {
-        //    auto mixer = std::dynamic_pointer_cast<IAudioMixer>(output);
-        //    mixer->unregisterSource(shared_from_this());
-        //}
         if(m_audioUnit) {
+            [[NSNotificationCenter defaultCenter] removeObserver:m_interruptionHandler];
+            [m_interruptionHandler release];
+            
             AudioOutputUnitStop(m_audioUnit);
             AudioComponentInstanceDispose(m_audioUnit);
         }
@@ -162,6 +182,16 @@ namespace videocore { namespace iOS {
             
             output->pushBuffer(data, data_size, md);
         }
+    }
+    void
+    MicSource::interruptionBegan() {
+        DLog("interruptionBegan");
+        AudioOutputUnitStop(m_audioUnit);
+    }
+    void
+    MicSource::interruptionEnded() {
+        DLog("interruptionEnded");
+        AudioOutputUnitStart(m_audioUnit);
     }
     void
     MicSource::setOutput(std::shared_ptr<IOutput> output) {

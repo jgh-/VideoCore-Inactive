@@ -557,27 +557,6 @@ namespace videocore { namespace iOS {
         
                 });
                 current_fb = !current_fb;
-                
-                /*auto ptsdiff = pts - m_epoch;
-                auto nowdiff = std::chrono::steady_clock::now() - m_epoch;
-                if(ptsdiff > nowdiff) {
-                    if(ptsdiff - nowdiff > std::chrono::milliseconds(200)) {
-                        m_catchingUp = true;
-                    } else if(ptsdiff - nowdiff <= std::chrono::milliseconds(50)) {
-                        m_catchingUp = false;
-                    }
-                } else if ( ptsdiff < nowdiff) {
-                    m_catchingUp = false;
-                    if (nowdiff - ptsdiff > std::chrono::milliseconds(200)) {
-                        pts = std::chrono::steady_clock::now();
-                    }
-                }
-                
-                if(!m_catchingUp) {
-                    pts += us;
-                } else {
-                    pts += std::chrono::milliseconds(1);
-                }*/
             }
             
             m_mixThreadCond.wait_until(l, m_nextMixTime);

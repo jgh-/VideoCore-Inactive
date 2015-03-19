@@ -38,6 +38,8 @@
 
 namespace videocore
 {
+    static const size_t kMaxSendbufferSize = 10 * 1024 * 1024; // 10 MB
+    
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback callback)
     : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_callback(callback), m_bandwidthCallback(nullptr), m_outChunkSize(128), m_inChunkSize(128), m_bufferSize(0), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false),
     m_jobQueue("com.videocore.rtmp"), m_networkQueue("com.videocore.rtmp.network"), m_previousTs(0), m_clearing(false)
@@ -215,7 +217,7 @@ namespace videocore
             if(isKeyframe) {
                 m_sentKeyframe = packetTime;
             }
-            if(m_bufferSize > 2000000 && isKeyframe) {
+            if(m_bufferSize > kMaxSendbufferSize && isKeyframe) {
                 m_clearing = true;
             }
             m_networkQueue.enqueue([=]() {
