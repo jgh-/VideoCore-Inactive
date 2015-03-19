@@ -147,6 +147,7 @@ namespace videocore { namespace Apple {
     void
     H264Encode::setupCompressionSession( bool useBaseline )
     {
+        m_baseline = useBaseline;
         
 #if VERSION_OK
         // Parts of this code pulled from https://github.com/galad87/HandBrake-QuickSync-Mac/blob/2c1332958f7095c640cbcbcb45ffc955739d5945/libhb/platform/macosx/encvt_h264.c
@@ -221,7 +222,7 @@ namespace videocore { namespace Apple {
         }
         
         if(err == noErr) {
-            CFBooleanRef allowFrameReodering = useBaseline ? kCFBooleanFalse : kCFBooleanFalse;
+            CFBooleanRef allowFrameReodering = useBaseline ? kCFBooleanFalse : kCFBooleanTrue;
             err = VTSessionSetProperty(session , kVTCompressionPropertyKey_AllowFrameReordering, allowFrameReodering);
         }
         

@@ -69,7 +69,7 @@ namespace videocore { namespace Apple {
         int                    m_fps;
         int                    m_bitrate;
         
-        
+        bool                   m_baseline;
         bool                   m_forceKeyframe;
     };
 }

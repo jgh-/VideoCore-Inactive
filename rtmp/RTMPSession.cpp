@@ -74,7 +74,7 @@ namespace videocore
         
         m_playPath = pp.str();
         m_playPath.pop_back();
-        
+        DLog("playPath: %s, app: %s", m_playPath.c_str(), m_app.c_str());
         long port = (m_uri.port > 0) ? m_uri.port : 1935;
         
         m_streamSession->connect(m_uri.host, static_cast<int>(port), [&](IStreamSession& session, StreamStatus_t status) {
