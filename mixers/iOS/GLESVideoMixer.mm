@@ -248,9 +248,13 @@ namespace videocore { namespace iOS {
             
             [(id)m_glesCtx release];
         });
+        
+        if(m_mixThread.joinable()) {
+            m_mixThread.join();
+        }
         m_glJobQueue.mark_exiting();
         m_glJobQueue.enqueue_sync([](){});
-        m_mixThread.join();
+
         
         [(id)m_callbackSession release];
     }
