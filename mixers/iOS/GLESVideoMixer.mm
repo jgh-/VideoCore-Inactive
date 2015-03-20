@@ -206,7 +206,8 @@ namespace videocore { namespace iOS {
     m_pixelBufferPool(pool),
     m_paused(false),
     m_glJobQueue("com.videocore.composite"),
-    m_catchingUp(false)
+    m_catchingUp(false),
+    m_epoch(std::chrono::steady_clock::now())
     {
         PERF_GL_sync({
             

@@ -104,7 +104,8 @@ namespace videocore {
     m_exiting(false),
     m_mixQueue("com.videocore.audiomix", kJobQueuePriorityHigh),
     m_outgoingWindow(nullptr),
-    m_catchingUp(false)
+    m_catchingUp(false),
+    m_epoch(std::chrono::steady_clock::now())
     {
         m_bytesPerSample = outChannelCount * outBitsPerChannel / 8;
 
