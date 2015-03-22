@@ -504,7 +504,7 @@ namespace videocore { namespace iOS {
                     glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[current_fb]);
                     
                     IVideoFilter* currentFilter = nil;
-                    
+                    glClear(GL_COLOR_BUFFER_BIT);
                     for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i) {
                         
                         for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {

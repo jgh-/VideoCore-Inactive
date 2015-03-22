@@ -702,6 +702,11 @@ namespace videocore { namespace simpleApi {
         m_micSource = std::make_shared<videocore::iOS::MicSource>(self.audioSampleRate, self.audioChannelCount);
         m_micSource->setOutput(m_audioMixer);
         
+        const auto epoch = std::chrono::steady_clock::now();
+        
+        m_audioMixer->setEpoch(epoch);
+        m_videoMixer->setEpoch(epoch);
+        
         m_audioMixer->start();
         m_videoMixer->start();
 
@@ -754,10 +759,7 @@ namespace videocore { namespace simpleApi {
         m_aacSplit->setOutput(m_muxer);
         m_h264Split->setOutput(m_muxer);*/
     }
-    const auto epoch = std::chrono::steady_clock::now();
-
-    m_audioMixer->setEpoch(epoch);
-    m_videoMixer->setEpoch(epoch);
+ 
     
     m_h264Packetizer->setOutput(m_outputSession);
     m_aacPacketizer->setOutput(m_outputSession);
