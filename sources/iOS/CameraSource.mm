@@ -363,6 +363,12 @@ namespace videocore { namespace iOS {
                     default:
                         break;
                 }
+                
+                AVCaptureInput* currentCameraInput = [session.inputs objectAtIndex:0];
+                
+                if(((AVCaptureDeviceInput*)currentCameraInput).device.position != AVCaptureDevicePositionBack) {
+                    [av setVideoMirrored:YES];
+                }
             }
         }
 
