@@ -66,10 +66,10 @@ namespace videocore { namespace Android {
 		void releaseOutputBuffer(uint8_t* buffer);
 
 	private:
-		static void staticInit();
+		static bool staticInit();
 		void init();
 	private:
-
+		static bool s_initialized;
 		MediaCodec_jni_  m_mcj;
 		MediaFormat_jni_ m_mfj;
 		BufferInfo_jni_ m_bij;

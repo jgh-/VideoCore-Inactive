@@ -14,7 +14,8 @@ typedef void __AMediaFormat;
 namespace videocore { namespace Android {
 
 
-    static bool s_initialized = false;
+    bool VCMediaCodec::s_initialized = VCMediaCodec::staticInit();
+
     static void* s_hMediaNdk = nullptr;
 
     typedef void (*amf_setString_t)(__AMediaFormat*, const char* name, const char* value);
@@ -51,11 +52,9 @@ namespace videocore { namespace Android {
     static amc_queueInputBuffer_t AMC_queueInputBuffer 			= nullptr;
     static amc_releaseOutputBuffer_t AMC_releaseOutputBuffer 	= nullptr;
 
-    void
+    bool
     VCMediaCodec::staticInit() {
     	if(!s_initialized) {
-    		s_initialized = true;
-
     		s_hMediaNdk = dlopen("libmediandk.so", RTLD_LAZY); 
     		if(s_hMediaNdk) {
     			// We are on >= 5.0 and can use the direct C methods
@@ -78,6 +77,8 @@ namespace videocore { namespace Android {
     			AMC_releaseOutputBuffer 	= (amc_releaseOutputBuffer_t)dlsym(s_hMediaNdk, "AMediaCodec_releaseOutputBuffer");
     		} 
     	}
+
+    	return true;
     }
 
     VCMediaCodec::VCMediaCodec(JavaVM* vm, std::string mime, int width, int height, int bitrate) 

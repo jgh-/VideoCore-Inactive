@@ -500,5 +500,14 @@ namespace videocore { namespace Android {
         auto h = hash(source);
         m_sourceFilters[h] = filter;
     }
+    const int
+    GLESVideoMixer::availableColorAttachments() const 
+    {
+        GLint attachments;
+
+        glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &attachments);
+
+        return attachments;
+    }
 }
 }

@@ -135,6 +135,7 @@ namespace videocore { namespace Android {
          */
         void setupGLES(std::function<void(void*)> excludeContext);
 
+        const int availableColorAttachments() const ;
     private:
         JobQueue m_glJobQueue;
         FilterFactory m_filterFactory;
