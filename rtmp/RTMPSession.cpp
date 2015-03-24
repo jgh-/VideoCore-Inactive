@@ -40,16 +40,19 @@
 
 namespace videocore
 {
+    static const size_t kMaxSendbufferSize = 10 * 1024 * 1024; // 10 MB
+    
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback callback)
     : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_callback(callback), m_bandwidthCallback(nullptr), m_outChunkSize(128), m_inChunkSize(128), m_bufferSize(0), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false),
     m_jobQueue("com.videocore.rtmp"), m_networkQueue("com.videocore.rtmp.network"), m_previousTs(0), m_clearing(false)
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
+        m_networkWaitSemaphore = dispatch_semaphore_create(0);
 #else
         m_streamSession.reset(new Sockets::StreamSession());
 #endif
-        
+      
         
         boost::char_separator<char> sep("/");
         boost::tokenizer<boost::char_separator<char>> uri_tokens(uri, sep);
@@ -75,7 +78,7 @@ namespace videocore
         
         m_playPath = pp.str();
         m_playPath.pop_back();
-        
+        DLog("playPath: %s, app: %s", m_playPath.c_str(), m_app.c_str());
         long port = (m_uri.port > 0) ? m_uri.port : 1935;
         
         m_streamSession->connect(m_uri.host, static_cast<int>(port), [&](IStreamSession& session, StreamStatus_t status) {
@@ -89,11 +92,15 @@ namespace videocore
         if(m_state == kClientStateConnected) {
             sendDeleteStream();
         }
+
         m_ending = true;
         m_jobQueue.mark_exiting();
         m_jobQueue.enqueue_sync([]() {});
         m_networkQueue.mark_exiting();
         m_networkQueue.enqueue_sync([]() {});
+#ifdef __APPLE__
+        dispatch_release(m_networkWaitSemaphore);
+#endif
     }
     void
     RTMPSession::setSessionParameters(videocore::IMetadata &parameters)
@@ -204,8 +211,6 @@ namespace videocore
     void
     RTMPSession::write(uint8_t* data, size_t size, std::chrono::steady_clock::time_point packetTime, bool isKeyframe)
     {
-        //static std::chrono::steady_clock::time_point previousTimePoint = std::chrono::steady_clock::now();
-        
         if(size > 0) {
             std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(size);
             buf->put(data, size);
@@ -216,7 +221,7 @@ namespace videocore
             if(isKeyframe) {
                 m_sentKeyframe = packetTime;
             }
-            if(m_bufferSize > 2000000 && isKeyframe) {
+            if(m_bufferSize > kMaxSendbufferSize && isKeyframe) {
                 m_clearing = true;
             }
             m_networkQueue.enqueue([=]() {
@@ -231,10 +236,14 @@ namespace videocore
                     tosend -= sent;
                     this->m_throughputSession.addSentBytesSample(sent);
                     if( sent == 0 ) {
+#ifdef __APPLE__
+                        dispatch_semaphore_wait(m_networkWaitSemaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)));
+#else
                         std::unique_lock<std::mutex> l(m_networkMutex);
                         m_networkCond.wait_until(l, std::chrono::steady_clock::now() + std::chrono::milliseconds(1000));
                         
                         l.unlock();
+#endif
                     }
                 }
                 this->increaseBuffer(-int64_t(size));
@@ -328,12 +337,14 @@ namespace videocore
         if(status & kStreamStatusWriteBufferHasSpace) {
             if(m_state < kClientStateHandshakeComplete) {
                 handshake();
-            } else { /*if (!m_ending) {
-                      m_jobQueue.enqueue([this]() {
-                      this->write(nullptr, 0);
-                      }); */
+            } else {
+                
+#ifdef __APPLE__
+                dispatch_semaphore_signal(m_networkWaitSemaphore);
+#else 
                 m_networkMutex.unlock();
                 m_networkCond.notify_one();
+#endif
             }
         }
         if(status & kStreamStatusEndStream) {
@@ -841,9 +852,9 @@ namespace videocore
                 sendHeaderPacket();
                 
                 sendSetChunkSize(getpagesize());
-                //sendSetBufferTime(2500);
-                
+               // sendSetBufferTime(0);
                 setClientState(kClientStateSessionStarted);
+                
                 m_throughputSession.start();
             }
         }

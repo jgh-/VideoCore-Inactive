@@ -53,7 +53,8 @@ namespace videocore { namespace rtmp {
 
 
         int ts = metadata.timestampDelta + m_ctsOffset ;
-
+//        DLog("AAC: %06d", ts);
+        
         auto output = m_output.lock();
 
         RTMPMetadata_t outMeta(ts);

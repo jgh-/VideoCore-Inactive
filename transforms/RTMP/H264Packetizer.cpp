@@ -53,7 +53,6 @@ namespace videocore { namespace rtmp {
         
         bool is_config = (nal_type == 7 || nal_type == 8);
         
-        
         flags = FLV_CODECID_H264;
         auto output = m_output.lock();
 

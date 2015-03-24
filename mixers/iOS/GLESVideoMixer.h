@@ -63,8 +63,8 @@ namespace videocore { namespace iOS {
         } Buffer_;
         
         std::map< CVPixelBufferRef, Buffer_ >   m_pixelBuffers;
-        Apple::PixelBufferRef  m_currentBuffer;
-        CVOpenGLESTextureRef        m_currentTexture;
+        Apple::PixelBufferRef                   m_currentBuffer;
+        CVOpenGLESTextureRef                    m_currentTexture;
     };
     /*
      *  Takes CVPixelBufferRef inputs and outputs a single CVPixelBufferRef that has been composited from the various sources.
@@ -102,6 +102,8 @@ namespace videocore { namespace iOS {
         /*! IVideoMixer::setSourceFilter */
         void setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter *filter);
         
+        void sync();
+        
         FilterFactory& filterFactory() { return m_filterFactory; };
         
         /*! IOutput::pushBuffer */
@@ -117,6 +119,8 @@ namespace videocore { namespace iOS {
             m_epoch = epoch;
             m_nextMixTime = epoch;
         };
+        
+        void start();
         
     public:
         
@@ -185,12 +189,17 @@ namespace videocore { namespace iOS {
         std::unordered_map<std::size_t, IVideoFilter*>   m_sourceFilters;
         std::unordered_map<std::size_t, SourceBuffer> m_sourceBuffers;
         
+        std::chrono::steady_clock::time_point m_syncPoint;
         std::chrono::steady_clock::time_point m_epoch;
         std::chrono::steady_clock::time_point m_nextMixTime;
+        std::chrono::microseconds m_us25;
         
         std::atomic<bool> m_exiting;
         std::atomic<bool> m_mixing;
         std::atomic<bool> m_paused;
+        
+        bool              m_shouldSync;
+        bool              m_catchingUp;
     };
     
 }
