@@ -34,7 +34,6 @@ class ViewController: UIViewController, VCSessionDelegate
     deinit {
         btnConnect = nil
         previewView = nil
-        session = nil
     }
 
     @IBAction func btnConnectTouch(sender: AnyObject) {
