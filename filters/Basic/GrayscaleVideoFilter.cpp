@@ -32,7 +32,7 @@ namespace videocore { namespace filters {
     GrayscaleVideoFilter::~GrayscaleVideoFilter()
     {
         glDeleteProgram(m_program);
-        glDeleteVertexArrays(1, &m_vao);
+        glDeleteVertexArraysOES(1, &m_vao);
     }
     
     const char * const
@@ -77,8 +77,8 @@ namespace videocore { namespace filters {
             case GL_ES2_3:
             case GL_2: {
                 setProgram(build_program(vertexKernel(), pixelKernel()));
-                glGenVertexArrays(1, &m_vao);
-                glBindVertexArray(m_vao);
+                glGenVertexArraysOES(1, &m_vao);
+                glBindVertexArrayOES(m_vao);
                 m_uMatrix = glGetUniformLocation(m_program, "uMat");
                 int attrpos = glGetAttribLocation(m_program, "aPos");
                 int attrtex = glGetAttribLocation(m_program, "aCoord");
@@ -106,7 +106,7 @@ namespace videocore { namespace filters {
                         initialize();
                     }
                     glUseProgram(m_program);
-                    glBindVertexArray(m_vao);
+                    glBindVertexArrayOES(m_vao);
                 }
                 glUniformMatrix4fv(m_uMatrix, 1, GL_FALSE, &m_matrix[0][0]);
                 break;

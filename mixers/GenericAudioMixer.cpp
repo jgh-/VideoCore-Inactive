@@ -297,7 +297,6 @@ namespace videocore {
             intBuffer = (uint8_t*) malloc(inNumberFrames * 4);
 
             deinterleaveDefloat((float*)buffer, (short*)intBuffer,(int) inNumberFrames, inChannelCount);
-            size = inNumberFrames * 4;
             pInBuffer = intBuffer;
             
         }

@@ -52,6 +52,8 @@ namespace videocore { namespace iOS {
         CVOpenGLESTextureRef currentTexture() const { return m_currentTexture; };
         Apple::PixelBufferRef currentBuffer() const { return m_currentBuffer; };
         
+        bool blends() const { return m_blends; };
+        void setBlends(bool blends) { m_blends = blends; };
     private:
         typedef struct __Buffer_ {
             __Buffer_(Apple::PixelBufferRef buf) : texture(nullptr), buffer(buf) {};
@@ -65,6 +67,7 @@ namespace videocore { namespace iOS {
         std::map< CVPixelBufferRef, Buffer_ >   m_pixelBuffers;
         Apple::PixelBufferRef                   m_currentBuffer;
         CVOpenGLESTextureRef                    m_currentTexture;
+        bool                                    m_blends;
     };
     /*
      *  Takes CVPixelBufferRef inputs and outputs a single CVPixelBufferRef that has been composited from the various sources.
@@ -185,9 +188,9 @@ namespace videocore { namespace iOS {
         std::pair<int, int> m_zRange;
         std::map<int, std::vector< std::size_t >> m_layerMap;
         
-        std::map< std::size_t, glm::mat4 >          m_sourceMats;
+        std::map< std::size_t, glm::mat4 >               m_sourceMats;
         std::unordered_map<std::size_t, IVideoFilter*>   m_sourceFilters;
-        std::unordered_map<std::size_t, SourceBuffer> m_sourceBuffers;
+        std::unordered_map<std::size_t, SourceBuffer>    m_sourceBuffers;
         
         std::chrono::steady_clock::time_point m_syncPoint;
         std::chrono::steady_clock::time_point m_epoch;

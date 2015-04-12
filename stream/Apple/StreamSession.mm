@@ -93,6 +93,7 @@ namespace videocore {
                 else {
                     nsStreamCallback(nullptr, NSStreamEventErrorOccurred);
                 }
+                dispatch_release(queue);
             }
 
         }

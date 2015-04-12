@@ -37,6 +37,7 @@
 #   include <videocore/mixers/Apple/AudioMixer.h>
 #   include <videocore/transforms/Apple/MP4Multiplexer.h>
 #   include <videocore/transforms/Apple/H264Encode.h>
+#   include <videocore/sources/Apple/PixelBufferSource.h>
 #   ifdef TARGET_OS_IPHONE
 #       include <videocore/sources/iOS/CameraSource.h>
 #       include <videocore/sources/iOS/MicSource.h>
@@ -92,7 +93,10 @@ namespace videocore { namespace simpleApi {
     std::shared_ptr<videocore::simpleApi::PixelBufferOutput> m_pbOutput;
     std::shared_ptr<videocore::iOS::MicSource>               m_micSource;
     std::shared_ptr<videocore::iOS::CameraSource>            m_cameraSource;
-
+    std::shared_ptr<videocore::Apple::PixelBufferSource>     m_pixelBufferSource;
+    std::shared_ptr<videocore::AspectTransform>              m_pbAspect;
+    std::shared_ptr<videocore::PositionTransform>            m_pbPosition;
+    
     std::shared_ptr<videocore::Split> m_videoSplit;
     std::shared_ptr<videocore::AspectTransform>   m_aspectTransform;
     std::shared_ptr<videocore::PositionTransform> m_positionTransform;
@@ -765,6 +769,44 @@ namespace videocore { namespace simpleApi {
     m_aacPacketizer->setOutput(m_outputSession);
 
 
+}
+- (void) addPixelBufferSource: (UIImage*) image
+                     withRect:(CGRect)rect {
+    CGImageRef ref = [image CGImage];
+    
+    m_pixelBufferSource = std::make_shared<videocore::Apple::PixelBufferSource>(CGImageGetWidth(ref),
+                                                                                CGImageGetHeight(ref),
+                                                                                'BGRA');
+    
+    NSUInteger width = CGImageGetWidth(ref);
+    NSUInteger height = CGImageGetHeight(ref);
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    unsigned char *rawData = (unsigned char*) calloc(height * width * 4, sizeof(unsigned char));
+    NSUInteger bytesPerPixel = 4;
+    NSUInteger bytesPerRow = bytesPerPixel * width;
+    NSUInteger bitsPerComponent = 8;
+    CGContextRef context = CGBitmapContextCreate(rawData, width, height,
+                                                 bitsPerComponent, bytesPerRow, colorSpace,
+                                                 kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
+    CGColorSpaceRelease(colorSpace);
+    
+    CGContextDrawImage(context, CGRectMake(0, 0, width, height), ref);
+    CGContextRelease(context);
+    
+    m_pbAspect = std::make_shared<videocore::AspectTransform>(rect.size.width,rect.size.height,videocore::AspectTransform::kAspectFit);
+    
+    m_pbPosition = std::make_shared<videocore::PositionTransform>(rect.origin.x, rect.origin.y,
+                                                                  rect.size.width, rect.size.height,
+                                                                  self.videoSize.width, self.videoSize.height
+                                                                            );
+    m_pixelBufferSource->setOutput(m_pbAspect);
+    m_pbAspect->setOutput(m_pbPosition);
+    m_pbPosition->setOutput(m_videoMixer);
+    m_videoMixer->registerSource(m_pixelBufferSource);
+    m_pixelBufferSource->pushPixelBuffer(rawData, width * height * 4);
+    
+    free(rawData);
+    
 }
 - (NSString *) applicationDocumentsDirectory
 {

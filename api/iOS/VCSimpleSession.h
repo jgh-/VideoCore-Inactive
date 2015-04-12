@@ -113,4 +113,13 @@ typedef NS_ENUM(NSInteger, VCCameraState)
 
 - (void) getCameraPreviewLayer: (AVCaptureVideoPreviewLayer**) previewLayer;
 
+/*!
+ *  Note that the rect you provide should be based on your video dimensions.  The origin
+ *  of the image will be the center of the image (so if you put 0,0 as its position, it will
+ *  basically end up with the bottom-right quadrant of the image hanging out at the top-left corner of
+ *  your video)
+ */
+- (void) addPixelBufferSource: (UIImage*) image
+                     withRect: (CGRect) rect;
+
 @end

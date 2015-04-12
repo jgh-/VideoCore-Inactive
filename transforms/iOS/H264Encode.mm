@@ -75,17 +75,28 @@ namespace videocore { namespace iOS {
                 remove(writer_cstr);
             }
             
-            BOOL autoLvlOK = &AVVideoProfileLevelH264MainAutoLevel != NULL;
+            NSDictionary* settings = nil;
             
-            
-            NSDictionary* settings = @{AVVideoCodecKey: AVVideoCodecH264,
-                                       AVVideoCompressionPropertiesKey: @{AVVideoAverageBitRateKey: @(m_bitrate),
-                                                                          AVVideoMaxKeyFrameIntervalKey: @(m_fps*2),
-                                                                          AVVideoProfileLevelKey: (autoLvlOK ? AVVideoProfileLevelH264BaselineAutoLevel : AVVideoProfileLevelH264Main32),
-                                                                          },
-                                       AVVideoWidthKey: @(m_frameW),
-                                       AVVideoHeightKey: @(m_frameH)
-                                       };
+            if(&AVVideoAllowFrameReorderingKey != nullptr) {
+                settings = @{AVVideoCodecKey: AVVideoCodecH264,
+                             AVVideoCompressionPropertiesKey: @{AVVideoAverageBitRateKey: @(m_bitrate),
+                                                                AVVideoMaxKeyFrameIntervalKey: @(m_fps*2),
+                                                                AVVideoProfileLevelKey: AVVideoProfileLevelH264Baseline41/*,
+                                                                AVVideoAllowFrameReorderingKey: @NO*/
+                                                                },
+                             AVVideoWidthKey: @(m_frameW),
+                             AVVideoHeightKey: @(m_frameH)
+                             };
+            } else {
+                settings = @{AVVideoCodecKey: AVVideoCodecH264,
+                             AVVideoCompressionPropertiesKey: @{AVVideoAverageBitRateKey: @(m_bitrate),
+                                                                AVVideoMaxKeyFrameIntervalKey: @(m_fps*2),
+                                                                AVVideoProfileLevelKey: AVVideoProfileLevelH264Baseline31
+                                                                },
+                             AVVideoWidthKey: @(m_frameW),
+                             AVVideoHeightKey: @(m_frameH)
+                             };
+            }
             AVAssetWriterInput* input = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo outputSettings:settings];
             input.expectsMediaDataInRealTime = YES;
             

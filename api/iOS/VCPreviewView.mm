@@ -34,6 +34,8 @@
 #import <glm/glm.hpp>
 #import <glm/gtc/matrix_transform.hpp>
 
+#include <atomic>
+
 @interface VCPreviewView()
 {
     GLuint _renderBuffer;
@@ -45,7 +47,7 @@
     
     int _currentBuffer;
     
-    BOOL _paused;
+    std::atomic<bool> _paused;
     
     CVPixelBufferRef _currentRef[2];
     CVOpenGLESTextureCacheRef _cache;
@@ -155,9 +157,9 @@
 }
 - (void) notification: (NSNotification*) notification {
     if([notification.name isEqualToString:UIApplicationDidEnterBackgroundNotification]) {
-        _paused = YES;
+        _paused = true;
     } else if([notification.name isEqualToString:UIApplicationWillEnterForegroundNotification]) {
-        _paused = NO;
+        _paused = false;
     }
 }
 #pragma mark - Public Methods
@@ -252,7 +254,7 @@
         glDrawArrays(GL_TRIANGLES, 0, 6);
         GL_ERRORS(__LINE__)
         glBindRenderbuffer(GL_RENDERBUFFER, bSelf->_renderBuffer);
-        if(!bSelf->_paused) {
+        if(!bSelf->_paused.load()) {
             [self.context presentRenderbuffer:GL_RENDERBUFFER];
         }
         [EAGLContext setCurrentContext:current];

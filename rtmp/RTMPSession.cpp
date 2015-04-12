@@ -519,25 +519,78 @@ namespace videocore
         
         put_string(enc, "@setDataFrame");
         put_string(enc, "onMetaData");
-        put_byte(enc, kAMFEMCAArray);
-        put_be32(enc, 5+5+2); // videoEnabled + audioEnabled + 2
+        put_byte(enc, kAMFObject);
+        //put_be32(enc, 5+5+2); // videoEnabled + audioEnabled + 2
         
-        put_named_double(enc, "duration", 0.0);
+        //put_named_double(enc, "duration", 0.0);
         put_named_double(enc, "width", m_frameWidth);
         put_named_double(enc, "height", m_frameHeight);
+        put_named_double(enc, "displaywidth", m_frameWidth);
+        put_named_double(enc, "displayheight", m_frameHeight);
+        put_named_double(enc, "framewidth", m_frameWidth);
+        put_named_double(enc, "frameheight", m_frameHeight);
         put_named_double(enc, "videodatarate", static_cast<double>(m_bitrate) / 1024.);
-        put_named_double(enc, "framerate", m_frameDuration);
-        put_named_double(enc, "videocodecid", 7.);
-        
-        
+        put_named_double(enc, "videoframerate", 1. / m_frameDuration);
+
+        put_named_string(enc, "videocodecid", "avc1");
+        {
+            put_name(enc, "trackinfo");
+            put_byte(enc, kAMFStrictArray);
+            put_be32(enc, 2);
+            
+            //
+            // Audio stream metadata
+            put_byte(enc, kAMFObject);
+            put_named_string(enc, "type", "audio");
+            {
+                std::stringstream ss;
+                ss << "{AACFrame: codec:AAC, channels: " << m_audioStereo+1 << ", frequency:" << m_audioSampleRate << ", samplesPerFrame:1024, objectType:LC}";
+                put_named_string(enc, "description", ss.str());
+            }
+            put_named_double(enc, "timescale", 1000.);
+            
+            put_name(enc, "sampledescription");
+            put_byte(enc, kAMFStrictArray);
+            put_be32(enc, 1);
+            put_byte(enc, kAMFObject);
+            put_named_string(enc, "sampletype", "mpeg4-generic");
+            put_byte(enc, 0);
+            put_byte(enc, 0);
+            put_byte(enc, kAMFObjectEnd);
+            
+            put_named_string(enc, "language", "eng");
+
+            put_byte(enc, 0);
+            put_byte(enc, 0);
+            put_byte(enc, kAMFObjectEnd);
+            
+            //
+            // Video stream metadata
+            
+            put_byte(enc, kAMFObject);
+            put_named_string(enc, "type", "video");
+            put_named_double(enc, "timescale", 1000.);
+            put_named_string(enc, "language", "eng");
+            put_name(enc, "sampledescription");
+            put_byte(enc, kAMFStrictArray);
+            put_be32(enc, 1);
+            put_byte(enc, kAMFObject);
+            put_named_string(enc, "sampletype", "H264");
+            put_byte(enc, 0);
+            put_byte(enc, 0);
+            put_byte(enc, kAMFObjectEnd);
+            put_byte(enc, 0);
+            put_byte(enc, 0);
+            put_byte(enc, kAMFObjectEnd);
+        }
+        put_be16(enc, 0);
+        put_byte(enc, kAMFObjectEnd);
         put_named_double(enc, "audiodatarate", 131152. / 1024.);
         put_named_double(enc, "audiosamplerate", m_audioSampleRate);
         put_named_double(enc, "audiosamplesize", 16);
-        put_named_bool(enc, "stereo", m_audioStereo);
-        put_named_double(enc, "audiocodecid", 10.);
+        put_named_double(enc, "audiochannels", m_audioStereo + 1);
+        put_named_string(enc, "audiocodecid", "mp4a");
         
-        
-        put_named_double(enc, "filesize", 0.);
         put_be16(enc, 0);
         put_byte(enc, kAMFObjectEnd);
         size_t len = enc.size();
@@ -727,8 +780,6 @@ namespace videocore
         
         long ret = m_streamInBuffer->get(p, size, false);
         
-        start = p;
-        
         if(!p) return false;
         
         while (ret>0) {
@@ -737,7 +788,6 @@ namespace videocore
             ret--;
             
             if (ret <= 0) {
-                ret = 0;
                 break;
             }
             
@@ -848,7 +898,7 @@ namespace videocore
                 sendHeaderPacket();
                 
                 sendSetChunkSize(getpagesize());
-               // sendSetBufferTime(0);
+                // sendSetBufferTime(0);
                 setClientState(kClientStateSessionStarted);
                 
                 m_throughputSession.start();
@@ -858,12 +908,12 @@ namespace videocore
     }
     
     std::string RTMPSession::parseStatusCode(uint8_t *p) {
-        uint8_t *start = p;
+        //uint8_t *start = p;
         std::map<std::string, std::string> props;
         
         // skip over the packet id
-        double num = get_double(p+1); // num
-        p += sizeof(num) + 1;
+        get_double(p+1); // num
+        p += sizeof(double) + 1;
         
         // keep reading until we find an AMF Object
         bool foundObject = false;
@@ -900,7 +950,7 @@ namespace videocore
             }
         } while (get_be24(p) != AMF_DATA_TYPE_OBJECT_END);
         
-        p = start;
+        //p = start;
         return props["code"];
     }
     

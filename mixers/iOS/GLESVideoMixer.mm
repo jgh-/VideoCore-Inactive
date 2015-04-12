@@ -310,8 +310,8 @@ namespace videocore { namespace iOS {
                 CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[1]);
             }
             else {
-                CVReturn ret = CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, m_pixelBufferPool, &m_pixelBuffer[0]);
-                ret = CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, m_pixelBufferPool, &m_pixelBuffer[1]);
+                CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, m_pixelBufferPool, &m_pixelBuffer[0]);
+                CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, m_pixelBufferPool, &m_pixelBuffer[1]);
             }
             
         }
@@ -441,6 +441,7 @@ namespace videocore { namespace iOS {
         auto inPixelBuffer = *(Apple::PixelBufferRef*)data ;
 
         m_sourceBuffers[h].setBuffer(inPixelBuffer, this->m_textureCache, m_glJobQueue, m_glesCtx);
+        m_sourceBuffers[h].setBlends(md.getData<kVideoMetadataBlends>());
         
         auto it = std::find(this->m_layerMap[zIndex].begin(), this->m_layerMap[zIndex].end(), h);
         if(it == this->m_layerMap[zIndex].end()) {
@@ -531,10 +532,10 @@ namespace videocore { namespace iOS {
                             texture = iTex->second.currentTexture();
                             
                             // TODO: Add blending.
-                            /*if(this->m_sourceProperties[*it].blends) {
-                             glEnable(GL_BLEND);
-                             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                             }*/
+                            if(iTex->second.blends()) {
+                                glEnable(GL_BLEND);
+                                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                            }
                             if(texture && currentFilter) {
                                 currentFilter->incomingMatrix(this->m_sourceMats[*it]);
                                 currentFilter->bind();
@@ -543,9 +544,9 @@ namespace videocore { namespace iOS {
                             } else {
                                 DLog("Null texture!");
                             }
-                            /*if(this->m_sourceProperties[*it].blends) {
-                             glDisable(GL_BLEND);
-                             }*/
+                            if(iTex->second.blends()) {
+                                glDisable(GL_BLEND);
+                            }
                         }
                     }
                     glFlush();
