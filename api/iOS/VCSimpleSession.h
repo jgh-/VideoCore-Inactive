@@ -34,6 +34,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
 
+
 @class VCSimpleSession;
 
 typedef NS_ENUM(NSInteger, VCSessionState)
@@ -52,6 +53,13 @@ typedef NS_ENUM(NSInteger, VCCameraState)
     VCCameraStateFront,
     VCCameraStateBack
 };
+
+typedef NS_ENUM(NSInteger, VCAspectMode)
+{
+    VCAspectModeFit,
+    VCAscpectModeFill
+};
+
 
 @protocol VCSessionDelegate <NSObject>
 @required
@@ -84,6 +92,7 @@ typedef NS_ENUM(NSInteger, VCCameraState)
 @property (nonatomic, assign) BOOL          continuousExposure;
 @property (nonatomic, assign) BOOL          useAdaptiveBitrate;     /* Default is off */
 @property (nonatomic, readonly) int         estimatedThroughput;    /* Bytes Per Second. */
+@property (nonatomic, assign) VCAspectMode  aspectMode;
 
 @property (nonatomic, assign) id<VCSessionDelegate> delegate;
 
@@ -106,6 +115,15 @@ typedef NS_ENUM(NSInteger, VCCameraState)
                        cameraState:(VCCameraState) cameraState;
 
 // -----------------------------------------------------------------------------
+- (instancetype) initWithVideoSize:(CGSize)videoSize
+                         frameRate:(int)fps
+                           bitrate:(int)bps
+           useInterfaceOrientation:(BOOL)useInterfaceOrientation
+                       cameraState:(VCCameraState) cameraState
+                        aspectMode:(VCAspectMode) aspectMode;
+
+// -----------------------------------------------------------------------------
+
 - (void) startRtmpSessionWithURL:(NSString*) rtmpUrl
                     andStreamKey:(NSString*) streamKey;
 
