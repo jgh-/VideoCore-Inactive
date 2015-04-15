@@ -100,8 +100,8 @@ namespace videocore { namespace Apple {
         
     }
 #endif
-    H264Encode::H264Encode( int frame_w, int frame_h, int fps, int bitrate, bool useBaseline )
-    : m_frameW(frame_w), m_frameH(frame_h), m_fps(fps), m_bitrate(bitrate), m_forceKeyframe(false)
+    H264Encode::H264Encode( int frame_w, int frame_h, int fps, int bitrate, bool useBaseline, int ctsOffset)
+    : m_frameW(frame_w), m_frameH(frame_h), m_fps(fps), m_bitrate(bitrate), m_forceKeyframe(false), m_ctsOffset(ctsOffset)
     {
         setupCompressionSession( useBaseline );
     }
@@ -116,8 +116,8 @@ namespace videocore { namespace Apple {
         if(m_compressionSession) {
             m_encodeMutex.lock();
             VTCompressionSessionRef session = (VTCompressionSessionRef)m_compressionSession;
-            
-            CMTime pts = CMTimeMake(metadata.timestampDelta, 1000.); // timestamp is in ms.
+
+            CMTime pts = CMTimeMake(metadata.timestampDelta + m_ctsOffset, 1000.); // timestamp is in ms.
             CMTime dur = CMTimeMake(1, m_fps);
             VTEncodeInfoFlags flags;
             

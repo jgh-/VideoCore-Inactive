@@ -758,6 +758,7 @@ namespace videocore { namespace simpleApi {
 }
 - (void) addEncodersAndPacketizers
 {
+    int ctsOffset = 2000 / self.fps; // 2 * frame duration
     {
         // Add encoders
 
@@ -768,7 +769,8 @@ namespace videocore { namespace simpleApi {
                                                                            self.videoSize.height,
                                                                            self.fps,
                                                                            self.bitrate,
-                                                                           false);
+                                                                           false,
+                                                                           ctsOffset);
         } else {
             m_h264Encoder =std::make_shared<videocore::iOS::H264Encode>(self.videoSize.width,
                                                                         self.videoSize.height,
@@ -787,8 +789,8 @@ namespace videocore { namespace simpleApi {
 
     }
     {
-        m_h264Packetizer = std::make_shared<videocore::rtmp::H264Packetizer>(2000/self.fps); // 2 * frame duration
-        m_aacPacketizer = std::make_shared<videocore::rtmp::AACPacketizer>(self.audioSampleRate, self.audioChannelCount,2000/self.fps);
+        m_h264Packetizer = std::make_shared<videocore::rtmp::H264Packetizer>(ctsOffset);
+        m_aacPacketizer = std::make_shared<videocore::rtmp::AACPacketizer>(self.audioSampleRate, self.audioChannelCount, ctsOffset);
 
         m_h264Split->setOutput(m_h264Packetizer);
         m_aacSplit->setOutput(m_aacPacketizer);
