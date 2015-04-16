@@ -38,13 +38,14 @@ namespace videocore
         kVideoMetadataZIndex, /*!< Specifies the z-Index the buffer (lower is farther back) */
         kVideoMetadataMatrix, /*!< Specifies the transformation matrix to use. Pass an Identity matrix if no transformation is to be applied.
                                    Note that the compositor operates using homogeneous coordinates (-1 to 1) unless otherwise specified. */
-        kVideoMetadataSource  /*!< Specifies a smart pointer to the source */
+        kVideoMetadataBlends,
+        kVideoMetadataSource, /*!< Specifies a smart pointer to the source */
     };
     
     /*!
      *  Specifies the properties of the incoming image buffer.
      */
-    typedef MetaData<'vide', int, glm::mat4, std::weak_ptr<ISource>> VideoBufferMetadata;
+    typedef MetaData<'vide', int, glm::mat4, bool, std::weak_ptr<ISource>> VideoBufferMetadata;
     
     /*! IAudioMixer interface.  Defines the required interface methods for Video mixers (compositors). */
     class IVideoMixer : public IMixer

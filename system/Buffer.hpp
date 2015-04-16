@@ -251,7 +251,6 @@ namespace videocore {
         {
             resize(I);
         };
-       
         virtual size_t resize(size_t size) {
             if(size > 0) {
                 m_buffer.reset();

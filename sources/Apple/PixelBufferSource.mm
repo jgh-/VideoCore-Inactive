@@ -23,17 +23,26 @@
 #include <videocore/mixers/IVideoMixer.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <videocore/system/pixelBuffer/Apple/PixelBuffer.h>
+
 #include <CoreVideo/CoreVideo.h>
 
 namespace videocore { namespace Apple {
- 
+    
     PixelBufferSource::PixelBufferSource(int width, int height, OSType pixelFormat )
     : m_pixelBuffer(nullptr), m_width(width), m_height(height), m_pixelFormat(pixelFormat)
     {
         CVPixelBufferRef pb = nullptr;
-        
-        CVReturn ret = CVPixelBufferCreate(kCFAllocatorDefault, width, height, pixelFormat, NULL, &pb);
-        
+        CVReturn ret = kCVReturnSuccess;
+        @autoreleasepool {
+            NSDictionary* pixelBufferOptions = @{ (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
+                (NSString*) kCVPixelBufferWidthKey : @(width),
+                (NSString*) kCVPixelBufferHeightKey : @(height),
+                (NSString*) kCVPixelBufferOpenGLESCompatibilityKey : @YES,
+                (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}};
+            
+            ret = CVPixelBufferCreate(kCFAllocatorDefault, width, height, pixelFormat, (__bridge CFDictionaryRef)pixelBufferOptions, &pb);
+        }
         if(!ret) {
             m_pixelBuffer = pb;
         } else {
@@ -59,12 +68,12 @@ namespace videocore { namespace Apple {
             void* loc = CVPixelBufferGetBaseAddress((CVPixelBufferRef)m_pixelBuffer);
             memcpy(loc, data, size);
             CVPixelBufferUnlockBaseAddress((CVPixelBufferRef)m_pixelBuffer, 0);
-
-            glm::mat4 mat = glm::scale(glm::mat4(1.f), glm::vec3(1.f,-1.f,1.f));
-            VideoBufferMetadata md(0.);
-            md.setData(0, mat, shared_from_this());
             
-            outp->pushBuffer((const uint8_t*)m_pixelBuffer, sizeof(CVPixelBufferRef), md);
+            glm::mat4 mat = glm::mat4(1.f);
+            VideoBufferMetadata md(0.);
+            md.setData(4, mat, true, shared_from_this());
+            auto pixelBuffer = std::make_shared<Apple::PixelBuffer>((CVPixelBufferRef)m_pixelBuffer, false);
+            outp->pushBuffer((const uint8_t*)&pixelBuffer, sizeof(pixelBuffer), md);
         }
     }
     void

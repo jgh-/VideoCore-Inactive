@@ -152,7 +152,7 @@ namespace videocore {
             if(!m_bufferSizeSamples.empty()) {
                 
 
-                float frontAvg = 0.f;
+                /*float frontAvg = 0.f;
                 float backAvg = 0.f;
                 int frontCount = 0;
                 int backCount = 0;
@@ -173,7 +173,7 @@ namespace videocore {
                 backAvg /= float(backCount);
                 
                 frontAvg = std::floor(frontAvg);
-                backAvg = std::floor(backAvg);
+                backAvg = std::floor(backAvg);*/
                 
                 m_buffGrowth.push_front(int(m_bufferSizeSamples.back()));
                 if(m_buffGrowth.size() > 3) {
