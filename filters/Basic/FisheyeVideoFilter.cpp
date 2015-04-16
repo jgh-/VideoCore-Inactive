@@ -61,12 +61,10 @@ namespace videocore { namespace filters {
                precision mediump float;
                varying vec2      vCoord;
                uniform sampler2D uTex0;
-               uniform float fovTheta; // FOV's theta
                void main(void) {
                    vec2 uv = vCoord - 0.5;
                    float z = sqrt(1.0 - uv.x * uv.x - uv.y * uv.y);
-                   float a = 1.0 / (z * tan(-10.0 * 0.5));
-//                     float a = (z * tan(fovTheta * 0.5)) / 1.0; // reverse lens
+                   float a = 1.0 / (z * tan(-5.2)); // FOV
                    gl_FragColor = texture2D(uTex0, (uv * a) + 0.5);
                }
         )
