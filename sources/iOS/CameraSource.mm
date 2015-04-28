@@ -103,7 +103,7 @@ namespace videocore { namespace iOS {
     }
     
     void
-    CameraSource::setupCamera(int fps, bool useFront, bool useInterfaceOrientation, NSString* sessionPreset)
+    CameraSource::setupCamera(int fps, bool useFront, bool useInterfaceOrientation, NSString* sessionPreset, void (^callbackBlock)(void))
     {
         m_fps = fps;
         m_useInterfaceOrientation = useInterfaceOrientation;
@@ -185,6 +185,9 @@ namespace videocore { namespace iOS {
                         }
                     }
                     [output release];
+                }
+                if (callbackBlock) {
+                    callbackBlock();
                 }
             }
         };

@@ -723,23 +723,24 @@ namespace videocore { namespace simpleApi {
                                                                                 self.videoSize.width, self.videoSize.height
                                                                                 );
 
-        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,(self.cameraState == VCCameraStateFront),self.useInterfaceOrientation);
 
-        m_cameraSource->setContinuousAutofocus(true);
-        m_cameraSource->setContinuousExposure(true);
+        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,(self.cameraState == VCCameraStateFront),self.useInterfaceOrientation,nil,^{
+            m_cameraSource->setContinuousAutofocus(true);
+            m_cameraSource->setContinuousExposure(true);
 
-        m_cameraSource->setOutput(aspectTransform);
+            m_cameraSource->setOutput(aspectTransform);
 
-        m_videoMixer->setSourceFilter(m_cameraSource, dynamic_cast<videocore::IVideoFilter*>(m_videoMixer->filterFactory().filter("com.videocore.filters.bgra")));
-        aspectTransform->setOutput(positionTransform);
-        positionTransform->setOutput(m_videoMixer);
-        m_aspectTransform = aspectTransform;
-        m_positionTransform = positionTransform;
+            m_videoMixer->setSourceFilter(m_cameraSource, dynamic_cast<videocore::IVideoFilter*>(m_videoMixer->filterFactory().filter("com.videocore.filters.bgra")));
+            aspectTransform->setOutput(positionTransform);
+            positionTransform->setOutput(m_videoMixer);
+            m_aspectTransform = aspectTransform;
+            m_positionTransform = positionTransform;
 
-        // Inform delegate that camera source has been added
-        if ([_delegate respondsToSelector:@selector(didAddCameraSource:)]) {
-            [_delegate didAddCameraSource:self];
-        }
+            // Inform delegate that camera source has been added
+            if ([_delegate respondsToSelector:@selector(didAddCameraSource:)]) {
+                [_delegate didAddCameraSource:self];
+            }
+        });
     }
     {
         // Add mic source
