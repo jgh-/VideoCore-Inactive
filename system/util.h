@@ -28,9 +28,10 @@
 
 
 #ifdef DEBUG
-#define DLog(...) printf(__VA_ARGS__);
+#define DLogLvl(lvl, fmt, ...) printf( "[VIDEOCORE][%d] " fmt "\n", lvl, ##__VA_ARGS__);
+#define DLog(fmt, ...) DLogLvl(0, fmt, ##__VA_ARGS__)
 #else
-#define DLog(...) {}
+#define DLog(fmt, ...) {}
 #endif
 
 

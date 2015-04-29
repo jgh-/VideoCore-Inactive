@@ -26,7 +26,6 @@
 #include <map>
 #include <tuple>
 #include <string>
-#include <boost/lexical_cast.hpp>
 #include <videocore/system/util.h>
 
 
@@ -34,9 +33,10 @@ namespace videocore
 {
     struct IMetadata
     {
+        IMetadata(double pts, double dts, double duration) : pts(pts), dts(dts), duration(duration) {};
         IMetadata(double pts, double dts) : pts(pts), dts(dts) {};
-        IMetadata(double ts) : pts(ts), dts(ts) {};
-        IMetadata() : pts(0.), dts(0.) {};
+        IMetadata(double ts) : pts(ts), dts(ts), duration(0.) {};
+        IMetadata() : pts(0.), dts(0.), duration(0.) {};
         
         virtual ~IMetadata() {};
         
@@ -46,11 +46,13 @@ namespace videocore
             double timestampDelta __attribute__((deprecated));
         };
         double dts;
+        double duration;
     };
     
     template <int32_t MetaDataType, typename... Types>
     struct MetaData : public IMetadata
     {
+        MetaData<Types...>(double pts, double dts, double duration) : IMetadata(pts, dts, duration) {};
         MetaData<Types...>(double pts, double dts) : IMetadata(pts, dts) {};
         MetaData<Types...>(double ts) : IMetadata(ts) {};
         MetaData<Types...>() : IMetadata() {};

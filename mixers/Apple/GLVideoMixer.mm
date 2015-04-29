@@ -24,17 +24,31 @@
  */
 
 
-#include <videocore/mixers/iOS/GLESVideoMixer.h>
+#include <videocore/mixers/Apple/GLVideoMixer.h>
 #include <videocore/sources/iOS/GLESUtil.h>
 #include <videocore/filters/FilterFactory.h>
 
 #import <Foundation/Foundation.h>
-#import <OpenGLES/EAGL.h>
-#import <OpenGLES/EAGLDrawable.h>
-#import <OpenGLES/ES2/gl.h>
-#import <OpenGLES/ES2/glext.h>
-#import <OpenGLES/ES3/gl.h>
-#import <UIKit/UIKit.h>
+#ifdef __APPLE__
+#   include <videocore/sources/iOS/GLESUtil.h>
+#   include <TargetConditionals.h>
+#   if (TARGET_OS_IPHONE)
+#       include <OpenGLES/ES2/gl.h>
+#       include <OpenGLES/ES3/gl.h>
+#       import <UIKit/UIKit.h>
+#   else
+#       include <OpenGL/gl3.h>
+#       include <OpenGL/gl3ext.h>
+#       import  <OpenGL/OpenGL.h>
+#       include <videocore/sources/iOS/GLESUtil.h>
+#       define glDeleteVertexArraysOES glDeleteVertexArraysAPPLE
+#       define glGenVertexArraysOES glGenVertexArraysAPPLE
+#       define glBindVertexArrayOES glBindVertexArrayAPPLE
+#       define CVOpenGLESTextureCacheFlush CVOpenGLTextureCacheFlush
+#       define CVOpenGLESTextureGetName    CVOpenGLTextureGetName
+#       define CVOpenGLESTextureGetTarget  CVOpenGLTextureGetTarget
+#   endif
+#endif
 
 #include <CoreVideo/CoreVideo.h>
 
@@ -44,6 +58,7 @@
 
 
 // Convenience macro to dispatch an OpenGL ES job to the created videocore::JobQueue
+#if TARGET_OS_IPHONE
 #define PERF_GL(x, dispatch) do {\
 m_glJobQueue.dispatch([=](){\
 EAGLContext* cur = [EAGLContext currentContext];\
@@ -54,6 +69,20 @@ x ;\
 [EAGLContext setCurrentContext:cur];\
 });\
 } while(0)
+#else
+#define PERF_GL(x, dispatch) do {\
+m_glJobQueue.dispatch([=](){\
+CGLContextObj cur = CGLGetCurrentContext();\
+if(m_glesCtx) {\
+CGLSetCurrentContext((CGLContextObj)m_glesCtx);\
+CGLLockContext((CGLContextObj)m_glesCtx);\
+}\
+x ;\
+CGLUnlockContext((CGLContextObj)m_glesCtx);\
+CGLSetCurrentContext(cur);\
+});\
+} while(0)
+#endif
 // Dispatch and execute synchronously
 #define PERF_GL_sync(x) PERF_GL((x), enqueue_sync);
 // Dispatch and execute asynchronously
@@ -61,16 +90,17 @@ x ;\
 
 @interface GLESObjCCallback : NSObject
 {
-    videocore::iOS::GLESVideoMixer* _mixer;
+    videocore::Apple::GLVideoMixer* _mixer;
 }
-- (void) setMixer: (videocore::iOS::GLESVideoMixer*) mixer;
+- (void) setMixer: (videocore::Apple::GLVideoMixer*) mixer;
 @end
 @implementation GLESObjCCallback
 - (instancetype) init {
     if((self = [super init])) {
+#if TARGET_OS_IPHONE
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(notification:) name:UIApplicationDidEnterBackgroundNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(notification:) name:UIApplicationWillEnterForegroundNotification object:nil];
-        
+#endif
     }
     return self;
 }
@@ -79,6 +109,7 @@ x ;\
     [super dealloc];
 }
 - (void) notification: (NSNotification*) notification {
+#if TARGET_OS_IPHONE
     if([notification.name isEqualToString:UIApplicationDidEnterBackgroundNotification]) {
         
         _mixer->mixPaused(true);
@@ -88,13 +119,14 @@ x ;\
         _mixer->mixPaused(false);
         
     }
+#endif
 }
-- (void) setMixer: (videocore::iOS::GLESVideoMixer*) mixer
+- (void) setMixer: (videocore::Apple::GLVideoMixer*) mixer
 {
     _mixer = mixer;
 }
 @end
-namespace videocore { namespace iOS {
+namespace videocore { namespace Apple {
     
     // -------------------------------------------------------------------------
     //
@@ -125,32 +157,45 @@ namespace videocore { namespace iOS {
                 bool is32bit = true;
                 
                 is32bit = (format != kCVPixelFormatType_16LE565);
-     
+                
                 CVOpenGLESTextureRef texture = nullptr;
+                const CVPixelBufferRef inCvpb = ref->cvBuffer();
+                
+                int w = (int)CVPixelBufferGetWidth(inCvpb);
+                int h = (int)CVPixelBufferGetHeight(inCvpb);
+                
+                
+#if TARGET_OS_IPHONE
+                
                 CVReturn ret = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
                                                                             textureCache,
-                                                                            ref->cvBuffer(),
+                                                                            inCvpb,
                                                                             NULL,
                                                                             GL_TEXTURE_2D,
                                                                             is32bit ? GL_RGBA : GL_RGB,
-                                                                            (GLsizei)ref->width(),
-                                                                            (GLsizei)ref->height(),
+                                                                            (GLsizei)w,
+                                                                            (GLsizei)h,
                                                                             is32bit ? GL_BGRA : GL_RGB,
                                                                             is32bit ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_5_6_5,
                                                                             0,
                                                                             &texture);
+#else
+                CVReturn ret;
+                ret = CVOpenGLTextureCacheCreateTextureFromImage(kCFAllocatorDefault, textureCache, inCvpb, NULL, &texture);
                 
+#endif
                 ref->unlock(true);
                 if(ret == noErr && texture) {
-                    glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                    GLint target = CVOpenGLESTextureGetTarget(texture);
+                    glBindTexture(target, CVOpenGLESTextureGetName(texture));
+                    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                     
-                    auto iit = this->m_pixelBuffers.emplace(ref->cvBuffer(), ref).first;
+                    auto iit = this->m_pixelBuffers.emplace(inCvpb, ref).first;
                     iit->second.texture = texture;
-                    
+                    this->m_currentBufferBacking = &iit->second;
                     this->m_currentBuffer = ref;
                     this->m_currentTexture = texture;
                     iit->second.time = now;
@@ -161,7 +206,8 @@ namespace videocore { namespace iOS {
             });
             flush = true;
         } else {
-
+            
+            m_currentBufferBacking = &it->second;
             m_currentBuffer = ref;
             m_currentTexture = it->second.texture;
             it->second.time = now;
@@ -192,11 +238,11 @@ namespace videocore { namespace iOS {
     //
     //
     // -------------------------------------------------------------------------
-    GLESVideoMixer::GLESVideoMixer( int frame_w,
-                                   int frame_h,
-                                   double frameDuration,
-                                   CVPixelBufferPoolRef pool,
-                                   std::function<void(void*)> excludeContext )
+    GLVideoMixer::GLVideoMixer( int frame_w,
+                               int frame_h,
+                               double frameDuration,
+                               CVPixelBufferPoolRef pool,
+                               std::function<void(void*)> excludeContext )
     : m_bufferDuration(frameDuration),
     m_glesCtx(nullptr),
     m_frameW(frame_w),
@@ -217,20 +263,27 @@ namespace videocore { namespace iOS {
         m_zRange.first = INT_MAX;
         m_zRange.second = INT_MIN;
         
+        m_mixThreadSem = dispatch_semaphore_create(0);
+        
         m_callbackSession = [[GLESObjCCallback alloc] init];
         [(GLESObjCCallback*)m_callbackSession setMixer:this];
         
     }
     
-    GLESVideoMixer::~GLESVideoMixer()
+    GLVideoMixer::~GLVideoMixer()
     {
         m_output.reset();
         m_exiting = true;
-        m_mixThreadCond.notify_all();
-        DLog("GLESVideoMixer::~GLESVideoMixer()");
+        
+        dispatch_semaphore_signal(m_mixThreadSem);
+        DLog("GLVideoMixer::~GLVideoMixer()");
+        if(m_mixThread.joinable()) {
+            m_mixThread.join();
+        }
+        
         PERF_GL_sync({
             //glDeleteProgram(m_prog);
-            glDeleteFramebuffers(2, m_fbo);
+            glDeleteFramebuffers(kOutPBCount, m_fbo);
             glDeleteBuffers(1, &m_vbo);
             //glDeleteVertexArraysOES(1, &m_vao);
             GLuint textures[2] ;
@@ -255,17 +308,19 @@ namespace videocore { namespace iOS {
         }
         m_glJobQueue.mark_exiting();
         m_glJobQueue.enqueue_sync([](){});
-
+        
         
         [(id)m_callbackSession release];
+        dispatch_release(m_mixThreadSem);
     }
     void
-    GLESVideoMixer::start() {
+    GLVideoMixer::start() {
         m_mixThread = std::thread([this](){ this->mixThread(); });
     }
     void
-    GLESVideoMixer::setupGLES(std::function<void(void*)> excludeContext)
+    GLVideoMixer::setupGLES(std::function<void(void*)> excludeContext)
     {
+#if TARGET_OS_IPHONE
         if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
             m_glesCtx = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
         }
@@ -281,7 +336,24 @@ namespace videocore { namespace iOS {
         if(excludeContext) {
             excludeContext(m_glesCtx);
         }
+#else
+        CGLPixelFormatObj pix;
+        CGLError errorCode;
+        GLint num; // stores the number of possible pixel formats
+        CGLPixelFormatAttribute attributes[] = {
+            kCGLPFAAccelerated,   // no software rendering
+            kCGLPFAOpenGLProfile, // core profile with the version stated below
+            (CGLPixelFormatAttribute) kCGLOGLPVersion_3_2_Core,
+            (CGLPixelFormatAttribute) 0
+        };
+        errorCode = CGLChoosePixelFormat( attributes, &pix, &num );
+        CGLContextObj ctx;
         
+        errorCode = CGLCreateContext(pix, nullptr, &ctx);
+        CGLSetCurrentContext(ctx);
+        CGLLockContext(ctx);
+        m_glesCtx = (void*)ctx;
+#endif
         //
         // Shared-memory FBOs
         //
@@ -303,8 +375,11 @@ namespace videocore { namespace iOS {
                 NSDictionary* pixelBufferOptions = @{ (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
                                                       (NSString*) kCVPixelBufferWidthKey : @(m_frameW),
                                                       (NSString*) kCVPixelBufferHeightKey : @(m_frameH),
+#if TARGET_OS_IPHONE
                                                       (NSString*) kCVPixelBufferOpenGLESCompatibilityKey : @YES,
-                                                      (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}};
+                                                      (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}
+#endif
+                                                      };
                 
                 CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[0]);
                 CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[1]);
@@ -315,23 +390,41 @@ namespace videocore { namespace iOS {
             }
             
         }
+        
+#if TARGET_OS_IPHONE
         CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, NULL, (EAGLContext*)this->m_glesCtx, NULL, &this->m_textureCache);
+#else
+        CVOpenGLTextureCacheCreate(kCFAllocatorDefault,
+                                   nullptr,
+                                   (CGLContextObj)m_glesCtx,
+                                   pix,
+                                   nullptr,
+                                   &m_textureCache);
+        CGLDestroyPixelFormat( pix );
+#endif
+        
         glGenFramebuffers(2, this->m_fbo);
         for(int i = 0 ; i < 2 ; ++i) {
+#if TARGET_OS_IPHONE
             CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, this->m_textureCache, this->m_pixelBuffer[i], NULL, GL_TEXTURE_2D, GL_RGBA, m_frameW, m_frameH, GL_BGRA, GL_UNSIGNED_BYTE, 0, &m_texture[i]);
-            
-            glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_texture[i]));
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#else
+            CVOpenGLTextureCacheCreateTextureFromImage(kCFAllocatorDefault, this->m_textureCache, this->m_pixelBuffer[i], NULL, &m_texture[i]);
+#endif
+            GLenum textarget = CVOpenGLESTextureGetTarget(m_texture[i]);
+            GLint texname = CVOpenGLESTextureGetName(m_texture[i]);
+            glBindTexture(textarget, texname);
+            glTexParameterf(textarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameterf(textarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameterf(textarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameterf(textarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[i]);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, CVOpenGLESTextureGetName(m_texture[i]), 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, textarget, texname, 0);
             
+            GL_FRAMEBUFFER_STATUS(__LINE__);
         }
         
+        GL_ERRORS(__LINE__);
         
-        GL_FRAMEBUFFER_STATUS(__LINE__);
         
         glGenBuffers(1, &this->m_vbo);
         glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
@@ -342,11 +435,13 @@ namespace videocore { namespace iOS {
         glDisable(GL_SCISSOR_TEST);
         glViewport(0, 0, m_frameW,m_frameH);
         glClearColor(0.05,0.05,0.07,1.0);
+
         CVOpenGLESTextureCacheFlush(m_textureCache, 0);
+        GL_ERRORS(__LINE__);
     }
     void
-    GLESVideoMixer::registerSource(std::shared_ptr<ISource> source,
-                                   size_t bufferSize)
+    GLVideoMixer::registerSource(std::shared_ptr<ISource> source,
+                                 size_t bufferSize)
     {
         const auto hash = std::hash< std::shared_ptr<ISource> > () (source);
         bool registered = false;
@@ -367,9 +462,9 @@ namespace videocore { namespace iOS {
         }
     }
     void
-    GLESVideoMixer::releaseBuffer(std::weak_ptr<ISource> source)
+    GLVideoMixer::releaseBuffer(std::weak_ptr<ISource> source)
     {
-        DLog("GLESVideoMixer::releaseBuffer");
+        DLog("GLVideoMixer::releaseBuffer");
         const auto h = hash(source);
         auto it = m_sourceBuffers.find(h) ;
         if(it != m_sourceBuffers.end()) {
@@ -378,9 +473,9 @@ namespace videocore { namespace iOS {
         
     }
     void
-    GLESVideoMixer::unregisterSource(std::shared_ptr<ISource> source)
+    GLVideoMixer::unregisterSource(std::shared_ptr<ISource> source)
     {
-        DLog("GLESVideoMixer::unregisterSource");
+        DLog("GLVideoMixer::unregisterSource");
         releaseBuffer(source);
         
         auto it = m_sources.begin();
@@ -413,9 +508,9 @@ namespace videocore { namespace iOS {
         
     }
     void
-    GLESVideoMixer::pushBuffer(const uint8_t *const data,
-                               size_t size,
-                               videocore::IMetadata &metadata)
+    GLVideoMixer::pushBuffer(const uint8_t *const data,
+                             size_t size,
+                             videocore::IMetadata &metadata)
     {
         if(m_paused.load()) {
             return;
@@ -439,7 +534,7 @@ namespace videocore { namespace iOS {
         
         
         auto inPixelBuffer = *(Apple::PixelBufferRef*)data ;
-
+        
         m_sourceBuffers[h].setBuffer(inPixelBuffer, this->m_textureCache, m_glJobQueue, m_glesCtx);
         m_sourceBuffers[h].setBlends(md.getData<kVideoMetadataBlends>());
         
@@ -450,12 +545,12 @@ namespace videocore { namespace iOS {
         this->m_sourceMats[h] = mat;
     }
     void
-    GLESVideoMixer::setOutput(std::shared_ptr<IOutput> output)
+    GLVideoMixer::setOutput(std::shared_ptr<IOutput> output)
     {
         m_output = output;
     }
     const std::size_t
-    GLESVideoMixer::hash(std::weak_ptr<ISource> source) const
+    GLVideoMixer::hash(std::weak_ptr<ISource> source) const
     {
         const auto l = source.lock();
         if (l) {
@@ -464,7 +559,7 @@ namespace videocore { namespace iOS {
         return 0;
     }
     void
-    GLESVideoMixer::mixThread()
+    GLVideoMixer::mixThread()
     {
         const auto us = std::chrono::microseconds(static_cast<long long>(m_bufferDuration * 1000000.));
         const auto us_25 = std::chrono::microseconds(static_cast<long long>(m_bufferDuration * 250000.));
@@ -477,10 +572,9 @@ namespace videocore { namespace iOS {
         bool locked[2] = {false};
         
         m_nextMixTime = m_epoch;
-        
+        auto lastMixTime = m_epoch;
         while(!m_exiting.load())
         {
-            std::unique_lock<std::mutex> l(m_mutex);
             const auto now = std::chrono::steady_clock::now();
             
             if(now >= (m_nextMixTime)) {
@@ -500,89 +594,106 @@ namespace videocore { namespace iOS {
                 locked[current_fb] = true;
                 
                 m_mixing = true;
-                PERF_GL_async({
-                    glPushGroupMarkerEXT(0, "Videocore.Mix");
-                    glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[current_fb]);
-                    
-                    IVideoFilter* currentFilter = nil;
-                    glClear(GL_COLOR_BUFFER_BIT);
-                    for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i) {
-                        
-                        for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {
-                            CVOpenGLESTextureRef texture = NULL;
-                            auto filterit = m_sourceFilters.find(*it);
-                            if(filterit == m_sourceFilters.end()) {
-                                IFilter* filter = m_filterFactory.filter("com.videocore.filters.bgra");
-                                m_sourceFilters[*it] = dynamic_cast<IVideoFilter*>(filter);
-                            }
-                            if(currentFilter != m_sourceFilters[*it]) {
-                                if(currentFilter) {
-                                    currentFilter->unbind();
-                                }
-                                currentFilter = m_sourceFilters[*it];
-                                
-                                if(currentFilter && !currentFilter->initialized()) {
-                                    currentFilter->initialize();
-                                }
-                            }
-                            
-                            auto iTex = this->m_sourceBuffers.find(*it);
-                            if(iTex == this->m_sourceBuffers.end()) continue;
-                            
-                            texture = iTex->second.currentTexture();
-                            
-                            // TODO: Add blending.
-                            if(iTex->second.blends()) {
-                                glEnable(GL_BLEND);
-                                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                            }
-                            if(texture && currentFilter) {
-                                currentFilter->incomingMatrix(this->m_sourceMats[*it]);
-                                currentFilter->bind();
-                                glBindTexture(GL_TEXTURE_2D, CVOpenGLESTextureGetName(texture));
-                                glDrawArrays(GL_TRIANGLES, 0, 6);
-                            } else {
-                                DLog("Null texture!");
-                            }
-                            if(iTex->second.blends()) {
-                                glDisable(GL_BLEND);
-                            }
-                        }
-                    }
-                    glFlush();
-                    glPopGroupMarkerEXT();
-                    
-                    
-                    auto lout = this->m_output.lock();
-                    if(lout) {
-                        
-                        MetaData<'vide'> md(std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_epoch).count());
-                        lout->pushBuffer((uint8_t*)this->m_pixelBuffer[!current_fb], sizeof(this->m_pixelBuffer[!current_fb]), md);
-                    }
-                    this->m_mixing = false;
-        
+                
+                PERF_GL_sync({
+                    compose(current_fb, currentTime, lastMixTime);
                 });
-                current_fb = !current_fb;
+                
+                current_fb = (current_fb + 1) % kOutPBCount;
+                lastMixTime = currentTime;
             }
             
-            m_mixThreadCond.wait_until(l, m_nextMixTime);
-                
+            while(std::chrono::steady_clock::now() >= m_nextMixTime) {
+                m_nextMixTime += us;
+            }
+            dispatch_semaphore_wait(m_mixThreadSem, dispatch_time(DISPATCH_TIME_NOW,
+                                                                  std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                                                                                                       m_nextMixTime -
+                                                                                                                       std::chrono::steady_clock::now())
+                                                                  .count()));
+            
         }
+    }
+    void
+    GLVideoMixer::compose(int fbo, std::chrono::steady_clock::time_point currentTime, std::chrono::steady_clock::time_point lastMixTime)
+    {
+        glPushGroupMarkerEXT(0, "Videocore.Mix");
+        glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[fbo]);
+        
+        IVideoFilter* currentFilter = nil;
+        glClear(GL_COLOR_BUFFER_BIT);
+        for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i) {
+            
+            for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {
+                CVOpenGLESTextureRef texture = NULL;
+                auto filterit = m_sourceFilters.find(*it);
+                if(filterit == m_sourceFilters.end()) {
+                    IFilter* filter = m_filterFactory.filter("com.videocore.filters.bgra");
+                    m_sourceFilters[*it] = dynamic_cast<IVideoFilter*>(filter);
+                }
+                if(currentFilter != m_sourceFilters[*it]) {
+                    if(currentFilter) {
+                        currentFilter->unbind();
+                    }
+                    currentFilter = m_sourceFilters[*it];
+                    
+                    if(currentFilter && !currentFilter->initialized()) {
+                        currentFilter->setFilterLanguage(TARGET_OS_IPHONE ? GL_ES2_3 : GL_3);
+                        currentFilter->initialize();
+                    }
+                }
+                
+                auto iTex = this->m_sourceBuffers.find(*it);
+                if(iTex == this->m_sourceBuffers.end()) continue;
+                
+                texture = iTex->second.currentTexture();
+                
+                // TODO: Add blending.
+                if(iTex->second.blends()) {
+                    glEnable(GL_BLEND);
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                }
+                if(texture && currentFilter) {
+                    currentFilter->incomingMatrix(this->m_sourceMats[*it]);
+                    currentFilter->imageDimensions(iTex->second.currentBuffer()->width(), iTex->second.currentBuffer()->height());
+                    currentFilter->bind();
+                    glBindTexture(CVOpenGLESTextureGetTarget(texture), CVOpenGLESTextureGetName(texture));
+                    glDrawArrays(GL_TRIANGLES, 0, 6);
+                } else {
+                    DLog("Null texture!");
+                }
+                if(iTex->second.blends()) {
+                    glDisable(GL_BLEND);
+                }
+            }
+        }
+        glFlush();
+        glPopGroupMarkerEXT();
+        
+        
+        auto lout = this->m_output.lock();
+        if(lout) {
+            
+            MetaData<'vide'> md(std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_epoch).count());
+            lout->pushBuffer((uint8_t*)this->m_pixelBuffer[!fbo], sizeof(this->m_pixelBuffer[!fbo]), md);
+        }
+        this->m_mixing = false;
+        
     }
     
     void
-    GLESVideoMixer::mixPaused(bool paused)
+    GLVideoMixer::mixPaused(bool paused)
     {
         m_paused = paused;
     }
     
     void
-    GLESVideoMixer::setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter *filter) {
+    GLVideoMixer::setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter *filter) {
         auto h = hash(source);
         m_sourceFilters[h] = filter;
     }
     void
-    GLESVideoMixer::sync() {
+    GLVideoMixer::sync() {
         m_syncPoint = std::chrono::steady_clock::now();
         m_shouldSync = true;
         //if(m_syncPoint >= (m_nextMixTime)) {

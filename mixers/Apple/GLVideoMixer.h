@@ -24,8 +24,8 @@
  */
 
 
-#ifndef __videocore__GLESVideoMixer__
-#define __videocore__GLESVideoMixer__
+#ifndef __videocore__GLVideoMixer__
+#define __videocore__GLVideoMixer__
 
 #include <iostream>
 #include <videocore/mixers/IVideoMixer.hpp>
@@ -41,7 +41,12 @@
 #include <map>
 #include <unordered_map>
 
-namespace videocore { namespace iOS {
+
+#if !TARGET_OS_IPHONE
+typedef CVOpenGLTextureCacheRef CVOpenGLESTextureCacheRef;
+typedef CVOpenGLTextureRef CVOpenGLESTextureRef;
+#endif
+namespace videocore { namespace Apple {
  
     struct SourceBuffer
     {
@@ -49,6 +54,7 @@ namespace videocore { namespace iOS {
         ~SourceBuffer() { };
         void setBuffer(Apple::PixelBufferRef ref, CVOpenGLESTextureCacheRef textureCache, JobQueue& jobQueue, void* glContext);
         
+        size_t               bufferId() const { return m_currentBufferBacking->bufid; };
         CVOpenGLESTextureRef currentTexture() const { return m_currentTexture; };
         Apple::PixelBufferRef currentBuffer() const { return m_currentBuffer; };
         
@@ -56,24 +62,27 @@ namespace videocore { namespace iOS {
         void setBlends(bool blends) { m_blends = blends; };
     private:
         typedef struct __Buffer_ {
-            __Buffer_(Apple::PixelBufferRef buf) : texture(nullptr), buffer(buf) {};
+            __Buffer_(Apple::PixelBufferRef buf) : texture(nullptr), buffer(buf) { static int sbufid=0; bufid=sbufid++; };
             ~__Buffer_() { if(texture) { CFRelease(texture); } };
                 
             Apple::PixelBufferRef buffer;
             CVOpenGLESTextureRef texture;
             std::chrono::steady_clock::time_point time;
+            size_t bufid;
         } Buffer_;
         
         std::map< CVPixelBufferRef, Buffer_ >   m_pixelBuffers;
         Apple::PixelBufferRef                   m_currentBuffer;
         CVOpenGLESTextureRef                    m_currentTexture;
+        Buffer_*                                m_currentBufferBacking;
         bool                                    m_blends;
     };
     /*
      *  Takes CVPixelBufferRef inputs and outputs a single CVPixelBufferRef that has been composited from the various sources.
      *  Sources must output VideoBufferMetadata with their buffers. This compositor uses homogeneous coordinates.
      */
-    class GLESVideoMixer : public IVideoMixer
+    static const int kOutPBCount = 2;
+    class GLVideoMixer : public IVideoMixer
     {
       
     public:
@@ -86,14 +95,14 @@ namespace videocore { namespace iOS {
          *                          The parameter of this method will be a pointer to its EAGLContext.  This is useful for
          *                          applications that may be capturing GLES data and do not wish to capture the mixer.
          */
-        GLESVideoMixer(int frame_w,
+        GLVideoMixer(int frame_w,
                        int frame_h,
                        double frameDuration,
                        CVPixelBufferPoolRef pixelBufferPool = nullptr,
                        std::function<void(void*)> excludeContext = nullptr);
         
         /*! Destructor */
-        ~GLESVideoMixer();
+        ~GLVideoMixer();
         
         /*! IMixer::registerSource */
         void registerSource(std::shared_ptr<ISource> source,
@@ -156,6 +165,9 @@ namespace videocore { namespace iOS {
         void setupGLES(std::function<void(void*)> excludeContext);
         
         
+        void compose(int fbo,
+                     std::chrono::steady_clock::time_point currentTime,
+                     std::chrono::steady_clock::time_point lastMixTime);
         
     private:
         
@@ -169,17 +181,21 @@ namespace videocore { namespace iOS {
         
         std::thread m_mixThread;
         std::mutex  m_mutex;
-        std::condition_variable m_mixThreadCond;
-        
+
+        dispatch_semaphore_t m_mixThreadSem;
         
         CVPixelBufferPoolRef m_pixelBufferPool;
-        CVPixelBufferRef m_pixelBuffer[2];
+        CVPixelBufferRef m_pixelBuffer[kOutPBCount];
+#if TARGET_OS_IPHONE
         CVOpenGLESTextureCacheRef m_textureCache;
-        CVOpenGLESTextureRef      m_texture[2];
-        
+        CVOpenGLESTextureRef      m_texture[kOutPBCount];
+#else
+        CVOpenGLTextureCacheRef   m_textureCache;
+        CVOpenGLTextureRef        m_texture[kOutPBCount];
+#endif
         void*       m_callbackSession;
         void*       m_glesCtx;
-        unsigned    m_vbo, m_vao, m_fbo[2], m_prog, m_uMat;
+        unsigned    m_vbo, m_vao, m_fbo[kOutPBCount], m_prog, m_uMat;
         
         
         int m_frameW;

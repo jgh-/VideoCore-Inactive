@@ -53,6 +53,7 @@ namespace videocore {
 
             unsigned int m_vao;
             unsigned int m_uMatrix;
+            unsigned int m_uImageSize;
             bool m_initialized;
             bool m_bound;
             

@@ -1,17 +1,22 @@
 
 #include <videocore/filters/Basic/GrayscaleVideoFilter.h>
 
-#include <TargetConditionals.h>
-
-
-#ifdef TARGET_OS_IPHONE
-
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES3/gl.h>
-#include <videocore/sources/iOS/GLESUtil.h>
-#include <videocore/filters/FilterFactory.h>
-
+#ifdef __APPLE__
+#   include <TargetConditionals.h>
+#   if (TARGET_OS_IPHONE)
+#       include <OpenGLES/ES2/gl.h>
+#       include <OpenGLES/ES3/gl.h>
+#       include <videocore/sources/iOS/GLESUtil.h>
+#   else
+#       include <OpenGL/gl3.h>
+#       include <OpenGL/gl3ext.h>
+#       include <videocore/sources/iOS/GLESUtil.h>
+#       define glDeleteVertexArraysOES glDeleteVertexArrays
+#       define glGenVertexArraysOES glGenVertexArrays
+#       define glBindVertexArrayOES glBindVertexArray
+#   endif
 #endif
+#include <videocore/filters/FilterFactory.h>
 
 namespace videocore { namespace filters {
  
@@ -39,7 +44,7 @@ namespace videocore { namespace filters {
     GrayscaleVideoFilter::vertexKernel() const
     {
         
-        KERNEL(GL_ES2_3, m_language,
+        FKERNEL(GL_ES2_3, m_language,
                attribute vec2 aPos;
                attribute vec2 aCoord;
                varying vec2   vCoord;
@@ -47,7 +52,7 @@ namespace videocore { namespace filters {
                void main(void) {
                 gl_Position = uMat * vec4(aPos,0.,1.);
                 vCoord = aCoord;
-               }
+               }, ""
         )
         
         return nullptr;
@@ -57,7 +62,7 @@ namespace videocore { namespace filters {
     GrayscaleVideoFilter::pixelKernel() const
     {
         
-         KERNEL(GL_ES2_3, m_language,
+         FKERNEL(GL_ES2_3, m_language,
                precision mediump float;
                varying vec2      vCoord;
                uniform sampler2D uTex0;
@@ -65,7 +70,7 @@ namespace videocore { namespace filters {
                    vec4 color = texture2D(uTex0, vCoord);
                    float gray = dot(color.rgb, vec3(0.3, 0.59, 0.11));
                    gl_FragColor = vec4(gray, gray, gray, color.a);
-               }
+               }, ""
         )
         
         return nullptr;

@@ -26,7 +26,7 @@
 #include <videocore/system/pixelBuffer/Apple/PixelBuffer.h>
 
 #include <CoreVideo/CoreVideo.h>
-
+#import <Foundation/Foundation.h>
 namespace videocore { namespace Apple {
     
     PixelBufferSource::PixelBufferSource(int width, int height, OSType pixelFormat )
@@ -38,9 +38,11 @@ namespace videocore { namespace Apple {
             NSDictionary* pixelBufferOptions = @{ (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
                 (NSString*) kCVPixelBufferWidthKey : @(width),
                 (NSString*) kCVPixelBufferHeightKey : @(height),
+#if TARGET_OS_IPHONE
                 (NSString*) kCVPixelBufferOpenGLESCompatibilityKey : @YES,
-                (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}};
-            
+                (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}
+#endif
+                                                  };
             ret = CVPixelBufferCreate(kCFAllocatorDefault, width, height, pixelFormat, (__bridge CFDictionaryRef)pixelBufferOptions, &pb);
         }
         if(!ret) {
@@ -74,6 +76,7 @@ namespace videocore { namespace Apple {
             md.setData(4, mat, true, shared_from_this());
             auto pixelBuffer = std::make_shared<Apple::PixelBuffer>((CVPixelBufferRef)m_pixelBuffer, false);
             outp->pushBuffer((const uint8_t*)&pixelBuffer, sizeof(pixelBuffer), md);
+            DLog("Pb bpr: %zu",CVPixelBufferGetBytesPerRow((CVPixelBufferRef)m_pixelBuffer));
         }
     }
     void

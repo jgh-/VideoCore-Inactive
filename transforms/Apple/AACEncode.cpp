@@ -22,11 +22,12 @@
  THE SOFTWARE.
  
  */
-#include <videocore/transforms/iOS/AACEncode.h>
+#include <videocore/transforms/Apple/AACEncode.h>
 #include <sstream>
+#include <TargetConditionals.h>
 
-namespace videocore { namespace iOS {
-    
+namespace videocore { namespace Apple {
+#if TARGET_OS_IPHONE
     Boolean IsAACHardwareEncoderAvailable(void)
     {
         Boolean isAvailable = false;
@@ -53,10 +54,10 @@ namespace videocore { namespace iOS {
             if (encoderDescriptions[i].mSubType == kAudioFormatMPEG4AAC &&
                 encoderDescriptions[i].mManufacturer == kAppleHardwareAudioCodecManufacturer) isAvailable = true;
         }
-        
+
         return isAvailable;
     }
-    
+#endif
     struct UserData {
         uint8_t* data;
         int size;
@@ -119,16 +120,25 @@ namespace videocore { namespace iOS {
         UInt32 outputPacketSize = 0;
 
         const OSType subtype = kAudioFormatMPEG4AAC;
+
         AudioClassDescription requestedCodecs[2] = {
             {
                 kAudioEncoderComponentType,
                 subtype,
+#if TARGET_OS_IPHONE
                 kAppleSoftwareAudioCodecManufacturer
+#else
+                'appl'
+#endif
             },
             {
                 kAudioEncoderComponentType,
                 subtype,
+#if TARGET_OS_IPHONE
                 kAppleHardwareAudioCodecManufacturer
+#else
+                'appl'
+#endif
             }
         };
         
@@ -284,12 +294,20 @@ namespace videocore { namespace iOS {
                 {
                     kAudioEncoderComponentType,
                     subtype,
+#if TARGET_OS_IPHONE
                     kAppleSoftwareAudioCodecManufacturer
+#else
+                    'appl'
+#endif
                 },
                 {
                     kAudioEncoderComponentType,
                     subtype,
+#if TARGET_OS_IPHONE
                     kAppleHardwareAudioCodecManufacturer
+#else
+                    'appl'
+#endif
                 }
             };
             AudioConverterNewSpecific(&m_in, &m_out, 2,requestedCodecs, &m_audioConverter);

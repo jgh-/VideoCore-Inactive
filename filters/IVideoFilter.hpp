@@ -34,7 +34,8 @@
 #include <videocore/filters/IFilter.hpp>
 #include <glm/glm.hpp>
 
-#define KERNEL(_language, _target, _kernelstr) if(_language == _target){ do { return # _kernelstr ; } while(0); }
+#define FKERNEL1(_language, _target, _kernelstr, _pre) if(_language == _target){ do { return _pre "\n" # _kernelstr ; } while(0); }
+#define FKERNEL(_language, _target, _kernelstr, _pre) FKERNEL1(_language, _target, _kernelstr, _pre)
 
 
 namespace videocore {

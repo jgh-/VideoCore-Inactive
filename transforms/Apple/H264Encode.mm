@@ -22,6 +22,10 @@
 #include <Availability.h>
 #include <TargetConditionals.h>
 #include <CoreFoundation/CoreFoundation.h>
+#include <videocore/system/pixelBuffer/Apple/PixelBuffer.h>
+
+#import <Foundation/Foundation.h>
+#include <chrono>
 
 #if TARGET_OS_IPHONE
 #if defined(__IPHONE_8_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_8_0
@@ -116,9 +120,12 @@ namespace videocore { namespace Apple {
         if(m_compressionSession) {
             m_encodeMutex.lock();
             VTCompressionSessionRef session = (VTCompressionSessionRef)m_compressionSession;
-
-            CMTime pts = CMTimeMake(metadata.timestampDelta + m_ctsOffset, 1000.); // timestamp is in ms.
-            CMTime dur = CMTimeMake(1, m_fps);
+            
+            CVPixelBufferRef buffer = (CVPixelBufferRef)data;
+            
+            const uint64_t _pts = metadata.pts + m_ctsOffset;
+            CMTime pts = CMTimeMake(_pts, 1000.); // timestamp is in ms.
+            CMTime dur = CMTimeMake(1, (1. / metadata.duration));
             VTEncodeInfoFlags flags;
             
             
@@ -132,9 +139,9 @@ namespace videocore { namespace Apple {
                 
                 CFDictionaryAddValue(frameProps, kVTEncodeFrameOptionKey_ForceKeyFrame, kCFBooleanTrue);
             }
-            
-            VTCompressionSessionEncodeFrame(session, (CVPixelBufferRef)data, pts, dur, frameProps, NULL, &flags);
-            
+
+            OSStatus ret = VTCompressionSessionEncodeFrame(session, buffer, pts, dur, frameProps, NULL, &flags);
+
             if(m_forceKeyframe) {
                 CFRelease(frameProps);
                 m_forceKeyframe = false;
@@ -162,10 +169,10 @@ namespace videocore { namespace Apple {
         CFStringRef key = kVTVideoEncoderSpecification_EncoderID;
         CFStringRef value = CFSTR("com.apple.videotoolbox.videoencoder.h264.gva");
         
-        CFStringRef bkey = CFSTR("EnableHardwareAcceleratedVideoEncoder");
+        CFStringRef bkey = kVTVideoEncoderSpecification_EnableHardwareAcceleratedVideoEncoder;
         CFBooleanRef bvalue = kCFBooleanTrue;
         
-        CFStringRef ckey = CFSTR("RequireHardwareAcceleratedVideoEncoder");
+        CFStringRef ckey = kVTVideoEncoderSpecification_RequireHardwareAcceleratedVideoEncoder;
         CFBooleanRef cvalue = kCFBooleanTrue;
         
         encoderSpecifications = CFDictionaryCreateMutable(
@@ -183,8 +190,7 @@ namespace videocore { namespace Apple {
         @autoreleasepool {
             
             
-            NSDictionary* pixelBufferOptions = @{ (NSString*) kCVPixelBufferPixelFormatTypeKey : //@(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange),
-                                                  @(kCVPixelFormatType_32BGRA),
+            NSDictionary* pixelBufferOptions = @{ (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
                                                   (NSString*) kCVPixelBufferWidthKey : @(m_frameW),
                                                   (NSString*) kCVPixelBufferHeightKey : @(m_frameH),
                                                   (NSString*) kCVPixelBufferOpenGLESCompatibilityKey : @YES,
@@ -259,6 +265,7 @@ namespace videocore { namespace Apple {
         if(m_compressionSession) {
             VTCompressionSessionInvalidate((VTCompressionSessionRef)m_compressionSession);
             CFRelease((VTCompressionSessionRef)m_compressionSession);
+            m_compressionSession = nullptr;
         }
 #endif
     }
@@ -268,8 +275,25 @@ namespace videocore { namespace Apple {
 #if VERSION_OK
         auto l = m_output.lock();
         if(l && data && size > 0) {
+            //DLog("Received [pts:%lld  dts:%lld]", pts, dts);
+           // DLog("NALU: %d [%x %x %x %x][%x %x %x %x] pts: %lld dts: %lld", data[4] & 0x1F, data[0], data[1], data[2], data[3],
+           //     data[4],data[5],data[6],data[7],pts, dts);
+            int nalu_type = INT32_MAX;
+            uint8_t* p = (uint8_t*)&data[0];
+            int32_t nsize = 0;
+            while(p < (data+size)) {
+                nsize = htonl(*(int32_t*)p);
+                nalu_type = p[4] & 0x1f;
+                //DLog("nalu[%x][%d]", nalu_type, nsize);
+                if(nalu_type <= 5 || nalu_type == 7 || nalu_type == 8) {
+                    break;
+                }
+                p += nsize + sizeof(nsize);
+            }
+            //DLog("NALU: %d", p[4] & 0x1f);
             videocore::VideoBufferMetadata md(pts, dts);
-            l->pushBuffer(data, size, md);
+            l->pushBuffer(p, (data+size)-p, md);
+            
         }
 #endif
         

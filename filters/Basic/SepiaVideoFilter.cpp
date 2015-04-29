@@ -1,17 +1,22 @@
 
 #include <videocore/filters/Basic/SepiaVideoFilter.h>
 
-#include <TargetConditionals.h>
-
-
-#ifdef TARGET_OS_IPHONE
-
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES3/gl.h>
-#include <videocore/sources/iOS/GLESUtil.h>
-#include <videocore/filters/FilterFactory.h>
-
+#ifdef __APPLE__
+#   include <TargetConditionals.h>
+#   if (TARGET_OS_IPHONE)
+#       include <OpenGLES/ES2/gl.h>
+#       include <OpenGLES/ES3/gl.h>
+#       include <videocore/sources/iOS/GLESUtil.h>
+#   else
+#       include <OpenGL/gl3.h>
+#       include <OpenGL/gl3ext.h>
+#       include <videocore/sources/iOS/GLESUtil.h>
+#       define glDeleteVertexArraysOES glDeleteVertexArrays
+#       define glGenVertexArraysOES glGenVertexArrays
+#       define glBindVertexArrayOES glBindVertexArray
+#   endif
 #endif
+#include <videocore/filters/FilterFactory.h>
 
 namespace videocore { namespace filters {
  
@@ -32,14 +37,14 @@ namespace videocore { namespace filters {
     SepiaVideoFilter::~SepiaVideoFilter()
     {
         glDeleteProgram(m_program);
-        glDeleteVertexArrays(1, &m_vao);
+        glDeleteVertexArraysOES(1, &m_vao);
     }
     
     const char * const
     SepiaVideoFilter::vertexKernel() const
     {
         
-        KERNEL(GL_ES2_3, m_language,
+        FKERNEL(GL_ES2_3, m_language,
                attribute vec2 aPos;
                attribute vec2 aCoord;
                varying vec2   vCoord;
@@ -47,7 +52,7 @@ namespace videocore { namespace filters {
                void main(void) {
                 gl_Position = uMat * vec4(aPos,0.,1.);
                 vCoord = aCoord;
-               }
+               }, ""
         )
         
         return nullptr;
@@ -57,7 +62,7 @@ namespace videocore { namespace filters {
     SepiaVideoFilter::pixelKernel() const
     {
         
-         KERNEL(GL_ES2_3, m_language,
+         FKERNEL(GL_ES2_3, m_language,
                precision mediump float;
                varying vec2      vCoord;
                uniform sampler2D uTex0;
@@ -68,7 +73,7 @@ namespace videocore { namespace filters {
                    vec3 sepiaColor = vec3(gray) * SEPIA;
                    color.rgb = mix(color.rgb, sepiaColor, 0.75);
                    gl_FragColor = color;
-               }
+               }, ""
         )
         
         return nullptr;
@@ -80,8 +85,8 @@ namespace videocore { namespace filters {
             case GL_ES2_3:
             case GL_2: {
                 setProgram(build_program(vertexKernel(), pixelKernel()));
-                glGenVertexArrays(1, &m_vao);
-                glBindVertexArray(m_vao);
+                glGenVertexArraysOES(1, &m_vao);
+                glBindVertexArrayOES(m_vao);
                 m_uMatrix = glGetUniformLocation(m_program, "uMat");
                 int attrpos = glGetAttribLocation(m_program, "aPos");
                 int attrtex = glGetAttribLocation(m_program, "aCoord");
@@ -109,7 +114,7 @@ namespace videocore { namespace filters {
                         initialize();
                     }
                     glUseProgram(m_program);
-                    glBindVertexArray(m_vao);
+                    glBindVertexArrayOES(m_vao);
                 }
                 glUniformMatrix4fv(m_uMatrix, 1, GL_FALSE, &m_matrix[0][0]);
                 break;

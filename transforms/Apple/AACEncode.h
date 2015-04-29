@@ -38,7 +38,7 @@
 #include <AudioToolbox/AudioToolbox.h>
 #include <videocore/system/Buffer.hpp>
 
-namespace videocore { namespace iOS {
+namespace videocore { namespace Apple {
 
     class AACEncode : public IEncoder
     {

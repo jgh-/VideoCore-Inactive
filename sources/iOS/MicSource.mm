@@ -96,7 +96,7 @@ namespace videocore { namespace iOS {
             if(granted) {
 
                 [session setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker | AVAudioSessionCategoryOptionMixWithOthers error:nil];
-                //[session setMode:AVAudioSessionModeVideoChat error:nil];
+                [session setMode:AVAudioSessionModeVideoChat error:nil];
                 [session setActive:YES error:nil];
                 
                 AudioComponentDescription acd;
@@ -197,7 +197,9 @@ namespace videocore { namespace iOS {
     MicSource::setOutput(std::shared_ptr<IOutput> output) {
         m_output = output;
         auto mixer = std::dynamic_pointer_cast<IAudioMixer>(output);
-        mixer->registerSource(shared_from_this());
+        if(mixer) {
+            mixer->registerSource(shared_from_this());
+        }
     }
 }
 }

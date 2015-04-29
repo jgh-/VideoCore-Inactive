@@ -26,7 +26,7 @@
 #include <sstream>
 #include <vector>
 #include <stdint.h>
-
+#include <cmath>
 
 #ifndef INT16_MAX
 #define INT16_MAX 0x7FFF
