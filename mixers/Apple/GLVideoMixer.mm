@@ -161,11 +161,10 @@ namespace videocore { namespace Apple {
                 CVOpenGLESTextureRef texture = nullptr;
                 const CVPixelBufferRef inCvpb = ref->cvBuffer();
                 
-                int w = (int)CVPixelBufferGetWidth(inCvpb);
-                int h = (int)CVPixelBufferGetHeight(inCvpb);
-                
                 
 #if TARGET_OS_IPHONE
+                int w = (int)CVPixelBufferGetWidth(inCvpb);
+                int h = (int)CVPixelBufferGetHeight(inCvpb);
                 
                 CVReturn ret = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
                                                                             textureCache,
@@ -419,7 +418,7 @@ namespace videocore { namespace Apple {
             glTexParameterf(textarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glBindFramebuffer(GL_FRAMEBUFFER, m_fbo[i]);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, textarget, texname, 0);
-            
+
             GL_FRAMEBUFFER_STATUS(__LINE__);
         }
         

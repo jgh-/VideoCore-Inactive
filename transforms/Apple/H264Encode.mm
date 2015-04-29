@@ -193,8 +193,11 @@ namespace videocore { namespace Apple {
             NSDictionary* pixelBufferOptions = @{ (NSString*) kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA),
                                                   (NSString*) kCVPixelBufferWidthKey : @(m_frameW),
                                                   (NSString*) kCVPixelBufferHeightKey : @(m_frameH),
+#if TARGET_OS_IPHONE
                                                   (NSString*) kCVPixelBufferOpenGLESCompatibilityKey : @YES,
-                                                  (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}};
+                                                  (NSString*) kCVPixelBufferIOSurfacePropertiesKey : @{}
+#endif
+                                                  };
             
             err = VTCompressionSessionCreate(
                                              kCFAllocatorDefault,

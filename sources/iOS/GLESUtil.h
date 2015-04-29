@@ -25,10 +25,17 @@
 #ifndef videocore_GLESUtil_h
 #define videocore_GLESUtil_h
 
-#import <OpenGLES/ES2/gl.h>
-#import <OpenGLES/ES2/glext.h>
-#import <OpenGLES/ES3/gl.h>
-
+#ifdef __APPLE__
+#   include <TargetConditionals.h>
+#   if TARGET_OS_IPHONE
+#       import <OpenGLES/ES2/gl.h>
+#       import <OpenGLES/ES2/glext.h>
+#       import <OpenGLES/ES3/gl.h>
+#   else
+#       include <OpenGL/gl3.h>
+#       include <OpenGL/gl3ext.h>
+#   endif
+#endif
 #define BUFFER_OFFSET(i) ((void*)(i))
 #define BUFFER_OFFSET_POSITION BUFFER_OFFSET(0)
 #define BUFFER_OFFSET_TEXTURE  BUFFER_OFFSET(8)
@@ -62,9 +69,9 @@ switch(status)\
 case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:\
 DLog("OGL(" __FILE__ "):: %d: Incomplete attachment\n", line);\
 break;\
-case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:\
+/*case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:\
 DLog("OGL(" __FILE__ "):: %d: Incomplete dimensions\n", line);\
-break;\
+break;*/\
 case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:\
 DLog("OGL(" __FILE__ "):: %d: Incomplete missing attachment\n", line);\
 break;\
