@@ -16,18 +16,22 @@ PODS:
   - boost/string_algorithms-includes (1.51.0)
   - glm (0.9.4.6)
   - UriParser-cpp (0.1.3)
-  - VideoCore (0.1.12):
+  - VideoCore (0.3.1):
     - boost (~> 1.51.0)
     - glm (~> 0.9.4.6)
     - UriParser-cpp (~> 0.1.3)
 
 DEPENDENCIES:
-  - VideoCore (~> 0.1.12)
+  - VideoCore (from `../..`)
+
+EXTERNAL SOURCES:
+  VideoCore:
+    :path: ../..
 
 SPEC CHECKSUMS:
-  boost: 581038adda16d11045576013ad27e3eeeabc2d10
-  glm: 840dd35fe3cc445935accf81ffd1384dad532ee7
-  UriParser-cpp: e6df3fd87445ba4ab37a72acafb4f03bc39db524
-  VideoCore: 4842dcca60f127b3c75c1e21aa1304356d911b8d
+  boost: 6c5c8d8daef26ac83c1e1c00ad14de62b80161d7
+  glm: e22c8d9df10404059b19c2952f9fa44d9a9f3056
+  UriParser-cpp: cbbe00080ee432ec4833dca863a7fc83adc9b01a
+  VideoCore: e375f2e5b41067a8c74cf6dc6f0c79a958c88613
 
-COCOAPODS: 0.35.0
+COCOAPODS: 0.37.1

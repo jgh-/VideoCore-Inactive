@@ -33,5 +33,6 @@
 @property (retain, nonatomic) IBOutlet UIButton *btnConnect;
 
 - (IBAction)btnConnectTouch:(id)sender;
+- (IBAction)btnFilterTouch:(id)sender;
 
 @end
