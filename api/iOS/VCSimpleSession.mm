@@ -143,7 +143,8 @@ namespace videocore { namespace simpleApi {
     BOOL _continuousExposure;
     CGPoint _focusPOI;
     CGPoint _exposurePOI;
-
+    
+    VCFilter _filter;
 }
 @property (nonatomic, readwrite) VCSessionState rtmpSessionState;
 
@@ -652,6 +653,34 @@ namespace videocore { namespace simpleApi {
         m_cameraSource->getPreviewLayer((void**)previewLayer);
     }
 }
+
+//Set property filter for the new enum + set dynamically the sourceFilter for the video mixer
+- (void)setFilter:(VCFilter)filterToChange {
+        NSString *filterName = @"com.videocore.filters.bgra";
+        
+        switch (filterToChange) {
+            case VCFilterNormal:
+                filterName = @"com.videocore.filters.bgra";
+                break;
+            case VCFilterGray:
+                filterName = @"com.videocore.filters.grayscale";
+                break;
+            case VCFilterInvertColors:
+                filterName = @"com.videocore.filters.invertColors";
+                break;
+            case VCFilterSepia:
+                filterName = @"com.videocore.filters.sepia";
+                break;
+            default:
+                break;
+        }
+        
+        _filter = filterToChange;
+        NSLog(@"FILTER IS : [%d]", (int)_filter);
+        std::string convertString([filterName UTF8String]);
+        m_videoMixer->setSourceFilter(m_cameraSource, dynamic_cast<videocore::IVideoFilter*>(m_videoMixer->filterFactory().filter(convertString))); // default is com.videocore.filters.bgra
+}
+
 // -----------------------------------------------------------------------------
 //  Private Methods
 // -----------------------------------------------------------------------------
@@ -731,6 +760,7 @@ namespace videocore { namespace simpleApi {
             m_cameraSource->setOutput(aspectTransform);
 
             m_videoMixer->setSourceFilter(m_cameraSource, dynamic_cast<videocore::IVideoFilter*>(m_videoMixer->filterFactory().filter("com.videocore.filters.bgra")));
+            _filter = VCFilterNormal;
             aspectTransform->setOutput(positionTransform);
             positionTransform->setOutput(m_videoMixer);
             m_aspectTransform = aspectTransform;

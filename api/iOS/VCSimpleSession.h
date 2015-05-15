@@ -34,7 +34,6 @@
 #import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
 
-
 @class VCSimpleSession;
 
 typedef NS_ENUM(NSInteger, VCSessionState)
@@ -60,6 +59,13 @@ typedef NS_ENUM(NSInteger, VCAspectMode)
     VCAscpectModeFill
 };
 
+//With new filters should add an enum here
+typedef NS_ENUM(NSInteger, VCFilter) {
+    VCFilterNormal,
+    VCFilterGray,
+    VCFilterInvertColors,
+    VCFilterSepia
+};
 
 @protocol VCSessionDelegate <NSObject>
 @required
@@ -93,6 +99,8 @@ typedef NS_ENUM(NSInteger, VCAspectMode)
 @property (nonatomic, assign) BOOL          useAdaptiveBitrate;     /* Default is off */
 @property (nonatomic, readonly) int         estimatedThroughput;    /* Bytes Per Second. */
 @property (nonatomic, assign) VCAspectMode  aspectMode;
+
+@property (nonatomic, assign) VCFilter      filter; /* Default is VCFilterNormal*/
 
 @property (nonatomic, assign) id<VCSessionDelegate> delegate;
 
@@ -137,6 +145,7 @@ typedef NS_ENUM(NSInteger, VCAspectMode)
  *  basically end up with the bottom-right quadrant of the image hanging out at the top-left corner of
  *  your video)
  */
+
 - (void) addPixelBufferSource: (UIImage*) image
                      withRect: (CGRect) rect;
 

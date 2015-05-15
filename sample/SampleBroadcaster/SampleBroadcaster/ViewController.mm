@@ -74,6 +74,27 @@
     }
 }
 
+
+//Switch with the availables filters
+- (IBAction)btnFilterTouch:(id)sender {
+    switch (_session.filter) {
+        case VCFilterNormal:
+            [_session setFilter:VCFilterGray];
+            break;
+        case VCFilterGray:
+            [_session setFilter:VCFilterInvertColors];
+            break;
+        case VCFilterInvertColors:
+            [_session setFilter:VCFilterSepia];
+            break;
+        case VCFilterSepia:
+            [_session setFilter:VCFilterNormal];
+            break;
+        default:
+            break;
+    }
+}
+
 - (void) connectionStatusChanged:(VCSessionState) state
 {
     switch(state) {

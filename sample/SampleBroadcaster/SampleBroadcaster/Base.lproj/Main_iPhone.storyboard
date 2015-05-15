@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6254" systemVersion="14B25" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="vXZ-lx-hvc">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6751" systemVersion="14D136" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="vXZ-lx-hvc">
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6247"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6736"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
@@ -32,6 +32,15 @@
                                     <action selector="btnConnectTouch:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="U36-yX-cp8"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="yD4-SW-ZCa">
+                                <rect key="frame" x="258" y="515.5" width="46" height="30"/>
+                                <state key="normal" title="Filter">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="btnFilterTouch:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="A9q-ye-yXX"/>
+                                </connections>
+                            </button>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="L0s-wI-daT">
                                 <rect key="frame" x="0.0" y="0.0" width="320" height="505"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
@@ -40,7 +49,9 @@
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="L0s-wI-daT" firstAttribute="top" secondItem="kh9-bI-dsS" secondAttribute="topMargin" id="5wT-jJ-YIW"/>
+                            <constraint firstItem="sJT-7B-7CU" firstAttribute="centerY" secondItem="yD4-SW-ZCa" secondAttribute="centerY" id="Bal-o4-nRG"/>
                             <constraint firstItem="sJT-7B-7CU" firstAttribute="top" secondItem="L0s-wI-daT" secondAttribute="bottom" constant="8" id="CHE-mL-vhx"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="yD4-SW-ZCa" secondAttribute="trailing" id="c9c-mU-kBm"/>
                             <constraint firstAttribute="centerX" secondItem="sJT-7B-7CU" secondAttribute="centerX" id="cVT-Y5-v45"/>
                             <constraint firstItem="2fi-mo-0CV" firstAttribute="top" secondItem="sJT-7B-7CU" secondAttribute="bottom" constant="20" id="fgw-7I-k37"/>
                             <constraint firstAttribute="trailingMargin" secondItem="L0s-wI-daT" secondAttribute="trailing" constant="-16" id="nyA-0b-b2e"/>
