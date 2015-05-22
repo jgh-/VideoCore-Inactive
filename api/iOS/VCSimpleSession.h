@@ -66,6 +66,8 @@ typedef NS_ENUM(NSInteger, VCAspectMode)
 - (void) connectionStatusChanged: (VCSessionState) sessionState;
 @optional
 - (void) didAddCameraSource:(VCSimpleSession*)session;
+
+- (void) detectedThroughput: (NSInteger) throughputInBytesPerSecond; //Depreciated, should use method below
 - (void) detectedThroughput: (NSInteger) throughputInBytesPerSecond videoRate:(NSInteger) rate;
 @end
 
