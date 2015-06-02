@@ -675,6 +675,12 @@ namespace videocore { namespace simpleApi {
             case VCFilterSepia:
                 filterName = @"com.videocore.filters.sepia";
                 break;
+            case VCFilterFisheye:
+                filterName = @"com.videocore.filters.fisheye";
+                break;
+            case VCFilterGlow:
+                filterName = @"com.videocore.filters.glow";
+                break;
             default:
                 break;
         }
