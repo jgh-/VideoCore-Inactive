@@ -763,7 +763,7 @@ namespace videocore { namespace simpleApi {
                                                                                 );
 
 
-        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,(self.cameraState == VCCameraStateFront),self.useInterfaceOrientation,nil,^{
+        std::dynamic_pointer_cast<videocore::iOS::CameraSource>(m_cameraSource)->setupCamera(self.fps,(self.cameraState == VCCameraStateFront),self.useMirroring,self.useInterfaceOrientation,nil,^{
             m_cameraSource->setContinuousAutofocus(true);
             m_cameraSource->setContinuousExposure(true);
 

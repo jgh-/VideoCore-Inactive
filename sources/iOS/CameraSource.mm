@@ -103,7 +103,7 @@ namespace videocore { namespace iOS {
     }
     
     void
-    CameraSource::setupCamera(int fps, bool useFront, bool useInterfaceOrientation, NSString* sessionPreset, void (^callbackBlock)(void))
+    CameraSource::setupCamera(int fps, bool useFront, bool useMirroring, bool useInterfaceOrientation, NSString* sessionPreset, void (^callbackBlock)(void))
     {
         m_fps = fps;
         m_useInterfaceOrientation = useInterfaceOrientation;
@@ -153,6 +153,9 @@ namespace videocore { namespace iOS {
                         if([conn isVideoMaxFrameDurationSupported]) {
                             [conn setVideoMaxFrameDuration:CMTimeMake(1, fps)];
                         }
+
+                        if (useMirroring && [conn isVideoMirroringSupported])
+                            [conn setVideoMirrored:YES];
                     }
                     if(!bThis->m_callbackSession) {
                         bThis->m_callbackSession = [[sbCallback alloc] init];

@@ -63,11 +63,13 @@ namespace videocore { namespace iOS {
          *
          *  \param fps      Optional parameter to set the output frames per second.
          *  \param useFront Start with the front-facing camera
+         *  \param useMirroring use mirriring on front camera
          *  \param useInterfaceOrientation whether to use interface or device orientation as reference for video capture orientation
          *  \param sessionPreset name of the preset to use for the capture session
          *  \param callbackBlock block to be called after everything is set
          */
-        void setupCamera(int fps = 15, bool useFront = true, bool useInterfaceOrientation = false, NSString* sessionPreset = nil, void (^callbackBlock)(void) = nil);
+        void setupCamera(int fps = 15, bool useFront = true, bool useMirroring = false, bool useInterfaceOrientation = false, NSString* sessionPreset = nil, void (^callbackBlock)(void) = nil);
+
 
         
         /*!
