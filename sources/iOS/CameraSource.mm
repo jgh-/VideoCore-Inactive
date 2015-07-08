@@ -457,7 +457,9 @@ namespace videocore { namespace iOS {
             NSError* err = nil;
             if([device lockForConfiguration:&err]) {
                 [device setFocusPointOfInterest:CGPointMake(x, y)];
-                [device setFocusMode:AVCaptureFocusModeAutoFocus];
+                if (device.focusMode == AVCaptureFocusModeLocked) {
+                    [device setFocusMode:AVCaptureFocusModeAutoFocus];
+                }
                 device.focusMode = device.focusMode;
                 [device unlockForConfiguration];
             } else {
