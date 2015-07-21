@@ -1,9 +1,8 @@
 
 
 #VideoCore
-_&copy; 2013-2014 James G Hurley_
 
-VideoCore is a project inteded to be an audio and video manipulation and streaming graph.  It currently works with iOS and periodic (live) sources.  It is a work in progress and will eventually expand to other platforms such as OS X and Android.  **Contributors welcome!** [![Stories in Ready](https://badge.waffle.io/jgh-/VideoCore.png?label=ready&title=Ready)](https://waffle.io/jgh-/VideoCore)
+VideoCore is a project inteded to be an audio and video manipulation and streaming graph.  It currently works with iOS and periodic (live) sources.  It is a work in progress and will eventually expand to other platforms such as OS X and Android.  **Contributors welcome!** 
 
 ###Table of Contents
 * [Setup](#setup)
