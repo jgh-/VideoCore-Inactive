@@ -38,15 +38,6 @@ xcodebuild -workspace SampleBroadcaster.xcworkspace -scheme SampleBroadcaster bu
 ```
 More on CocoaPods: http://cocoapods.org/
 
-##Projects Using VideoCore
-
-Looking for someone to help you with your video streaming project? Feel free to contact jamesghurley@gmail.com
-
-* Cine.io (http://www.cine.io)
-
-_If you would like to be included in this list, either make a pull request or contact jamesghurley@gmail.com_
-
-
 ##Architecture Overview
 
 VideoCore's architecture is inspired by Microsoft Media Foundation (except with saner naming).  Samples start at the source, are passed through a series of transforms, and end up at the output.
