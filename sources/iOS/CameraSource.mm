@@ -256,21 +256,26 @@ namespace videocore { namespace iOS {
         AVCaptureSession* session = (AVCaptureSession*)m_captureSession;
         
         [session beginConfiguration];
-        AVCaptureDeviceInput* currentCameraInput = [session.inputs objectAtIndex:0];
         
-        if(currentCameraInput.device.torchAvailable) {
-            NSError* err = nil;
-            if([currentCameraInput.device lockForConfiguration:&err]) {
-                [currentCameraInput.device setTorchMode:( torchOn ? AVCaptureTorchModeOn : AVCaptureTorchModeOff ) ];
-                [currentCameraInput.device unlockForConfiguration];
-                ret = (currentCameraInput.device.torchMode == AVCaptureTorchModeOn);
+        if (session.inputs.count > 0) {
+            AVCaptureDeviceInput* currentCameraInput = [session.inputs objectAtIndex:0];
+            
+            if(currentCameraInput.device.torchAvailable) {
+                NSError* err = nil;
+                if([currentCameraInput.device lockForConfiguration:&err]) {
+                    [currentCameraInput.device setTorchMode:( torchOn ? AVCaptureTorchModeOn : AVCaptureTorchModeOff ) ];
+                    [currentCameraInput.device unlockForConfiguration];
+                    ret = (currentCameraInput.device.torchMode == AVCaptureTorchModeOn);
+                } else {
+                    NSLog(@"Error while locking device for torch: %@", err);
+                    ret = false;
+                }
             } else {
-                NSLog(@"Error while locking device for torch: %@", err);
-                ret = false;
+                NSLog(@"Torch not available in current camera input");
             }
-        } else {
-            NSLog(@"Torch not available in current camera input");
+
         }
+        
         [session commitConfiguration];
         m_torchOn = ret;
         return ret;
@@ -287,30 +292,32 @@ namespace videocore { namespace iOS {
             [session beginConfiguration];
             [(AVCaptureDevice*)m_captureDevice lockForConfiguration: &error];
             
-            AVCaptureInput* currentCameraInput = [session.inputs objectAtIndex:0];
-            
-            [session removeInput:currentCameraInput];
-            [(AVCaptureDevice*)m_captureDevice unlockForConfiguration];
-            
-            AVCaptureDevice *newCamera = nil;
-            if(((AVCaptureDeviceInput*)currentCameraInput).device.position == AVCaptureDevicePositionBack)
-            {
-                newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionFront);
+            if (session.inputs.count > 0) {
+                AVCaptureInput* currentCameraInput = [session.inputs objectAtIndex:0];
+                
+                [session removeInput:currentCameraInput];
+                [(AVCaptureDevice*)m_captureDevice unlockForConfiguration];
+                
+                AVCaptureDevice *newCamera = nil;
+                if(((AVCaptureDeviceInput*)currentCameraInput).device.position == AVCaptureDevicePositionBack)
+                {
+                    newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionFront);
+                }
+                else
+                {
+                    newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionBack);
+                }
+                
+                AVCaptureDeviceInput *newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:newCamera error:nil];
+                [newCamera lockForConfiguration:&error];
+                [session addInput:newVideoInput];
+                
+                m_captureDevice = newCamera;
+                [newCamera unlockForConfiguration];
+                [session commitConfiguration];
+                
+                [newVideoInput release];
             }
-            else
-            {
-                newCamera = (AVCaptureDevice*)cameraWithPosition(AVCaptureDevicePositionBack);
-            }
-            
-            AVCaptureDeviceInput *newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:newCamera error:nil];
-            [newCamera lockForConfiguration:&error];
-            [session addInput:newVideoInput];
-            
-            m_captureDevice = newCamera;
-            [newCamera unlockForConfiguration];
-            [session commitConfiguration];
-            
-            [newVideoInput release];
             
             reorientCamera();
         }
