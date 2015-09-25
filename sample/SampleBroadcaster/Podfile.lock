@@ -26,12 +26,12 @@ DEPENDENCIES:
 
 EXTERNAL SOURCES:
   VideoCore:
-    :path: "../.."
+    :path: ../..
 
 SPEC CHECKSUMS:
   boost: 6c5c8d8daef26ac83c1e1c00ad14de62b80161d7
   glm: e22c8d9df10404059b19c2952f9fa44d9a9f3056
   UriParser-cpp: cbbe00080ee432ec4833dca863a7fc83adc9b01a
-  VideoCore: 9b783edd81b91a80c5599bae1f98e9c93ee029e7
+  VideoCore: ee91bb8b71919ac7a1cbc752b72272fc53a0567f
 
-COCOAPODS: 0.37.2
+COCOAPODS: 0.38.2

@@ -27,6 +27,7 @@
 
 #include <stdint.h>
 
+static const size_t kRTMPMaxChunkSize = 128;
 static const size_t kRTMPDefaultChunkSize = 128;
 static const size_t kRTMPSignatureSize = 1536;
 

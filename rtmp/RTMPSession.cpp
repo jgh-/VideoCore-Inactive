@@ -74,9 +74,9 @@ namespace videocore
         
         m_playPath = pp.str();
         m_playPath.pop_back();
-        DLog("playPath: %s, app: %s", m_playPath.c_str(), m_app.c_str());
         long port = (m_uri.port > 0) ? m_uri.port : 1935;
         
+        DLog("playPath: %s:%d, app: %s", m_playPath.c_str(), (int)port, m_app.c_str());
         m_streamSession->connect(m_uri.host, static_cast<int>(port), [&](IStreamSession& session, StreamStatus_t status) {
             streamStatusChanged(status);
         });
@@ -769,18 +769,70 @@ namespace videocore
         }
         return ret;
     }
+    void dumpBuffer(const char *desc, uint8_t *buf, size_t size) {
+        char hexBuf[size * 4 + 1];
+        int j = 0;
+        for (size_t i=0; i<size; i++) {
+            sprintf(&hexBuf[j], "%02x ", buf[i]);
+            j += 3;
+            if (i % 16 == 15) {
+                sprintf(&hexBuf[j], "\n");
+                j++;
+            }
+        }
+        hexBuf[j] = '\0';
+        DLog("%s:\n%s\n", desc, hexBuf);
+    }
+    int RTMPSession::reassembleBuffer(uint8_t *buf, long size) {
+        // FIXME: only reassemble one package
+        long sepPos = m_inChunkSize;
+        long remainSize = size;
+        int chunkCount = 0;
+        DLog("reassembleBuffer, buffer size:%zd, chunk size:%zd\n", size, m_inChunkSize);
+        while (remainSize > (long)m_inChunkSize) {
+            remainSize -= m_inChunkSize;
+            uint8_t sep = buf[sepPos];
+            DLog("Checking package seperator:0x%02X\n", (int)sep);
+            if (remainSize <= m_inChunkSize) {
+                // last chunk
+                memmove(buf+sepPos-chunkCount, buf+sepPos+1, remainSize-1-chunkCount);
+                DLog("Buffer reassembled at:%zd\n", sepPos);
+            }
+            else {
+                memmove(buf+sepPos-chunkCount, buf+sepPos+1, m_inChunkSize);
+                DLog("Buffer reassembled at:%zd\n", sepPos);
+                sepPos += (m_inChunkSize+1);
+            }
+            chunkCount++;
+//            uint8_t sep = buf[m_inChunkSize];
+//            DLog("Checking package seperator:0x%02X, m_inChunkSize(%zd)\n", (int)sep, m_inChunkSize);
+//            if ((sep & 0xC0) == 0xC0) {
+//                dumpBuffer("reassembleBuffer", buf, size);
+//                memmove(buf+m_inChunkSize, buf+m_inChunkSize+1, size-m_inChunkSize-1);
+//                size -= m_inChunkSize;
+//                DLog("Buffer reassembled\n");
+//            }
+        }
+        if (size > m_inChunkSize) {
+            dumpBuffer("Reassemble", buf, size);
+        }
+        return chunkCount;
+    }
     bool
     RTMPSession::parseCurrentData()
     {
         const size_t size = m_streamInBuffer->size();
         
-        uint8_t buf[size], *p, *start ;
+        uint8_t buf[size], *p;
         
         p = &buf[0];
         
         long ret = m_streamInBuffer->get(p, size, false);
         
         if(!p) return false;
+        
+        // FIXME: when TCP layer do not receive enougth buffer for a full RTMP package,
+        // we shout put back the data.
         
         while (ret>0) {
             int header_type = (p[0] & 0xC0) >> 6;
@@ -799,16 +851,22 @@ namespace videocore
                     memcpy(&chunk, p, sizeof(RTMPChunk_0));
                     chunk.msg_length.data = get_be24((uint8_t*)&chunk.msg_length);
                     
-                    p+=sizeof(chunk);
+                    p += sizeof(chunk);
                     ret -= sizeof(chunk);
-                    
+                    int chunkCount = 0;
+                    if (chunk.msg_length.data >= m_inChunkSize) {
+                        chunkCount = reassembleBuffer(p, ret);
+                    }
                     bool success = handleMessage(p, chunk.msg_type_id);
                     
                     if(!success) {
                         ret = 0; break;
                     }
-                    p+=chunk.msg_length.data;
+
+                    p += chunk.msg_length.data;
+                    p += chunkCount;
                     ret -= chunk.msg_length.data;
+                    ret -= chunkCount;
                 }
                     break;
                     
@@ -820,13 +878,19 @@ namespace videocore
                     ret -= sizeof(chunk);
                     chunk.msg_length.data = get_be24((uint8_t*)&chunk.msg_length);
                     
+                    int chunkCount = 0;
+                    if (chunk.msg_length.data >= m_inChunkSize) {
+                        reassembleBuffer(p, ret);
+                    }
+
                     bool success = handleMessage(p, chunk.msg_type_id);
                     if(!success) {
                         ret = 0; break;
                     }
-                    p+=chunk.msg_length.data;
+                    p += chunk.msg_length.data;
+                    p += chunkCount;
                     ret -= chunk.msg_length.data;
-                    
+                    ret -= chunkCount;
                 }
                     break;
                     
