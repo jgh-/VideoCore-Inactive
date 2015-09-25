@@ -783,38 +783,22 @@ namespace videocore
         hexBuf[j] = '\0';
         DLog("%s:\n%s\n", desc, hexBuf);
     }
+    // reassemble the chunked package, and return the chunk count
     int RTMPSession::reassembleBuffer(uint8_t *buf, long size) {
-        // FIXME: only reassemble one package
         long sepPos = m_inChunkSize;
         long remainSize = size;
         int chunkCount = 0;
-        DLog("reassembleBuffer, buffer size:%zd, chunk size:%zd\n", size, m_inChunkSize);
         while (remainSize > (long)m_inChunkSize) {
             remainSize -= m_inChunkSize;
-            uint8_t sep = buf[sepPos];
-            DLog("Checking package seperator:0x%02X\n", (int)sep);
             if (remainSize <= m_inChunkSize) {
                 // last chunk
                 memmove(buf+sepPos-chunkCount, buf+sepPos+1, remainSize-1-chunkCount);
-                DLog("Buffer reassembled at:%zd\n", sepPos);
             }
             else {
                 memmove(buf+sepPos-chunkCount, buf+sepPos+1, m_inChunkSize);
-                DLog("Buffer reassembled at:%zd\n", sepPos);
                 sepPos += (m_inChunkSize+1);
             }
             chunkCount++;
-//            uint8_t sep = buf[m_inChunkSize];
-//            DLog("Checking package seperator:0x%02X, m_inChunkSize(%zd)\n", (int)sep, m_inChunkSize);
-//            if ((sep & 0xC0) == 0xC0) {
-//                dumpBuffer("reassembleBuffer", buf, size);
-//                memmove(buf+m_inChunkSize, buf+m_inChunkSize+1, size-m_inChunkSize-1);
-//                size -= m_inChunkSize;
-//                DLog("Buffer reassembled\n");
-//            }
-        }
-        if (size > m_inChunkSize) {
-            dumpBuffer("Reassemble", buf, size);
         }
         return chunkCount;
     }
@@ -853,6 +837,7 @@ namespace videocore
                     
                     p += sizeof(chunk);
                     ret -= sizeof(chunk);
+                    // chunk process
                     int chunkCount = 0;
                     if (chunk.msg_length.data >= m_inChunkSize) {
                         chunkCount = reassembleBuffer(p, ret);
