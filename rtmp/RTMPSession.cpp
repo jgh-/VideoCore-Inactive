@@ -137,8 +137,7 @@ namespace videocore
                 auto packetTime = std::chrono::steady_clock::now();
                 
                 std::vector<uint8_t> chunk;
-                std::shared_ptr<std::vector<uint8_t>> outb = std::make_shared<std::vector<uint8_t>>();
-                outb->reserve(size + 64);
+                chunk.reserve(size+64);
                 size_t len = buf->size();
                 size_t tosend = std::min(len, m_outChunkSize);
                 uint8_t* p;
@@ -168,8 +167,6 @@ namespace videocore
                 m_previousChunkData[streamId] = ts;
                 put_buff(chunk, p, tosend);
                 
-                outb->insert(outb->end(), chunk.begin(), chunk.end());
-                
                 len -= tosend;
                 p += tosend;
                 
@@ -177,18 +174,12 @@ namespace videocore
                     tosend = std::min(len, m_outChunkSize);
                     p[-1] = RTMP_CHUNK_TYPE_3 | (streamId & 0x1F);
                     
-                    outb->insert(outb->end(), p-1, p+tosend);
+                    put_buff(chunk, p-1, tosend+1);
                     p+=tosend;
                     len-=tosend;
-                    //  this->write(&outb[0], outb.size(), packetTime);
-                    //  outb.clear();
-                    
                 }
-                
-                this->write(&(*outb)[0], outb->size(), packetTime, inMetadata.getData<kRTMPMetadataIsKeyframe>() );
+                this->write(&chunk[0], chunk.size(), packetTime, inMetadata.getData<kRTMPMetadataIsKeyframe>() );
             }
-            
-            
         });
     }
     void
