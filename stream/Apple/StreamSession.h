@@ -36,23 +36,20 @@ namespace videocore {
             StreamSession();
             ~StreamSession();
             
-            void connect(std::string host, int port, StreamSessionCallback_t);
-            void disconnect();
+            void connect(std::string host, int port, StreamSessionCallback_t) override;
+            void disconnect() override;
             
-            size_t write(uint8_t* buffer, size_t size);
-            size_t read(uint8_t* buffer, size_t size);
-            
-            int unsent();
-            int unread();
-            
-            const StreamStatus_t status() const {
+            size_t write(uint8_t* buffer, size_t size) override;
+            size_t read(uint8_t* buffer, size_t size) override;
+                        
+            const StreamStatus_t status() const override {
                 return m_status;
             };
         public:
             void nsStreamCallback(void* stream, unsigned event);
             
         private:
-            void setStatus(StreamStatus_t status, bool clear = false);
+            void setStatus(StreamStatus_t status, bool clear = false) override;
             void startNetwork();
         private:
             void*              m_inputStream;

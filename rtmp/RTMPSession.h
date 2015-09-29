@@ -122,7 +122,7 @@ namespace videocore
         
         std::string parseStatusCode(uint8_t *p);
         int32_t amfPrimitiveObjectSize(uint8_t* p);
-        
+        int32_t trackCommand(const std::string& cmd);
     private:
         JobQueue            m_networkQueue;
         JobQueue            m_jobQueue;
@@ -162,7 +162,7 @@ namespace videocore
         int64_t         m_bufferSize;
         
         int32_t         m_streamId;
-        int32_t         m_createStreamInvoke;
+//        int32_t         m_createStreamInvoke;
         int32_t         m_numberOfInvokes;
         int32_t         m_frameWidth;
         int32_t         m_frameHeight;

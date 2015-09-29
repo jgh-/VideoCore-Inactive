@@ -33,22 +33,54 @@
 #include <algorithm>
 #include <sstream>
 
-
-
-
 namespace videocore
 {
+    void test() {
+        RingBuffer buf(30);
+        for (int i=0; i<buf.total(); i++) {
+            uint8_t cc = 'a' + i;
+            buf.put(&cc, 1);
+        }
+        uint8_t p[1024] = {0};
+        memset(p, 0, sizeof(p));
+        buf.get(p, 20);
+        DLog("p1:%s\n", p);
+        for (int i=0; i<20; i++) {
+            uint8_t cc = 'A' + i;
+            buf.put(&cc, 1);
+        }
+        memset(p, 0, sizeof(p));
+        buf.get(p, 30);
+        DLog("p2:%s\n", p);
+        
+        buf.unget(30);
+        memset(p, 0, sizeof(p));
+        buf.get(p, 20);
+        DLog("p3:%s\n", p);
+    }
     static const size_t kMaxSendbufferSize = 10 * 1024 * 1024; // 10 MB
     
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback callback)
-    : m_streamOutRemainder(65536),m_streamInBuffer(new RingBuffer(4096)), m_callback(callback), m_bandwidthCallback(nullptr), m_outChunkSize(128), m_inChunkSize(128), m_bufferSize(0), m_streamId(0),  m_createStreamInvoke(0), m_numberOfInvokes(0), m_state(kClientStateNone), m_ending(false),
-    m_jobQueue("com.videocore.rtmp"), m_networkQueue("com.videocore.rtmp.network"), m_previousTs(0), m_clearing(false)
+    : m_streamOutRemainder(65536)
+    , m_streamInBuffer(new RingBuffer(4096))
+    , m_callback(callback)
+    , m_bandwidthCallback(nullptr)
+    , m_outChunkSize(128)
+    , m_inChunkSize(128)
+    , m_bufferSize(0)
+    , m_streamId(0)
+    , m_numberOfInvokes(0)
+    , m_state(kClientStateNone)
+    , m_ending(false)
+    , m_jobQueue("com.videocore.rtmp")
+    , m_networkQueue("com.videocore.rtmp.network")
+    , m_previousTs(0)
+    , m_clearing(false)
     {
 #ifdef __APPLE__
         m_streamSession.reset(new Apple::StreamSession());
         m_networkWaitSemaphore = dispatch_semaphore_create(0);
 #endif
-      
         
         boost::char_separator<char> sep("/");
         boost::tokenizer<boost::char_separator<char>> uri_tokens(uri, sep);
@@ -71,13 +103,12 @@ namespace videocore
                 pp << *it << "/";
             }
         }
-        
         m_playPath = pp.str();
         m_playPath.pop_back();
-        long port = (m_uri.port > 0) ? m_uri.port : 1935;
-        
-        DLog("playPath: %s:%d, app: %s", m_playPath.c_str(), (int)port, m_app.c_str());
-        m_streamSession->connect(m_uri.host, static_cast<int>(port), [&](IStreamSession& session, StreamStatus_t status) {
+        int port = (m_uri.port > 0) ? m_uri.port : 1935;
+        test();
+        DLog("Connecting:%s:%d, stream name:%s\n", m_uri.host.c_str(), port, m_playPath.c_str());
+        m_streamSession->connect(m_uri.host, port, [&](IStreamSession& session, StreamStatus_t status) {
             streamStatusChanged(status);
         });
         
@@ -88,7 +119,7 @@ namespace videocore
         if(m_state == kClientStateConnected) {
             sendDeleteStream();
         }
-
+        
         m_ending = true;
         m_jobQueue.mark_exiting();
         m_jobQueue.enqueue_sync([]() {});
@@ -123,13 +154,13 @@ namespace videocore
             return ;
         }
         
+        // make the lamdba capture the data
         std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(size);
         buf->put(const_cast<uint8_t*>(data), size);
         
         const RTMPMetadata_t inMetadata = static_cast<const RTMPMetadata_t&>(metadata);
-
+        
         m_jobQueue.enqueue([=]() {
-            
             if(!this->m_ending) {
                 static int c_count = 0;
                 c_count ++;
@@ -241,12 +272,10 @@ namespace videocore
     void
     RTMPSession::dataReceived()
     {
-        
         static uint8_t buffer[4096] = {0};
         bool stop1 = false;
         bool stop2 = false;
         do {
-            
             size_t maxlen = m_streamInBuffer->total() - m_streamInBuffer->size();
             size_t len = m_streamSession->read(buffer, maxlen);
             
@@ -328,7 +357,7 @@ namespace videocore
                 
 #ifdef __APPLE__
                 dispatch_semaphore_signal(m_networkWaitSemaphore);
-#else 
+#else
                 m_networkMutex.unlock();
                 m_networkCond.notify_one();
 #endif
@@ -415,8 +444,7 @@ namespace videocore
             url << m_uri.protocol << "://" << m_uri.host << "/" << m_app;
         }
         put_string(buff, "connect");
-        put_double(buff, ++m_numberOfInvokes);
-        m_trackedCommands[m_numberOfInvokes] = "connect";
+        put_double(buff, trackCommand("connect"));
         put_byte(buff, kAMFObject);
         put_named_string(buff, "app", m_app.c_str());
         put_named_string(buff,"type", "nonprivate");
@@ -440,8 +468,7 @@ namespace videocore
         metadata.msg_type_id = RTMP_PT_NOTIFY;
         std::vector<uint8_t> buff;
         put_string(buff, "releaseStream");
-        put_double(buff, ++m_numberOfInvokes);
-        m_trackedCommands[m_numberOfInvokes] = "releaseStream";
+        put_double(buff, trackCommand("releaseStream"));
         put_byte(buff, kAMFNull);
         put_string(buff, m_playPath);
         metadata.msg_length.data = static_cast<int> (buff.size());
@@ -456,8 +483,7 @@ namespace videocore
         metadata.msg_type_id = RTMP_PT_NOTIFY;
         std::vector<uint8_t> buff;
         put_string(buff, "FCPublish");
-        put_double(buff, ++m_numberOfInvokes);
-        m_trackedCommands[m_numberOfInvokes] = "FCPublish";
+        put_double(buff, trackCommand("FCPublish"));
         put_byte(buff, kAMFNull);
         put_string(buff, m_playPath);
         metadata.msg_length.data = static_cast<int>( buff.size() );
@@ -472,9 +498,7 @@ namespace videocore
         metadata.msg_type_id = RTMP_PT_INVOKE;
         std::vector<uint8_t> buff;
         put_string(buff, "createStream");
-        m_createStreamInvoke = ++m_numberOfInvokes;
-        m_trackedCommands[m_numberOfInvokes] = "createStream";
-        put_double(buff, m_createStreamInvoke);
+        put_double(buff, trackCommand("createStream"));
         put_byte(buff, kAMFNull);
         metadata.msg_length.data = static_cast<int>( buff.size() );
         
@@ -490,8 +514,7 @@ namespace videocore
         std::vector<uint8_t> chunk;
         
         put_string(buff, "publish");
-        put_double(buff, ++m_numberOfInvokes);
-        m_trackedCommands[m_numberOfInvokes] = "publish";
+        put_double(buff, trackCommand("publish"));
         put_byte(buff, kAMFNull);
         put_string(buff, m_playPath);
         put_string(buff, "live");
@@ -503,8 +526,8 @@ namespace videocore
     void
     RTMPSession::sendHeaderPacket()
     {
-        std::vector<uint8_t> outBuffer;
-        
+        DLog("send header packet\n");
+
         std::vector<uint8_t> enc;
         RTMPChunk_0 metadata = {{0}};
         
@@ -522,7 +545,7 @@ namespace videocore
         put_named_double(enc, "frameheight", m_frameHeight);
         put_named_double(enc, "videodatarate", static_cast<double>(m_bitrate) / 1024.);
         put_named_double(enc, "videoframerate", 1. / m_frameDuration);
-
+        
         put_named_string(enc, "videocodecid", "avc1");
         {
             put_name(enc, "trackinfo");
@@ -550,7 +573,7 @@ namespace videocore
             put_byte(enc, kAMFObjectEnd);
             
             put_named_string(enc, "language", "eng");
-
+            
             put_byte(enc, 0);
             put_byte(enc, 0);
             put_byte(enc, kAMFObjectEnd);
@@ -587,20 +610,24 @@ namespace videocore
         size_t len = enc.size();
         
         
-        put_buff(outBuffer, (uint8_t*)&enc[0], static_cast<size_t>(len));
+//        put_buff(outBuffer, (uint8_t*)&enc[0], static_cast<size_t>(len));
         
         
         metadata.msg_type_id = FLV_TAG_TYPE_META;
         metadata.msg_stream_id = kAudioChannelStreamId;
-        metadata.msg_length.data = static_cast<int>( outBuffer.size() );
+//        metadata.msg_length.data = static_cast<int>( outBuffer.size() );
+        metadata.msg_length.data = static_cast<int>( len );
         metadata.timestamp.data = 0;
         
-        sendPacket(&outBuffer[0], outBuffer.size(), metadata);
-        
+        sendPacket(&enc[0], len, metadata);
+
+//        sendPacket(&outBuffer[0], outBuffer.size(), metadata);
     }
     void
     RTMPSession::sendDeleteStream()
     {
+        DLog("send delete stream\n");
+        
         RTMPChunk_0 metadata = {{0}};
         metadata.msg_stream_id = kControlChannelStreamId;
         metadata.msg_type_id = RTMP_PT_INVOKE;
@@ -619,9 +646,8 @@ namespace videocore
     void
     RTMPSession::sendSetChunkSize(int32_t chunkSize)
     {
-        
         m_jobQueue.enqueue([&, chunkSize] {
-            
+            DLog("send set chunk size:%d\n", chunkSize);
             int streamId = 0;
             
             std::vector<uint8_t> buff;
@@ -645,7 +671,8 @@ namespace videocore
     RTMPSession::sendPong()
     {
         m_jobQueue.enqueue([&] {
-            
+            DLog("send pong\n")
+
             int streamId = 0;
             
             std::vector<uint8_t> buff;
@@ -667,8 +694,12 @@ namespace videocore
     RTMPSession::sendSetBufferTime(int milliseconds)
     {
         m_jobQueue.enqueue([=]{
+            DLog("send ping\n")
+
             int streamId = 0;
+            
             std::vector<uint8_t> buff;
+            
             put_byte(buff, 2);
             put_be24(buff, 0);
             put_be24(buff, 10);
@@ -680,7 +711,6 @@ namespace videocore
             put_be32(buff, milliseconds);
             
             write(&buff[0], buff.size());
-            
         });
     }    bool
     RTMPSession::handleMessage(uint8_t *p, uint8_t msgTypeId)
@@ -704,20 +734,20 @@ namespace videocore
                 
             case RTMP_PT_PING:
             {
-                DLog("received ping, sending pong.\n");
+                DLog("Received ping, sending pong.\n");
                 sendPong();
             }
                 break;
                 
             case RTMP_PT_SERVER_WINDOW:
             {
-                DLog("received server window size: %d\n", get_be32(p));
+                DLog("Received server window size: %d\n", get_be32(p));
             }
                 break;
                 
             case RTMP_PT_PEER_BW:
             {
-                DLog("received peer bandwidth limit: %d type: %d\n", get_be32(p), p[4]);
+                DLog("Received peer bandwidth limit: %d type: %d\n", get_be32(p), p[4]);
             }
                 break;
                 
@@ -729,37 +759,38 @@ namespace videocore
                 break;
             case RTMP_PT_VIDEO:
             {
-                DLog("received video\n");
+                DLog("Received video\n");
             }
                 break;
                 
             case RTMP_PT_AUDIO:
             {
-                DLog("received audio\n");
+                DLog("Received audio\n");
             }
                 break;
                 
             case RTMP_PT_METADATA:
             {
-                DLog("received metadata\n");
+                DLog("Received metadata\n");
             }
                 break;
                 
             case RTMP_PT_NOTIFY:
             {
-                DLog("received notify\n");
+                DLog("Received notify\n");
             }
                 break;
                 
             default:
             {
-                DLog("received unknown packet type: 0x%02X\n", msgTypeId);
+                DLog("Received unknown packet type: 0x%02X\n", msgTypeId);
                 ret = false;
             }
                 break;
         }
         return ret;
     }
+    
     void dumpBuffer(const char *desc, uint8_t *buf, size_t size) {
         char hexBuf[size * 4 + 1];
         int j = 0;
@@ -774,6 +805,7 @@ namespace videocore
         hexBuf[j] = '\0';
         DLog("%s:\n%s\n", desc, hexBuf);
     }
+    
     // reassemble the chunked package, and return the chunk count
     int RTMPSession::reassembleBuffer(uint8_t *buf, long size) {
         long sepPos = m_inChunkSize;
@@ -838,7 +870,7 @@ namespace videocore
                     if(!success) {
                         ret = 0; break;
                     }
-
+                    
                     p += chunk.msg_length.data;
                     p += chunkCount;
                     ret -= chunk.msg_length.data;
@@ -858,7 +890,7 @@ namespace videocore
                     if (chunk.msg_length.data >= m_inChunkSize) {
                         reassembleBuffer(p, ret);
                     }
-
+                    
                     bool success = handleMessage(p, chunk.msg_type_id);
                     if(!success) {
                         ret = 0; break;
@@ -900,20 +932,20 @@ namespace videocore
     {
         int buflen=0;
         std::string command = get_string(p, buflen);
-        int32_t pktId = int32_t(get_double(p+11));
         
-        DLog("pktId: %d\n", pktId);
-        std::string trackedCommand ;
-        auto it = m_trackedCommands.find(pktId) ;
-        
-        if(it != m_trackedCommands.end()) {
-            trackedCommand = it->second;
-        }
-        
-        DLog("received invoke %s\n", command.c_str());
+        DLog("Received invoke %s\n", command.c_str());
         
         if (command == "_result") {
-            DLog("tracked command: %s\n", trackedCommand.c_str());
+            int32_t pktId = int32_t(get_double(p+11));
+            // 找回result对应的command
+            std::string trackedCommand;
+            auto it = m_trackedCommands.find(pktId) ;
+            
+            if(it != m_trackedCommands.end()) {
+                trackedCommand = it->second;
+            }
+            
+            DLog("Find command: %s for ID:%d\n", trackedCommand.c_str(), (int)pktId);
             if (trackedCommand == "connect") {
                 
                 sendReleaseStream();
@@ -930,6 +962,8 @@ namespace videocore
                 sendPublish();
                 setClientState(kClientStateReady);
             }
+            // FIXME: 需要清理一下m_trackedCommands的记录吗？
+            
         } else if (command == "onStatus") {
             std::string code = parseStatusCode(p + 3 + command.length());
             DLog("code : %s\n", code.c_str());
@@ -1003,5 +1037,11 @@ namespace videocore
             case AMF_DATA_TYPE_LONG_STRING:  return 5 + get_be32(p);
         }
         return -1; // not a primitive, likely an object
+    }
+    int32_t RTMPSession::trackCommand(const std::string& cmd) {
+        ++m_numberOfInvokes;
+        m_trackedCommands[m_numberOfInvokes] = cmd;
+        DLog("Tracking command(%d, %s)\n", m_numberOfInvokes, cmd.c_str());
+        return m_numberOfInvokes;
     }
 }

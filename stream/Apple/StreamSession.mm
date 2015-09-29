@@ -68,6 +68,7 @@ namespace videocore {
         void
         StreamSession::connect(std::string host, int port, StreamSessionCallback_t callback)
         {
+            DLog("StreamSession::connect\n");
             m_callback = callback;
             if(m_status > 0) {
                 disconnect();
@@ -101,6 +102,8 @@ namespace videocore {
         void
         StreamSession::disconnect()
         {
+            DLog("StreamSession::disconnect\n");
+
             if(m_outputStream) {
                 //if(m_runLoop) {
                 //    [NSOS(m_outputStream) removeFromRunLoop:NSRL(m_runLoop) forMode:NSDefaultRunLoopMode];
@@ -124,28 +127,15 @@ namespace videocore {
                 m_runLoop = nullptr;
             }
         }
-        int
-        StreamSession::unsent()
-        {
-            return 0;
-        }
-        int
-        StreamSession::unread()
-        {
-            int unread = 0;
-            
-            return unread;
-        }
+
         size_t
         StreamSession::write(uint8_t *buffer, size_t size)
         {
+//            DLog("StreamSession write: %zd byte%s\n", size, size > 1 ? "s":"");
             NSInteger ret = 0;
           
             if( NSOS(m_outputStream).hasSpaceAvailable ) {
                 ret = [NSOS(m_outputStream) write:buffer maxLength:size];
-            }
-            else {
-                DLog("ERROR! Output stream no space available\n");
             }
             if(ret >= 0 && ret < size && (m_status & kStreamStatusWriteBufferHasSpace)) {
                 // Remove the Has Space Available flag
@@ -170,7 +160,7 @@ namespace videocore {
             }
             return ret;
         }
-        
+
         void
         StreamSession::setStatus(StreamStatus_t status, bool clear)
         {

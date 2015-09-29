@@ -111,7 +111,6 @@ namespace videocore {
         //char* folder = "/Library/Documents";
         
         pthread_setname_np("com.videocore.tcp.adaptation");
-        DLog("TCPThroughputAdaptation::sampleThread");
         while(!m_exiting) {
             std::unique_lock<std::mutex> l(m);
             

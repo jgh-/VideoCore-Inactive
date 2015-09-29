@@ -28,7 +28,10 @@
 #include <cstddef>
 #include <functional>
 #include <string>
+#include <vector>
 
+//#include <boost/asio.hpp>
+#include <videocore/system/Buffer.hpp>
 #include <videocore/system/util.h>
 
 namespace videocore {
@@ -47,7 +50,6 @@ namespace videocore {
     class IStreamSession;
     
     typedef std::function<void(videocore::IStreamSession&, StreamStatus_t)> StreamSessionCallback_t;
-    
     class IStreamSession
     {
     public:
@@ -58,10 +60,7 @@ namespace videocore {
         virtual size_t write(uint8_t* buffer, size_t size) = 0;
         virtual size_t read(uint8_t* buffer, size_t size) = 0;
         virtual const StreamStatus_t status() const = 0;
-        
-        virtual int unsent() = 0;
-        virtual int unread() = 0;
-        
+                
     private:
         virtual void setStatus(StreamStatus_t,bool clear = false) = 0;
     };
