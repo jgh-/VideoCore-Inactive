@@ -277,8 +277,13 @@ namespace videocore
         bool stop2 = false;
         do {
             size_t maxlen = m_streamInBuffer->total() - m_streamInBuffer->size();
-            size_t len = m_streamSession->read(buffer, maxlen);
-            
+            ssize_t len = m_streamSession->read(buffer, maxlen);
+            if (len <= 0) {
+                DLog("Read from stream error:%ld", len);
+                stop1 = true;
+                stop2 = true;
+                break;
+            }
             m_streamInBuffer->put(&buffer[0], len);
             
             while(m_streamInBuffer->size() > 0 && !stop1) {

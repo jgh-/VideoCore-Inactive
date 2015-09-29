@@ -25,9 +25,12 @@
 
 #import "ViewController.h"
 #import "VCSimpleSession.h"
+#import "JCChatClient.h"
 
 
-@interface ViewController () <VCSessionDelegate>
+@interface ViewController () <VCSessionDelegate> {
+    JCChatClient *_chatClient;
+}
 @property (nonatomic, retain) VCSimpleSession* session;
 @end
 
@@ -40,14 +43,15 @@
     
     CGRect rect = [[UIScreen mainScreen] bounds];
     NSLog(@"Screen rect:%@", NSStringFromCGRect(rect));
-    _session = [[VCSimpleSession alloc] initWithVideoSize:rect.size frameRate:30 bitrate:1000000 useInterfaceOrientation:NO];
-    
-    [self.previewView addSubview:_session.previewView];
-    _session.previewView.frame = self.previewView.bounds;
-    _session.delegate = self;
+//    _session = [[VCSimpleSession alloc] initWithVideoSize:rect.size frameRate:30 bitrate:1000000 useInterfaceOrientation:NO];
+//    
+//    [self.previewView addSubview:_session.previewView];
+//    _session.previewView.frame = self.previewView.bounds;
+//    _session.delegate = self;
 }
 
 - (void)didReceiveMemoryWarning
+
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
@@ -61,8 +65,17 @@
     [super dealloc];
 }
 
+- (void)testChat {
+    if (!_chatClient) {
+        _chatClient = [[JCChatClient alloc] initWithURLString:@"ws://192.168.50.19:9000/chat" andVID:@"1" andUID:@"ios"];
+        [_chatClient open];
+    }
+    else {
+        [_chatClient sendMessage:@"test" ofChatter:@"ios"];
+    }
+}
 - (IBAction)btnConnectTouch:(id)sender {
-    
+    [self testChat];
     switch(_session.rtmpSessionState) {
         case VCSessionStateNone:
         case VCSessionStatePreviewStarted:

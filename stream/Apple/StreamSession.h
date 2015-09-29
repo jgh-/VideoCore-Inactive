@@ -36,11 +36,11 @@ namespace videocore {
             StreamSession();
             ~StreamSession();
             
-            void connect(std::string host, int port, StreamSessionCallback_t) override;
+            void connect(const std::string& host, int port, StreamSessionCallback_t) override;
             void disconnect() override;
             
-            size_t write(uint8_t* buffer, size_t size) override;
-            size_t read(uint8_t* buffer, size_t size) override;
+            ssize_t write(uint8_t* buffer, size_t size) override;
+            ssize_t read(uint8_t* buffer, size_t size) override;
                         
             const StreamStatus_t status() const override {
                 return m_status;

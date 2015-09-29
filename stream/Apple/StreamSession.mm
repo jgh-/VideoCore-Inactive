@@ -66,7 +66,7 @@ namespace videocore {
         }
         
         void
-        StreamSession::connect(std::string host, int port, StreamSessionCallback_t callback)
+        StreamSession::connect(const std::string& host, int port, StreamSessionCallback_t callback)
         {
             DLog("StreamSession::connect\n");
             m_callback = callback;
@@ -128,7 +128,7 @@ namespace videocore {
             }
         }
 
-        size_t
+        ssize_t
         StreamSession::write(uint8_t *buffer, size_t size)
         {
 //            DLog("StreamSession write: %zd byte%s\n", size, size > 1 ? "s":"");
@@ -148,10 +148,10 @@ namespace videocore {
             return ret;
         }
         
-        size_t
+        ssize_t
         StreamSession::read(uint8_t *buffer, size_t size)
         {
-            size_t ret = 0;
+            NSInteger ret = 0;
             
             ret = [NSIS(m_inputStream) read:buffer maxLength:size];
             
