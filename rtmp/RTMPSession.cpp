@@ -948,6 +948,11 @@ namespace videocore
                 p += amfPrimitiveObjectSize(p);
                 props[propName] = "";
             }
+            // Fix large AMF object may break to multiple packets
+            // that crash us.
+            if (strcmp(propName, "code") == 0) {
+                break;
+            }
         } while (get_be24(p) != AMF_DATA_TYPE_OBJECT_END);
         
         //p = start;
