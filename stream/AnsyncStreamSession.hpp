@@ -16,6 +16,7 @@
 #include <string>
 
 #include <videocore/system/util.h>
+#include <videocore/system/JobQueue.hpp>
 #include <videocore/stream/IStreamSession.hpp>
 
 namespace videocore {
@@ -30,11 +31,11 @@ namespace videocore {
     } AnsyncStreamState_T;
 
 #pragma mark -
-#pragma mark AnsyncBuffer
-    class AnsyncBuffer {
+#pragma mark PreallocBuffer
+    class PreallocBuffer {
     public:
-        AnsyncBuffer(size_t capBytes);
-        ~AnsyncBuffer();
+        PreallocBuffer(size_t capBytes);
+        PreallocBuffer();
         
         void ensureCapacityForWrite(size_t capBytes);
         
@@ -55,22 +56,24 @@ namespace videocore {
         void reset();
         
     private:
-        uint8_t *preBuffer;
-        size_t preBufferSize;
+        uint8_t *m_preBuffer;
+        size_t m_preBufferSize;
         
-        uint8_t *readPointer;
-        uint8_t *writePointer;
+        uint8_t *m_readPointer;
+        uint8_t *m_writePointer;
     };
     
-    typedef std::vector<uint8_t> AsyncReadBuffer;
+    typedef std::vector<uint8_t> AsyncStreamBuffer;
+    typedef std::shared_ptr<AsyncStreamBuffer> AsyncStreamBufferSP;
     
 #pragma mark -
 #pragma mark AnsyncStreamSession
     
     typedef std::function<void(StreamStatus_t status)> SSConnectionStatus_T;
-    typedef std::function<void(AsyncReadBuffer& abuff)> AnsyncReadCallBack_T;
+    typedef std::function<void(AsyncStreamBuffer& abuff)> SSAnsyncReadCallBack_T;
     
-    class AnsyncReadConsumer;
+    class AnsyncStreamReader;
+    class AnsyncStreamWriter;
     
     class AnsyncStreamSession {
     public:
@@ -79,24 +82,30 @@ namespace videocore {
         void connect(const std::string &host, int port, SSConnectionStatus_T statuscb);
         void disconnect();
         void write(uint8_t *buffer, size_t length);
-        void readLength(size_t length, AnsyncReadCallBack_T readcb);
+        void readLength(size_t length, SSAnsyncReadCallBack_T readcb);
+        
         
     private:
         void setState(AnsyncStreamState_T state);
-        void maybeDequeueReader();
-        void pumpReader();
-        bool innerPumpReader();
-        void pumpWriter();
+        std::shared_ptr<AnsyncStreamReader> getCurrentReader();
+        void doReadData();
+        bool innnerReadData();
+        void finishCurrentReader();
+        
+        std::shared_ptr<AnsyncStreamWriter> getCurrentWriter();
+
+        void doWriteData();
         
     private:
         std::unique_ptr<IStreamSession> m_stream;
-        std::queue<std::shared_ptr<AnsyncReadConsumer>> m_readerQueue;
-        std::shared_ptr<AnsyncReadConsumer> m_currentReader;
+        JobQueue m_eventTriggerJob;
+        JobQueue m_socketJob;
+        std::queue<std::shared_ptr<AnsyncStreamReader>> m_readerQueue;
+        std::queue<std::shared_ptr<AnsyncStreamWriter>> m_writerQueue;
         SSConnectionStatus_T m_connectionStatusCB;
         AnsyncStreamState_T m_state;
-        AnsyncBuffer m_outputBuffer;
-        AnsyncBuffer m_inputBuffer;
-        bool m_pumpingReader;
+        PreallocBuffer m_inputBuffer;
+        bool m_doReadingData;
     };
 }
 #endif /* AnsyncStreamSession_hpp */

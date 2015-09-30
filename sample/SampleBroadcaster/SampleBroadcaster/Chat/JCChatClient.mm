@@ -147,7 +147,7 @@ static __strong NSData *CRLFCRLF;   // HTTP消息分隔符
 //    }];
     
     // test only
-    m_anyncStream->readLength(129, [=](videocore::AsyncReadBuffer &buf){
+    m_anyncStream->readLength(129, [=](videocore::AsyncStreamBuffer &buf){
         NSLog(@"Shake response length:%ld", buf.size());
         NSData *data = [NSData dataWithBytes:&buf[0] length:buf.size()];
         [self checkShakeResponse:data];
@@ -215,7 +215,7 @@ static NSString *SHA1StringOfString(NSString *str) {
 // 开始分片的后续帧（或者第一帧）
 - (void)readContinueFrame{
     // 先读取两个字节的头
-    m_anyncStream->readLength(2, [=](videocore::AsyncReadBuffer &buf){
+    m_anyncStream->readLength(2, [=](videocore::AsyncStreamBuffer &buf){
         NSData *data = [NSData dataWithBytes:&buf[0] length:buf.size()];
         [self checkFrameHeader:data];
     });
@@ -235,7 +235,7 @@ static NSString *SHA1StringOfString(NSString *str) {
         }
         else {
             // 还要额外的数据组成帧头
-            m_anyncStream->readLength(extraLength, [=](videocore::AsyncReadBuffer &buf){
+            m_anyncStream->readLength(extraLength, [=](videocore::AsyncStreamBuffer &buf){
                 NSData *data = [NSData dataWithBytes:&buf[0] length:buf.size()];
                 [self checkFrameExtraHeader:data];
             });
@@ -285,7 +285,7 @@ static NSString *SHA1StringOfString(NSString *str) {
         [self checkFrameData:nil];
     }
     else {
-        m_anyncStream->readLength([_chatFrame payloadLength], [=](videocore::AsyncReadBuffer &buf){
+        m_anyncStream->readLength([_chatFrame payloadLength], [=](videocore::AsyncStreamBuffer &buf){
             NSData *data = [NSData dataWithBytes:&buf[0] length:buf.size()];
             [self checkFrameData:data];
         });
@@ -326,6 +326,8 @@ static NSString *SHA1StringOfString(NSString *str) {
 }
 
 - (void)handleMessage:(NSData *)message {
+    NSString *msg = [[NSString alloc] initWithData:message encoding:NSUTF8StringEncoding];
+    JCCLog("Handle message:%@", msg);
     [self performDelegateInMain:^(){
         if ([self.delegate respondsToSelector:@selector(chatClient:didReceiveMessage:)]) {
             [self.delegate chatClient:self didReceiveMessage:message];
@@ -360,7 +362,9 @@ static NSString *SHA1StringOfString(NSString *str) {
     NSString *host = _URL.host;
     std::string strhost("192.168.50.19");
     m_anyncStream->connect(strhost, port, [=](videocore::StreamStatus_t status) {
-        
+        if (status == videocore::kAsyncStreamStateConnected) {            
+            [self sendShakeHeader];
+        }
     });
 //    [_socket connectToHost:host onPort:port error:&error];
 //    if (error) {

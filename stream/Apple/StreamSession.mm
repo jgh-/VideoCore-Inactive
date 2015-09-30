@@ -137,6 +137,9 @@ namespace videocore {
             if( NSOS(m_outputStream).hasSpaceAvailable ) {
                 ret = [NSOS(m_outputStream) write:buffer maxLength:size];
             }
+            else {
+                DLog("DEBUG: Stream no space available\n");
+            }
             if(ret >= 0 && ret < size && (m_status & kStreamStatusWriteBufferHasSpace)) {
                 // Remove the Has Space Available flag
                 m_status ^= kStreamStatusWriteBufferHasSpace;
@@ -158,6 +161,10 @@ namespace videocore {
             if((ret < size) && (m_status & kStreamStatusReadBufferHasBytes)) {
                 m_status ^= kStreamStatusReadBufferHasBytes;
             }
+            // 每次读取完毕都检查一下是否还有
+            if (!NSIS(m_inputStream).hasBytesAvailable) {
+                m_status ^= kStreamStatusReadBufferHasBytes;
+            }
             return ret;
         }
 
@@ -174,14 +181,21 @@ namespace videocore {
         void
         StreamSession::nsStreamCallback(void* stream, unsigned event)
         {
+            DLog("DEBUG:nsStreamCallback event(%d) input stream status:%ld, output stream status:%ld\n",
+                 event,
+                 NSIS(m_inputStream).streamStatus,
+                 NSOS(m_outputStream).streamStatus);
+            
             if(event & NSStreamEventOpenCompleted) {
-                
-                if(NSIS(m_inputStream).streamStatus > 0 &&
-                   NSOS(m_outputStream).streamStatus > 0 &&
+                // FIXME: 这里可能触发多次Connected，因为两个流都有完成事件
+                if(NSIS(m_inputStream).streamStatus >= 2 &&
+                   NSOS(m_outputStream).streamStatus >=2 &&
                    NSIS(m_inputStream).streamStatus < 5 &&
-                   NSOS(m_outputStream).streamStatus < 5) {
+                   NSOS(m_outputStream).streamStatus < 5)
+                {
                     setStatus(kStreamStatusConnected, true);
-                } else return;
+                }
+                else return;
             }
             if(event & NSStreamEventHasBytesAvailable) {
                 setStatus(kStreamStatusReadBufferHasBytes);
