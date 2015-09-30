@@ -523,9 +523,7 @@ namespace videocore { namespace simpleApi {
 {
     std::stringstream uri ;
     uri << (rtmpUrl ? [rtmpUrl UTF8String] : "") << "/" << (streamKey ? [streamKey UTF8String] : "");
-
-    VCSimpleSession* bSelf = self;
-
+    
     m_outputSession.reset(
                           new videocore::RTMPSession ( uri.str(),
                                                       [=](videocore::RTMPSession& session,
@@ -536,23 +534,26 @@ namespace videocore { namespace simpleApi {
                                                           switch(state) {
 
                                                               case kClientStateConnected:
-                                                                  bSelf.rtmpSessionState = VCSessionStateStarting;
+                                                                  self.rtmpSessionState = VCSessionStateStarting;
                                                                   break;
                                                               case kClientStateSessionStarted:
+                                                              {
+
+                                                                  __block VCSimpleSession* bSelf = self;
                                                                   dispatch_async(_graphManagementQueue, ^{
                                                                       [bSelf addEncodersAndPacketizers];
                                                                   });
-                                                                  bSelf.rtmpSessionState = VCSessionStateStarted;
+                                                              }
+                                                                  self.rtmpSessionState = VCSessionStateStarted;
 
                                                                   break;
                                                               case kClientStateError:
-                                                                  bSelf.rtmpSessionState = VCSessionStateError;
-                                                                  [bSelf endRtmpSession];
+                                                                  self.rtmpSessionState = VCSessionStateError;
+                                                                  [self endRtmpSession];
                                                                   break;
-
                                                               case kClientStateNotConnected:
-                                                                  bSelf.rtmpSessionState = VCSessionStateEnded;
-                                                                  [bSelf endRtmpSession];
+                                                                  self.rtmpSessionState = VCSessionStateEnded;
+                                                                  [self endRtmpSession];
                                                                   break;
                                                               default:
                                                                   break;
@@ -560,6 +561,7 @@ namespace videocore { namespace simpleApi {
                                                           }
 
                                                       }) );
+    VCSimpleSession* bSelf = self;
 
     _bpsCeiling = _bitrate;
 
@@ -581,7 +583,7 @@ namespace videocore { namespace simpleApi {
                                                   if ([bSelf.delegate respondsToSelector:@selector(detectedThroughput:videoRate:)]) {
                                                       [bSelf.delegate detectedThroughput:predicted videoRate:video->bitrate()];
                                                   }
-                                                  
+
 
                                                   int videoBr = 0;
 
