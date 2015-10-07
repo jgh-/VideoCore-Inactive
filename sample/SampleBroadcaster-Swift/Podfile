@@ -4,5 +4,5 @@ source 'https://github.com/CocoaPods/Specs.git'
 
 # See: http://guides.cocoapods.org/making/making-a-cocoapod.html#release
 # Once the pod has been released, use a version number here instead of a path.
-#pod 'VideoCore', '~>0.3.0.3'
+#pod 'VideoCore', '~>0.3.2'
 pod 'VideoCore', path: '../..'

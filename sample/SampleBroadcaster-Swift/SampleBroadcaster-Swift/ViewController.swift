@@ -84,5 +84,32 @@ class ViewController: UIViewController, VCSessionDelegate
             btnConnect.setTitle("Connect", forState: .Normal)
         }
     }
+    
+    
+    @IBAction func btnFilterTouch(sender: AnyObject) {
+        switch self.session.filter {
+            
+        case .Normal:
+            self.session.filter = .Gray
+        
+        case .Gray:
+            self.session.filter = .InvertColors
+        
+        case .InvertColors:
+            self.session.filter = .Sepia
+        
+        case .Sepia:
+            self.session.filter = .Fisheye
+        
+        case .Fisheye:
+            self.session.filter = .Glow
+        
+        case .Glow:
+            self.session.filter = .Normal
+        
+        default: // Future proofing
+            break
+        }
+    }
 }
 
