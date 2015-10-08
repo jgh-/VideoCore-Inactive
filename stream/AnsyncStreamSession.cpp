@@ -166,7 +166,9 @@ namespace videocore {
             return m_readLength == m_bytesDone;
         }
         void triggerEvent() {
-            m_eventCallback(*m_buffer);
+            if (m_eventCallback) {
+                m_eventCallback(*m_buffer);
+            }
         }
         
     private:
@@ -207,17 +209,20 @@ namespace videocore {
 #pragma mark AnsyncStreamWriter
     class AnsyncStreamWriter {
     public:
-        AnsyncStreamWriter(AsyncStreamBufferSP buf) {
+        AnsyncStreamWriter(AsyncStreamBufferSP buf, SSAnsyncWriteCallBack_T writecb = nullptr) {
             m_bytesDone = 0;
             m_buffer = buf;
+            m_eventCallback = writecb;
         }
         ~AnsyncStreamWriter() {
             DLog("AnsyncStreamWriter::~AnsyncStreamWriter\n");
         }
         ssize_t writeToStream(IStreamSession *stream) {
             size_t bytesToWrite = m_buffer->size() - m_bytesDone;
+            assert(bytesToWrite > 0);
             ssize_t result = stream->write(&(*m_buffer)[m_bytesDone], bytesToWrite);
             if (result > 0) {
+                dumpBuffer("StreamWriter", &(*m_buffer)[m_bytesDone], result);
                 m_bytesDone += result;
             }
             return result;
@@ -225,9 +230,16 @@ namespace videocore {
         bool done() {
             return m_bytesDone == m_buffer->size();
         }
+        void triggerEvent() {
+            if (m_eventCallback) {
+                m_eventCallback();
+            }
+        }
+        
     private:
         AsyncStreamBufferSP m_buffer;
         size_t m_bytesDone;
+        SSAnsyncWriteCallBack_T m_eventCallback;
     };
     
 #pragma mark -
@@ -249,27 +261,29 @@ namespace videocore {
     void AnsyncStreamSession::connect(const std::string& host, int port, SSConnectionStatus_T statuscb) {
         m_connectionStatusCB = statuscb;
         m_state = kAsyncStreamStateConnecting;
-        m_stream->connect(host, port, [=](IStreamSession& session, StreamStatus_t status){
+        m_stream->connect(host, port, [=](IStreamSession& session, StreamStatus_T status){
             // 检查自己的Connected状态，避免重复
             m_socketJob.enqueue([=]{
                 if (status & kStreamStatusConnected && m_state < kAsyncStreamStateConnected) {
-                    DLog("Ansync stream connected\n");
+                    DLog("AnsyncStreamSession connected\n");
                     setState(kAsyncStreamStateConnected);
                     doWriteData();
                     doReadData();
                 }
                 if (status & kStreamStatusWriteBufferHasSpace) {
-                    DLog("Write ready\n");
+                    DLog("AnsyncStreamSession Write ready\n");
                     doWriteData();
                 }
                 if (status & kStreamStatusReadBufferHasBytes) {
-                    DLog("Read ready\n");
+                    DLog("AnsyncStreamSession Read ready\n");
                     doReadData();
                 }
                 if(status & kStreamStatusErrorEncountered) {
+                    DLog("AnsyncStreamSession Error!\n");
                     setState(kAsyncStreamStateError);
                 }
                 if (status & kStreamStatusEndStream) {
+                    DLog("AnsyncStreamSession end.\n")
                     setState(kAsyncStreamStateDisconnected);
                 }
             });
@@ -281,9 +295,11 @@ namespace videocore {
         m_stream->disconnect();
     }
     
-    void AnsyncStreamSession::write(uint8_t *buffer, size_t length){
+    void AnsyncStreamSession::write(uint8_t *buffer, size_t length, SSAnsyncWriteCallBack_T writecb){
+        auto bufsp = std::make_shared<AsyncStreamBuffer>(buffer, buffer+length);
+        // 因为Job是异步处理过程，需要自己小心处理引用计数
         m_socketJob.enqueue([=]{
-            auto writer = std::make_shared<AnsyncStreamWriter>(std::make_shared<AsyncStreamBuffer>(buffer, buffer+length));
+            auto writer = std::make_shared<AnsyncStreamWriter>(bufsp, writecb);
             m_writerQueue.push(writer);
             DLog("Queue write request:%ld\n", length);
             doWriteData();
@@ -335,13 +351,6 @@ namespace videocore {
         // FIXME: 梳理调用逻辑，避免递归调用。一个可能的地方是
         m_doReadingData = true;
         DLog("Do read data\n");
-//        auto currentReader = getCurrentReader();
-//        while(currentReader) {
-//            if (currentReader) {
-//                innnerReadData();
-//            }
-//            currentReader = getCurrentReader();
-//        }
         while (innnerReadData()) {
             ;
         }
@@ -431,10 +440,16 @@ namespace videocore {
         }
         return nullptr;
     }
-    
     void AnsyncStreamSession::doWriteData(){
         assert(m_socketJob.thisThreadInQueue());
         DLog("Do write data\n");
+        while (m_stream->status() & kStreamStatusWriteBufferHasSpace && m_writerQueue.size() > 0) {
+            innerWriteData();
+        }
+    }
+    void AnsyncStreamSession::innerWriteData(){
+        assert(m_socketJob.thisThreadInQueue());
+        
         if (m_stream->status() & kStreamStatusWriteBufferHasSpace) {
             auto writer = getCurrentWriter();
             if (writer) {
@@ -447,11 +462,23 @@ namespace videocore {
                     DLog("Wrote %ld bytes to stream\n", result);
                 }
                 if (writer->done()) {
-                    DLog("Writer done\n");
-                    m_writerQueue.pop();
+                    finishCurrentWriter();
                 }
-            }
-            
+            }            
+        }
+    }
+    
+    void AnsyncStreamSession::finishCurrentWriter() {
+        assert(m_socketJob.thisThreadInQueue());
+        
+        auto currentWriter = getCurrentWriter();
+        assert(currentWriter);
+        if (currentWriter) {
+            m_writerQueue.pop();
+            DLog("Writer done\n");
+            m_eventTriggerJob.enqueue([=]{
+                currentWriter->triggerEvent();
+            });
         }
     }
 }

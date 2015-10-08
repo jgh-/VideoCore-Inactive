@@ -93,7 +93,7 @@ namespace videocore
         
         
         
-        void streamStatusChanged(StreamStatus_t status);
+        void streamStatusChanged(StreamStatus_T status);
         void write(uint8_t* data, size_t size, std::chrono::steady_clock::time_point packetTime = std::chrono::steady_clock::now(), bool isKeyframe = false);
         void dataReceived();
         void setClientState(ClientState_t state);

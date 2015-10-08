@@ -69,8 +69,10 @@ namespace videocore {
 #pragma mark -
 #pragma mark AnsyncStreamSession
     
-    typedef std::function<void(StreamStatus_t status)> SSConnectionStatus_T;
+    typedef std::function<void(StreamStatus_T status)> SSConnectionStatus_T;
     typedef std::function<void(AsyncStreamBuffer& abuff)> SSAnsyncReadCallBack_T;
+    typedef std::function<void()> SSAnsyncWriteCallBack_T;
+
     
     class AnsyncStreamReader;
     class AnsyncStreamWriter;
@@ -81,7 +83,7 @@ namespace videocore {
         ~AnsyncStreamSession();
         void connect(const std::string &host, int port, SSConnectionStatus_T statuscb);
         void disconnect();
-        void write(uint8_t *buffer, size_t length);
+        void write(uint8_t *buffer, size_t length, SSAnsyncWriteCallBack_T writecb=nullptr);
         void readLength(size_t length, SSAnsyncReadCallBack_T readcb);
         
         
@@ -95,6 +97,8 @@ namespace videocore {
         std::shared_ptr<AnsyncStreamWriter> getCurrentWriter();
 
         void doWriteData();
+        void innerWriteData();
+        void finishCurrentWriter();
         
     private:
         std::unique_ptr<IStreamSession> m_stream;

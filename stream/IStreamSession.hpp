@@ -41,24 +41,24 @@ namespace videocore {
         kStreamStatusEndStream = 1 << 4
         
     } ;
-    typedef long StreamStatus_t;
+    typedef long StreamStatus_T;
     
     class IStreamSession;
     
-    typedef std::function<void(videocore::IStreamSession&, StreamStatus_t)> StreamSessionCallback_t;
+    typedef std::function<void(videocore::IStreamSession&, StreamStatus_T)> StreamSessionCallback_T;
     class IStreamSession
     {
     public:
         virtual ~IStreamSession() {};
         
-        virtual void connect(const std::string& host, int port, StreamSessionCallback_t ) = 0;
+        virtual void connect(const std::string& host, int port, StreamSessionCallback_T sscb) = 0;
         virtual void disconnect() = 0;
         virtual ssize_t write(uint8_t* buffer, size_t size) = 0;
         virtual ssize_t read(uint8_t* buffer, size_t size) = 0;
-        virtual const StreamStatus_t status() const = 0;
+        virtual const StreamStatus_T status() const = 0;
                 
     private:
-        virtual void setStatus(StreamStatus_t,bool clear = false) = 0;
+        virtual void setStatus(StreamStatus_T,bool clear = false) = 0;
     };
     
 }

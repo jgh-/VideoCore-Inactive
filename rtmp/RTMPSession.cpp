@@ -108,7 +108,7 @@ namespace videocore
         int port = (m_uri.port > 0) ? m_uri.port : 1935;
         test();
         DLog("Connecting:%s:%d, stream name:%s\n", m_uri.host.c_str(), port, m_playPath.c_str());
-        m_streamSession->connect(m_uri.host, port, [&](IStreamSession& session, StreamStatus_t status) {
+        m_streamSession->connect(m_uri.host, port, [&](IStreamSession& session, StreamStatus_T status) {
             streamStatusChanged(status);
         });
         
@@ -347,7 +347,7 @@ namespace videocore
         m_callback(*this, state);
     }
     void
-    RTMPSession::streamStatusChanged(StreamStatus_t status)
+    RTMPSession::streamStatusChanged(StreamStatus_T status)
     {
         if(status & kStreamStatusConnected && m_state < kClientStateConnected) {
             setClientState(kClientStateConnected);
@@ -794,21 +794,6 @@ namespace videocore
                 break;
         }
         return ret;
-    }
-    
-    void dumpBuffer(const char *desc, uint8_t *buf, size_t size) {
-        char hexBuf[size * 4 + 1];
-        int j = 0;
-        for (size_t i=0; i<size; i++) {
-            sprintf(&hexBuf[j], "%02x ", buf[i]);
-            j += 3;
-            if (i % 16 == 15) {
-                sprintf(&hexBuf[j], "\n");
-                j++;
-            }
-        }
-        hexBuf[j] = '\0';
-        DLog("%s:\n%s\n", desc, hexBuf);
     }
     
     // reassemble the chunked package, and return the chunk count

@@ -33,5 +33,6 @@
 #define DLog(...) {}
 #endif
 
+void dumpBuffer(const char *desc, uint8_t *buf, size_t size);
 
 #endif

@@ -21,7 +21,7 @@
 #include <videocore/stream/Apple/StreamSession.h>
 
 
-#define USE_CocoaAsyncSocket (YES)
+//#define USE_CocoaAsyncSocket 1
 
 
 NSString *const JCCWebSocketErrorDomain = @"JCCWebSocketErrorDomain";
@@ -393,7 +393,7 @@ static NSString *SHA1StringOfString(NSString *str) {
 #else 
     // test only
     std::string strhost("192.168.50.19");
-    m_anyncStream->connect(strhost, port, [=](videocore::StreamStatus_t status) {
+    m_anyncStream->connect(strhost, port, [=](videocore::StreamStatus_T status) {
         if (status == videocore::kAsyncStreamStateConnected) {
             [self sendShakeHeader];
         }
@@ -428,7 +428,7 @@ static NSString *SHA1StringOfString(NSString *str) {
         JCCLog(@"Can't make JSON message");
     }
     NSData *socketData = [JCChatFrame makeTextFrame:msgData];
-    JCCLog(@"Writing data with tag(%ld):%@", JCWriteFrameTag + _chatMessageIndex, msgDict);
+//    JCCLog(@"Writing data with tag(%ld):%@", JCWriteFrameTag + _chatMessageIndex, msgDict);
 #ifdef USE_CocoaAsyncSocket
     [_socket writeData:socketData withTimeout:-1 tag:(JCWriteFrameTag + _chatMessageIndex++)];
 #else

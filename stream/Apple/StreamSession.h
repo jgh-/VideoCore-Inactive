@@ -36,20 +36,20 @@ namespace videocore {
             StreamSession();
             ~StreamSession();
             
-            void connect(const std::string& host, int port, StreamSessionCallback_t) override;
+            void connect(const std::string& host, int port, StreamSessionCallback_T) override;
             void disconnect() override;
             
             ssize_t write(uint8_t* buffer, size_t size) override;
             ssize_t read(uint8_t* buffer, size_t size) override;
                         
-            const StreamStatus_t status() const override {
+            const StreamStatus_T status() const override {
                 return m_status;
             };
         public:
             void nsStreamCallback(void* stream, unsigned event);
             
         private:
-            void setStatus(StreamStatus_t status, bool clear = false) override;
+            void setStatus(StreamStatus_T status, bool clear = false) override;
             void startNetwork();
         private:
             void*              m_inputStream;
@@ -57,8 +57,8 @@ namespace videocore {
             void*                  m_runLoop;
             void*           m_streamCallback;
                         
-            StreamSessionCallback_t     m_callback;
-            StreamStatus_t              m_status;
+            StreamSessionCallback_T     m_callback;
+            StreamStatus_T              m_status;
           
             int m_outSocket;
             

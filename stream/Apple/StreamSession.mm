@@ -66,7 +66,7 @@ namespace videocore {
         }
         
         void
-        StreamSession::connect(const std::string& host, int port, StreamSessionCallback_t callback)
+        StreamSession::connect(const std::string& host, int port, StreamSessionCallback_T callback)
         {
             DLog("StreamSession::connect\n");
             m_callback = callback;
@@ -169,7 +169,7 @@ namespace videocore {
         }
 
         void
-        StreamSession::setStatus(StreamStatus_t status, bool clear)
+        StreamSession::setStatus(StreamStatus_T status, bool clear)
         {
             if(clear) {
                 m_status = status;
