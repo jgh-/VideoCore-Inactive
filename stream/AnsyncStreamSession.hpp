@@ -35,7 +35,7 @@ namespace videocore {
     class PreallocBuffer {
     public:
         PreallocBuffer(size_t capBytes);
-        PreallocBuffer();
+        ~PreallocBuffer();
         
         void ensureCapacityForWrite(size_t capBytes);
         

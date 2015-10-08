@@ -14,7 +14,7 @@
 
 namespace videocore {
 #pragma mark -
-#pragma mark AnsyncBuffer
+#pragma mark PreallocBuffer
 
     // 简单的缓冲区
     // 写入之前应该分配足够的空间，然后拿到裸指针写入
@@ -30,11 +30,11 @@ namespace videocore {
 
     }
     
-    PreallocBuffer::PreallocBuffer(){
+    PreallocBuffer::~PreallocBuffer(){
         if (m_preBuffer) {
             free(m_preBuffer);
         }
-        DLog("AnsyncBuffer::~AnsyncBuffer\n");
+        DLog("PreallocBuffer::~PreallocBuffer\n");
     }
     
     void PreallocBuffer::ensureCapacityForWrite(size_t capBytes){
@@ -141,8 +141,8 @@ namespace videocore {
             DLog("AnsyncReadConsumer::~AnsyncReadConsumer\n");
         }
         
-        // 从缓冲区复制数据过来
-        void readFromBuffer(PreallocBuffer abuff) {
+        // 从缓冲区复制数据过来，此方法会改变参数的读取状态
+        void readFromBuffer(PreallocBuffer &abuff) {
             size_t availableBytes = abuff.availableBytes();
             size_t bytesToCopy = readLengthIfAvailable(availableBytes);
             resizeForRead(bytesToCopy);
@@ -237,6 +237,7 @@ namespace videocore {
     , m_inputBuffer(4*1024)
     , m_socketJob("AnsyncStreamSession Socket")
     , m_eventTriggerJob("AnsyncStreamSession Event Trigger")
+    , m_doReadingData(false)
     {
         m_stream.reset(stream);
     }
@@ -249,33 +250,29 @@ namespace videocore {
         m_connectionStatusCB = statuscb;
         m_state = kAsyncStreamStateConnecting;
         m_stream->connect(host, port, [=](IStreamSession& session, StreamStatus_t status){
-            if (status & kStreamStatusConnected && m_state < kAsyncStreamStateConnected) {
-                DLog("Ansync stream connected\n");
-                setState(kAsyncStreamStateConnected);
-                m_socketJob.enqueue([=]{
+            // 检查自己的Connected状态，避免重复
+            m_socketJob.enqueue([=]{
+                if (status & kStreamStatusConnected && m_state < kAsyncStreamStateConnected) {
+                    DLog("Ansync stream connected\n");
+                    setState(kAsyncStreamStateConnected);
                     doWriteData();
-                });
-                // FIXME: 是否允许客户端在不关心Connect是否成功的情况下就进行数据的收发?
-//                    doReadData();
-            }
-            if (status & kStreamStatusWriteBufferHasSpace) {
-                DLog("Write ready\n");
-                m_socketJob.enqueue([=]{
-                    doWriteData();
-                });
-            }
-            if (status & kStreamStatusReadBufferHasBytes) {
-                DLog("Read ready\n");
-                m_socketJob.enqueue([=]{
                     doReadData();
-                });
-            }
-            if(status & kStreamStatusErrorEncountered) {
-                setState(kAsyncStreamStateError);
-            }
-            if (status & kStreamStatusEndStream) {
-                setState(kAsyncStreamStateDisconnected);
-            }
+                }
+                if (status & kStreamStatusWriteBufferHasSpace) {
+                    DLog("Write ready\n");
+                    doWriteData();
+                }
+                if (status & kStreamStatusReadBufferHasBytes) {
+                    DLog("Read ready\n");
+                    doReadData();
+                }
+                if(status & kStreamStatusErrorEncountered) {
+                    setState(kAsyncStreamStateError);
+                }
+                if (status & kStreamStatusEndStream) {
+                    setState(kAsyncStreamStateDisconnected);
+                }
+            });
         });
     }
     
@@ -308,7 +305,7 @@ namespace videocore {
 #pragma mark -
 #pragma mark - Private
     void AnsyncStreamSession::setState(AnsyncStreamState_T state) {
-//        assert(m_socketJob.thisThreadInQueue());
+        assert(m_socketJob.thisThreadInQueue());
 
         m_state = state;
         m_eventTriggerJob.enqueue([=]{
@@ -437,6 +434,7 @@ namespace videocore {
     
     void AnsyncStreamSession::doWriteData(){
         assert(m_socketJob.thisThreadInQueue());
+        DLog("Do write data\n");
         if (m_stream->status() & kStreamStatusWriteBufferHasSpace) {
             auto writer = getCurrentWriter();
             if (writer) {

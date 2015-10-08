@@ -21,6 +21,9 @@
 #include <videocore/stream/Apple/StreamSession.h>
 
 
+#define USE_CocoaAsyncSocket (YES)
+
+
 NSString *const JCCWebSocketErrorDomain = @"JCCWebSocketErrorDomain";
 NSString *const JCCHTTPResponseErrorKey = @"SRHTTPResponseErrorKey";
 
@@ -37,8 +40,11 @@ NS_ENUM(long, JCSocketTag) {
 
 @interface JCChatClient() <GCDAsyncSocketDelegate> {
     NSURL *_URL;
-//    GCDAsyncSocket *_socket;
+#ifdef USE_CocoaAsyncSocket
+    GCDAsyncSocket *_socket;
+#else
     videocore::AnsyncStreamSession *m_anyncStream;
+#endif
     
     dispatch_queue_t _delegateQueue;
     JCChatFrame *_chatFrame;
@@ -83,8 +89,11 @@ static __strong NSData *CRLFCRLF;   // HTTP消息分隔符
     _chatMessageIndex = 1;
     [DDLog addLogger:[DDTTYLogger sharedInstance] withLogLevel:LOG_LEVEL_WARN];
     _delegateQueue = dispatch_queue_create("cn.jclive.chatclient.delegatequeue", DISPATCH_QUEUE_SERIAL);
-//    _socket = [[GCDAsyncSocket alloc] initWithDelegate:self delegateQueue:_delegateQueue];
+#ifdef USE_CocoaAsyncSocket
+    _socket = [[GCDAsyncSocket alloc] initWithDelegate:self delegateQueue:_delegateQueue];
+#else
     m_anyncStream = new videocore::AnsyncStreamSession(new videocore::Apple::StreamSession);
+#endif
 }
 
 - (void)dealloc {
@@ -132,30 +141,31 @@ static __strong NSData *CRLFCRLF;   // HTTP消息分隔符
     
     JCCLog(@"send:\n%@", reqString);
     NSData *reqData = [reqString dataUsingEncoding:NSUTF8StringEncoding];
+#ifdef USE_CocoaAsyncSocket
+    [_socket writeData:reqData withTimeout:-1 tag:JCWriteShakeTag];
+#else
     m_anyncStream->write((uint8_t*)reqData.bytes, reqData.length);
-//    [_socket writeData:reqData withTimeout:-1 tag:JCWriteShakeTag];
+#endif
     
     [self readShakeResponse];
 }
 
 - (void)readShakeResponse {
     // 读取握手数据
-//    [_socket readDataToData:CRLFCRLF withTimeout:-1 tag:JCReadShakeTag];
-//    [_socket readDataToData:CRLFCRLF completionHandler:^(NSData *data) {
-//        NSLog(@"Shake response length:%d", (int)data.length);
-//        [self checkShakeResponse:data];
-//    }];
-    
+#ifdef USE_CocoaAsyncSocket
+    [_socket readDataToData:CRLFCRLF withTimeout:-1 tag:JCReadShakeTag];
+    [_socket readDataToData:CRLFCRLF completionHandler:^(NSData *data) {
+        NSLog(@"Shake response length:%d", (int)data.length);
+        [self checkShakeResponse:data];
+    }];
+#else
     // test only
     m_anyncStream->readLength(129, [=](videocore::AsyncStreamBuffer &buf){
         NSLog(@"Shake response length:%ld", buf.size());
         NSData *data = [NSData dataWithBytes:&buf[0] length:buf.size()];
         [self checkShakeResponse:data];
     });
-//    [_socket readDataToLength:129 completionHandler:^(NSData *data) {
-//        NSLog(@"Shake response length:%d", (int)data.length);
-//        [self checkShakeResponse:data];
-//    }];
+#endif
 }
 
 static NSString *SHA1StringOfString(NSString *str) {
@@ -215,13 +225,18 @@ static NSString *SHA1StringOfString(NSString *str) {
 // 开始分片的后续帧（或者第一帧）
 - (void)readContinueFrame{
     // 先读取两个字节的头
+    JCCLog(@"Read header length");
+#ifdef USE_CocoaAsyncSocket
+    [_socket readDataToLength:2 completionHandler:^(NSData *data) {
+        [self checkFrameHeader:data];
+    }];
+#else
     m_anyncStream->readLength(2, [=](videocore::AsyncStreamBuffer &buf){
         NSData *data = [NSData dataWithBytes:&buf[0] length:buf.size()];
+        JCCLog(@"Read %zd data", data.length);
         [self checkFrameHeader:data];
     });
-//    [_socket readDataToLength:2 completionHandler:^(NSData *data) {
-//        [self checkFrameHeader:data];
-//    }];
+#endif
 }
 
 - (void)checkFrameHeader:(NSData *)data {
@@ -234,14 +249,19 @@ static NSString *SHA1StringOfString(NSString *str) {
             [self handleFrameHeader];
         }
         else {
+            JCCLog(@"Read extra header length(%zd)", extraLength);
             // 还要额外的数据组成帧头
+#ifdef USE_CocoaAsyncSocket
+            [_socket readDataToLength:extraLength completionHandler:^(NSData *data) {
+                [self checkFrameExtraHeader:data];
+            }];
+#else
             m_anyncStream->readLength(extraLength, [=](videocore::AsyncStreamBuffer &buf){
                 NSData *data = [NSData dataWithBytes:&buf[0] length:buf.size()];
+                JCCLog(@"Read %zd data", data.length);
                 [self checkFrameExtraHeader:data];
             });
-//            [_socket readDataToLength:extraLength completionHandler:^(NSData *data) {
-//                [self checkFrameExtraHeader:data];
-//            }];
+#endif
         }
     }
     else {
@@ -285,14 +305,18 @@ static NSString *SHA1StringOfString(NSString *str) {
         [self checkFrameData:nil];
     }
     else {
+        JCCLog(@"Read payload length=%zd", [_chatFrame payloadLength]);
+#ifdef USE_CocoaAsyncSocket
+        [_socket readDataToLength:[_chatFrame payloadLength] completionHandler:^(NSData *data) {
+            [self checkFrameData:data];
+        }];
+#else
         m_anyncStream->readLength([_chatFrame payloadLength], [=](videocore::AsyncStreamBuffer &buf){
             NSData *data = [NSData dataWithBytes:&buf[0] length:buf.size()];
+            JCCLog(@"Read %zd payload", data.length);
             [self checkFrameData:data];
         });
-
-//        [_socket readDataToLength:[_chatFrame payloadLength] completionHandler:^(NSData *data) {
-//            [self checkFrameData:data];
-//        }];
+#endif
     }
 }
 
@@ -360,28 +384,37 @@ static NSString *SHA1StringOfString(NSString *str) {
         port = 80;
     }
     NSString *host = _URL.host;
+#ifdef USE_CocoaAsyncSocket
+    [_socket connectToHost:host onPort:port error:&error];
+    if (error) {
+        JCCLog(@"Connect to URL(%@) error:%@", _URL, error);
+        return NO;
+    }
+#else 
+    // test only
     std::string strhost("192.168.50.19");
     m_anyncStream->connect(strhost, port, [=](videocore::StreamStatus_t status) {
-        if (status == videocore::kAsyncStreamStateConnected) {            
+        if (status == videocore::kAsyncStreamStateConnected) {
             [self sendShakeHeader];
         }
     });
-//    [_socket connectToHost:host onPort:port error:&error];
-//    if (error) {
-//        JCCLog(@"Connect to URL(%@) error:%@", _URL, error);
-//        return NO;
-//    }
+#endif
+    
     return YES;
 }
 
 - (void)close{
-//    [_socket disconnect];
+#ifdef USE_CocoaAsyncSocket
+    [_socket disconnect];
+#endif
 }
 
 - (void)closeWithCode:(int)code reason:(NSString *)reason{
-//    NSData *frameData = [JCChatFrame makeFrame:[reason dataUsingEncoding:NSUTF8StringEncoding] withOpCode:JCCOpCodeConnectionClose];
-//    [_socket writeData:frameData withTimeout:-1 tag:JCWriteFrameTag];
-//    [_socket disconnectAfterWriting];
+#ifdef USE_CocoaAsyncSocket
+    NSData *frameData = [JCChatFrame makeFrame:[reason dataUsingEncoding:NSUTF8StringEncoding] withOpCode:JCCOpCodeConnectionClose];
+    [_socket writeData:frameData withTimeout:-1 tag:JCWriteFrameTag];
+    [_socket disconnectAfterWriting];
+#endif
 }
 
 - (void)sendMessage:(NSString *)message ofChatter:(NSString *)chatter{
@@ -396,8 +429,11 @@ static NSString *SHA1StringOfString(NSString *str) {
     }
     NSData *socketData = [JCChatFrame makeTextFrame:msgData];
     JCCLog(@"Writing data with tag(%ld):%@", JCWriteFrameTag + _chatMessageIndex, msgDict);
+#ifdef USE_CocoaAsyncSocket
+    [_socket writeData:socketData withTimeout:-1 tag:(JCWriteFrameTag + _chatMessageIndex++)];
+#else
     m_anyncStream->write((uint8_t *)socketData.bytes, socketData.length);
-//    [_socket writeData:socketData withTimeout:-1 tag:(JCWriteFrameTag + _chatMessageIndex++)];
+#endif
 }
 
 #pragma mark -

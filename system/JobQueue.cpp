@@ -34,23 +34,23 @@ namespace videocore {
             enqueue([=]() { pthread_setname_np(name); });
         }
 #else
-        m_queue = dispatch_queue_create(name ? name : "", 0);
+        m_queue = dispatch_queue_create(name ? name : "", DISPATCH_QUEUE_SERIAL);
         IsOnSameJobQueueKey = &IsOnSameJobQueueKey;
         dispatch_queue_set_specific(m_queue, IsOnSameJobQueueKey, this, NULL);
-        int p = 0;
-        switch (priority) {
-            case kJobQueuePriorityDefault:
-                p = DISPATCH_QUEUE_PRIORITY_DEFAULT;
-                break;
-            case kJobQueuePriorityHigh:
-                p = DISPATCH_QUEUE_PRIORITY_HIGH;
-                break;
-            case kJobQueuePriorityLow:
-                p = DISPATCH_QUEUE_PRIORITY_LOW;
-                break;
-        }
-        // 这里set target queue有神马用？
-        dispatch_set_target_queue(m_queue, dispatch_get_global_queue(p, 0 ));
+//        int p = 0;
+//        switch (priority) {
+//            case kJobQueuePriorityDefault:
+//                p = DISPATCH_QUEUE_PRIORITY_DEFAULT;
+//                break;
+//            case kJobQueuePriorityHigh:
+//                p = DISPATCH_QUEUE_PRIORITY_HIGH;
+//                break;
+//            case kJobQueuePriorityLow:
+//                p = DISPATCH_QUEUE_PRIORITY_LOW;
+//                break;
+//        }
+//        // 这里set target queue有神马用？
+//        dispatch_set_target_queue(m_queue, dispatch_get_global_queue(p, 0 ));
 #endif
     }
     JobQueue::~JobQueue()

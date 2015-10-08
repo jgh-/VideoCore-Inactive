@@ -488,6 +488,40 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SampleBroadcaster/SampleBroadcaster-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"${PODS_ROOT}/boost",
+					"\"${PODS_ROOT}/boost\"",
+					"$(inherited)",
+					"\"${PODS_ROOT}/Headers/Public\"",
+					"\"${PODS_ROOT}/Headers/Public/UriParser-cpp\"",
+					"\"${PODS_ROOT}/Headers/Public/UriParser-cpp/UriParser\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/api/iOS\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/filters\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/filters/Basic\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/mixers\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/mixers/Apple\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/mixers/iOS\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/rtmp\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/sources\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/sources/Apple\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/sources/iOS\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/stream\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/stream/Apple\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/system/h264\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/system/pixelBuffer\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/system/pixelBuffer/Apple\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/transforms\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/transforms/Apple\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/transforms/RTMP\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/transforms/iOS\"",
+					"\"${PODS_ROOT}/Headers/Public/boost\"",
+					"\"${PODS_ROOT}/Headers/Public/glm\"",
+					"\"${PODS_ROOT}/Headers/Public/glm/core\"",
+					"\"${PODS_ROOT}/Headers/Public/glm/gtc\"",
+					"\"${PODS_ROOT}/Headers/Public/glm/gtx\"",
+					"\"${PODS_ROOT}/Headers/Public/glm/virtrev\"",
+				);
 				INFOPLIST_FILE = "SampleBroadcaster/SampleBroadcaster-Info.plist";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -507,6 +541,40 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SampleBroadcaster/SampleBroadcaster-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"${PODS_ROOT}/boost",
+					"\"${PODS_ROOT}/boost\"",
+					"$(inherited)",
+					"\"${PODS_ROOT}/Headers/Public\"",
+					"\"${PODS_ROOT}/Headers/Public/UriParser-cpp\"",
+					"\"${PODS_ROOT}/Headers/Public/UriParser-cpp/UriParser\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/api/iOS\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/filters\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/filters/Basic\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/mixers\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/mixers/Apple\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/mixers/iOS\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/rtmp\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/sources\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/sources/Apple\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/sources/iOS\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/stream\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/stream/Apple\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/system/h264\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/system/pixelBuffer\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/system/pixelBuffer/Apple\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/transforms\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/transforms/Apple\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/transforms/RTMP\"",
+					"\"${PODS_ROOT}/Headers/Public/VideoCore/videocore/transforms/iOS\"",
+					"\"${PODS_ROOT}/Headers/Public/boost\"",
+					"\"${PODS_ROOT}/Headers/Public/glm\"",
+					"\"${PODS_ROOT}/Headers/Public/glm/core\"",
+					"\"${PODS_ROOT}/Headers/Public/glm/gtc\"",
+					"\"${PODS_ROOT}/Headers/Public/glm/gtx\"",
+					"\"${PODS_ROOT}/Headers/Public/glm/virtrev\"",
+				);
 				INFOPLIST_FILE = "SampleBroadcaster/SampleBroadcaster-Info.plist";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";

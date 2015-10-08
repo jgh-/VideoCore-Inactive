@@ -161,8 +161,8 @@ namespace videocore {
             if((ret < size) && (m_status & kStreamStatusReadBufferHasBytes)) {
                 m_status ^= kStreamStatusReadBufferHasBytes;
             }
-            // 每次读取完毕都检查一下是否还有
-            if (!NSIS(m_inputStream).hasBytesAvailable) {
+            else if (NSIS(m_inputStream).hasBytesAvailable != YES) {
+                DLog("No more data in stream, clear read status\n");
                 m_status ^= kStreamStatusReadBufferHasBytes;
             }
             return ret;
@@ -187,7 +187,7 @@ namespace videocore {
                  NSOS(m_outputStream).streamStatus);
             
             if(event & NSStreamEventOpenCompleted) {
-                // FIXME: 这里可能触发多次Connected，因为两个流都有完成事件
+                // 判定两个流都已经connected的情况下才发送kStreamStatusConnected事件
                 if(NSIS(m_inputStream).streamStatus >= 2 &&
                    NSOS(m_outputStream).streamStatus >=2 &&
                    NSIS(m_inputStream).streamStatus < 5 &&

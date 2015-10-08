@@ -28,7 +28,7 @@
 
 #ifdef __APPLE__
 #include <dispatch/dispatch.h>
-#define _USE_GCD 0
+#define _USE_GCD 1
 #else
 #define _USE_GCD 0
 #include <sys/prctl.h>
