@@ -24,6 +24,19 @@
 		7265D66B1919978E0042DC3B /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D66A1919978E0042DC3B /* CoreMedia.framework */; };
 		7265D66D191997930042DC3B /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D66C191997930042DC3B /* CoreVideo.framework */; };
 		7265D66F191997970042DC3B /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D66E191997970042DC3B /* OpenGLES.framework */; };
+		D03DDF1D1BC667A00044EC58 /* GCDAsyncSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF011BC667A00044EC58 /* GCDAsyncSocket.m */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
+		D03DDF1E1BC667A00044EC58 /* GCDAsyncUdpSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF031BC667A00044EC58 /* GCDAsyncUdpSocket.m */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
+		D03DDF1F1BC667A00044EC58 /* DDAbstractDatabaseLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF061BC667A00044EC58 /* DDAbstractDatabaseLogger.m */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
+		D03DDF201BC667A00044EC58 /* DDASLLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF081BC667A00044EC58 /* DDASLLogger.m */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
+		D03DDF211BC667A00044EC58 /* DDFileLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF0A1BC667A00044EC58 /* DDFileLogger.m */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
+		D03DDF221BC667A00044EC58 /* DDLog.m in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF0D1BC667A00044EC58 /* DDLog.m */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
+		D03DDF231BC667A00044EC58 /* DDTTYLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF0F1BC667A00044EC58 /* DDTTYLogger.m */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
+		D03DDF241BC667A00044EC58 /* DDContextFilterLogFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF121BC667A00044EC58 /* DDContextFilterLogFormatter.m */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
+		D03DDF251BC667A00044EC58 /* DDDispatchQueueLogFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF141BC667A00044EC58 /* DDDispatchQueueLogFormatter.m */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
+		D03DDF261BC667A00044EC58 /* DDMultiFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF161BC667A00044EC58 /* DDMultiFormatter.m */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
+		D03DDF271BC667A00044EC58 /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = D03DDF171BC667A00044EC58 /* README.txt */; settings = {ASSET_TAGS = (); }; };
+		D03DDF281BC667A00044EC58 /* JCChatClient.mm in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF191BC667A00044EC58 /* JCChatClient.mm */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
+		D03DDF291BC667A00044EC58 /* JCChatFrame.m in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF1C1BC667A00044EC58 /* JCChatFrame.m */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +64,33 @@
 		7265D66C191997930042DC3B /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		7265D66E191997970042DC3B /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		AC034311A4E2CCE0CCDA6C72 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
+		D03DDF001BC667A00044EC58 /* GCDAsyncSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDAsyncSocket.h; sourceTree = "<group>"; };
+		D03DDF011BC667A00044EC58 /* GCDAsyncSocket.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCDAsyncSocket.m; sourceTree = "<group>"; };
+		D03DDF021BC667A00044EC58 /* GCDAsyncUdpSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDAsyncUdpSocket.h; sourceTree = "<group>"; };
+		D03DDF031BC667A00044EC58 /* GCDAsyncUdpSocket.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCDAsyncUdpSocket.m; sourceTree = "<group>"; };
+		D03DDF051BC667A00044EC58 /* DDAbstractDatabaseLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDAbstractDatabaseLogger.h; sourceTree = "<group>"; };
+		D03DDF061BC667A00044EC58 /* DDAbstractDatabaseLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDAbstractDatabaseLogger.m; sourceTree = "<group>"; };
+		D03DDF071BC667A00044EC58 /* DDASLLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDASLLogger.h; sourceTree = "<group>"; };
+		D03DDF081BC667A00044EC58 /* DDASLLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDASLLogger.m; sourceTree = "<group>"; };
+		D03DDF091BC667A00044EC58 /* DDFileLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDFileLogger.h; sourceTree = "<group>"; };
+		D03DDF0A1BC667A00044EC58 /* DDFileLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDFileLogger.m; sourceTree = "<group>"; };
+		D03DDF0B1BC667A00044EC58 /* DDLog+LOGV.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "DDLog+LOGV.h"; sourceTree = "<group>"; };
+		D03DDF0C1BC667A00044EC58 /* DDLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDLog.h; sourceTree = "<group>"; };
+		D03DDF0D1BC667A00044EC58 /* DDLog.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDLog.m; sourceTree = "<group>"; };
+		D03DDF0E1BC667A00044EC58 /* DDTTYLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDTTYLogger.h; sourceTree = "<group>"; };
+		D03DDF0F1BC667A00044EC58 /* DDTTYLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDTTYLogger.m; sourceTree = "<group>"; };
+		D03DDF111BC667A00044EC58 /* DDContextFilterLogFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDContextFilterLogFormatter.h; sourceTree = "<group>"; };
+		D03DDF121BC667A00044EC58 /* DDContextFilterLogFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDContextFilterLogFormatter.m; sourceTree = "<group>"; };
+		D03DDF131BC667A00044EC58 /* DDDispatchQueueLogFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDDispatchQueueLogFormatter.h; sourceTree = "<group>"; };
+		D03DDF141BC667A00044EC58 /* DDDispatchQueueLogFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDDispatchQueueLogFormatter.m; sourceTree = "<group>"; };
+		D03DDF151BC667A00044EC58 /* DDMultiFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDMultiFormatter.h; sourceTree = "<group>"; };
+		D03DDF161BC667A00044EC58 /* DDMultiFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDMultiFormatter.m; sourceTree = "<group>"; };
+		D03DDF171BC667A00044EC58 /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
+		D03DDF181BC667A00044EC58 /* JCChatClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JCChatClient.h; sourceTree = "<group>"; };
+		D03DDF191BC667A00044EC58 /* JCChatClient.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = JCChatClient.mm; sourceTree = "<group>"; };
+		D03DDF1A1BC667A00044EC58 /* JCChatConsts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JCChatConsts.h; sourceTree = "<group>"; };
+		D03DDF1B1BC667A00044EC58 /* JCChatFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JCChatFrame.h; sourceTree = "<group>"; };
+		D03DDF1C1BC667A00044EC58 /* JCChatFrame.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JCChatFrame.m; sourceTree = "<group>"; };
 		D811EF3F24704EBFB916513B /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA5713A4139B758B1B834C67 /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -118,6 +158,7 @@
 		7265D5E5191994B80042DC3B /* SampleBroadcaster */ = {
 			isa = PBXGroup;
 			children = (
+				D03DDEFE1BC667A00044EC58 /* Chat */,
 				7265D5EE191994B80042DC3B /* AppDelegate.h */,
 				7265D5EF191994B80042DC3B /* AppDelegate.m */,
 				7265D5F1191994B80042DC3B /* Main_iPhone.storyboard */,
@@ -149,6 +190,64 @@
 			name = Pods;
 			sourceTree = "<group>";
 		};
+		D03DDEFE1BC667A00044EC58 /* Chat */ = {
+			isa = PBXGroup;
+			children = (
+				D03DDEFF1BC667A00044EC58 /* CocoaAsyncSocket */,
+				D03DDF041BC667A00044EC58 /* CocoaLumberjack */,
+				D03DDF181BC667A00044EC58 /* JCChatClient.h */,
+				D03DDF191BC667A00044EC58 /* JCChatClient.mm */,
+				D03DDF1A1BC667A00044EC58 /* JCChatConsts.h */,
+				D03DDF1B1BC667A00044EC58 /* JCChatFrame.h */,
+				D03DDF1C1BC667A00044EC58 /* JCChatFrame.m */,
+			);
+			path = Chat;
+			sourceTree = "<group>";
+		};
+		D03DDEFF1BC667A00044EC58 /* CocoaAsyncSocket */ = {
+			isa = PBXGroup;
+			children = (
+				D03DDF001BC667A00044EC58 /* GCDAsyncSocket.h */,
+				D03DDF011BC667A00044EC58 /* GCDAsyncSocket.m */,
+				D03DDF021BC667A00044EC58 /* GCDAsyncUdpSocket.h */,
+				D03DDF031BC667A00044EC58 /* GCDAsyncUdpSocket.m */,
+			);
+			path = CocoaAsyncSocket;
+			sourceTree = "<group>";
+		};
+		D03DDF041BC667A00044EC58 /* CocoaLumberjack */ = {
+			isa = PBXGroup;
+			children = (
+				D03DDF051BC667A00044EC58 /* DDAbstractDatabaseLogger.h */,
+				D03DDF061BC667A00044EC58 /* DDAbstractDatabaseLogger.m */,
+				D03DDF071BC667A00044EC58 /* DDASLLogger.h */,
+				D03DDF081BC667A00044EC58 /* DDASLLogger.m */,
+				D03DDF091BC667A00044EC58 /* DDFileLogger.h */,
+				D03DDF0A1BC667A00044EC58 /* DDFileLogger.m */,
+				D03DDF0B1BC667A00044EC58 /* DDLog+LOGV.h */,
+				D03DDF0C1BC667A00044EC58 /* DDLog.h */,
+				D03DDF0D1BC667A00044EC58 /* DDLog.m */,
+				D03DDF0E1BC667A00044EC58 /* DDTTYLogger.h */,
+				D03DDF0F1BC667A00044EC58 /* DDTTYLogger.m */,
+				D03DDF101BC667A00044EC58 /* Extensions */,
+			);
+			path = CocoaLumberjack;
+			sourceTree = "<group>";
+		};
+		D03DDF101BC667A00044EC58 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				D03DDF111BC667A00044EC58 /* DDContextFilterLogFormatter.h */,
+				D03DDF121BC667A00044EC58 /* DDContextFilterLogFormatter.m */,
+				D03DDF131BC667A00044EC58 /* DDDispatchQueueLogFormatter.h */,
+				D03DDF141BC667A00044EC58 /* DDDispatchQueueLogFormatter.m */,
+				D03DDF151BC667A00044EC58 /* DDMultiFormatter.h */,
+				D03DDF161BC667A00044EC58 /* DDMultiFormatter.m */,
+				D03DDF171BC667A00044EC58 /* README.txt */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -177,7 +276,7 @@
 		7265D5D4191994B80042DC3B /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0510;
+				LastUpgradeCheck = 0700;
 				ORGANIZATIONNAME = videocore;
 				TargetAttributes = {
 					7265D5DB191994B80042DC3B = {
@@ -210,6 +309,7 @@
 			files = (
 				7265D5FB191994B80042DC3B /* Images.xcassets in Resources */,
 				7265D5F3191994B80042DC3B /* Main_iPhone.storyboard in Resources */,
+				D03DDF271BC667A00044EC58 /* README.txt in Resources */,
 				7265D5EA191994B80042DC3B /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -254,9 +354,21 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D03DDF291BC667A00044EC58 /* JCChatFrame.m in Sources */,
+				D03DDF1D1BC667A00044EC58 /* GCDAsyncSocket.m in Sources */,
+				D03DDF231BC667A00044EC58 /* DDTTYLogger.m in Sources */,
+				D03DDF211BC667A00044EC58 /* DDFileLogger.m in Sources */,
+				D03DDF241BC667A00044EC58 /* DDContextFilterLogFormatter.m in Sources */,
+				D03DDF1E1BC667A00044EC58 /* GCDAsyncUdpSocket.m in Sources */,
+				D03DDF1F1BC667A00044EC58 /* DDAbstractDatabaseLogger.m in Sources */,
 				7265D5F9191994B80042DC3B /* ViewController.mm in Sources */,
+				D03DDF281BC667A00044EC58 /* JCChatClient.mm in Sources */,
+				D03DDF261BC667A00044EC58 /* DDMultiFormatter.m in Sources */,
 				7265D5F0191994B80042DC3B /* AppDelegate.m in Sources */,
+				D03DDF221BC667A00044EC58 /* DDLog.m in Sources */,
+				D03DDF201BC667A00044EC58 /* DDASLLogger.m in Sources */,
 				7265D5EC191994B80042DC3B /* main.m in Sources */,
+				D03DDF251BC667A00044EC58 /* DDDispatchQueueLogFormatter.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -300,6 +412,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -412,6 +525,7 @@
 				);
 				INFOPLIST_FILE = "SampleBroadcaster/SampleBroadcaster-Info.plist";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				PRODUCT_BUNDLE_IDENTIFIER = "videocore.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "802ea4ec-e810-451f-9144-bc91bd34dd7b";
 				TARGETED_DEVICE_FAMILY = 1;
@@ -465,6 +579,7 @@
 				);
 				INFOPLIST_FILE = "SampleBroadcaster/SampleBroadcaster-Info.plist";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				PRODUCT_BUNDLE_IDENTIFIER = "videocore.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "802ea4ec-e810-451f-9144-bc91bd34dd7b";
 				TARGETED_DEVICE_FAMILY = 1;

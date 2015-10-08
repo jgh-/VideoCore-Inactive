@@ -160,11 +160,15 @@ static __strong NSData *CRLFCRLF;   // HTTP消息分隔符
     }];
 #else
     // test only
-    m_anyncStream->readLength(129, [=](videocore::AsyncStreamBuffer &buf){
-        NSLog(@"Shake response length:%ld", buf.size());
-        NSData *data = [NSData dataWithBytes:&buf[0] length:buf.size()];
-        [self checkShakeResponse:data];
-    });
+    size_t length = 129;
+    for(int i=0; i<length; i++) {
+        
+        m_anyncStream->readLength(129, [=](videocore::AsyncStreamBuffer &buf){
+            NSLog(@"Shake response length:%ld", buf.size());
+            NSData *data = [NSData dataWithBytes:&buf[0] length:buf.size()];
+            [self checkShakeResponse:data];
+        });
+    }
 #endif
 }
 
@@ -378,13 +382,13 @@ static NSString *SHA1StringOfString(NSString *str) {
 #pragma mark -
 #pragma mark - 基本API
 - (BOOL)open{
-    NSError *error = nil;
     uint16_t port = _URL.port.unsignedShortValue;
     if (port == 0) {
         port = 80;
     }
-    NSString *host = _URL.host;
 #ifdef USE_CocoaAsyncSocket
+    NSError *error = nil;
+    NSString *host = _URL.host;
     [_socket connectToHost:host onPort:port error:&error];
     if (error) {
         JCCLog(@"Connect to URL(%@) error:%@", _URL, error);
@@ -392,8 +396,8 @@ static NSString *SHA1StringOfString(NSString *str) {
     }
 #else 
     // test only
-    std::string strhost("192.168.50.19");
-    m_anyncStream->connect(strhost, port, [=](videocore::StreamStatus_T status) {
+    std::string host([_URL.host UTF8String]);
+    m_anyncStream->connect(host, port, [=](videocore::StreamStatus_T status) {
         if (status == videocore::kAsyncStreamStateConnected) {
             [self sendShakeHeader];
         }

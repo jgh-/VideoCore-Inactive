@@ -26,13 +26,16 @@
 #ifndef __videocore_util_h
 #define __videocore_util_h
 
-
 #ifdef DEBUG
 #define DLog(...) printf(__VA_ARGS__);
 #else
 #define DLog(...) {}
 #endif
 
-void dumpBuffer(const char *desc, uint8_t *buf, size_t size);
+#ifndef DLOG_LEVEL_DEF
+#define DLOG_LEVEL_DEF DLOG_LEVEL_DEBUG
+#endif
+
+#include <videocore/system/Logger.hpp>
 
 #endif

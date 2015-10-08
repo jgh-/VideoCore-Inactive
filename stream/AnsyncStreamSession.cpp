@@ -6,11 +6,10 @@
 //
 //
 
+#include <videocore/stream/AnsyncStreamSession.hpp>
+
 #include <cstdlib>
 #include <cassert>
-
-#include "AnsyncStreamSession.hpp"
-
 
 namespace videocore {
 #pragma mark -
@@ -27,6 +26,12 @@ namespace videocore {
         
         m_readPointer = m_preBuffer;
         m_writePointer = m_preBuffer;
+
+        DLogError("error test %s\n", "123");
+        DLogWarn("warn test %s\n", "123");
+        DLogInfo("info test %s\n", "123");
+        DLogDebug("debug test %s\n", "123");
+        DLogVerbose("verbos test %s\n", "123");
 
     }
     
@@ -127,15 +132,15 @@ namespace videocore {
             m_readLength = length;
             m_eventCallback = eventcb;
         }
-        AnsyncStreamReader(size_t length, SSAnsyncReadCallBack_T eventcb){
-            m_bytesDone = 0;
-            
-            m_buffer = std::make_shared<AsyncStreamBuffer>(length);
-            m_startOffset = 0;
-            m_bufferOwner = true;
-            m_readLength = length;
-            m_eventCallback = eventcb;
-        }
+//        AnsyncStreamReader(size_t length, SSAnsyncReadCallBack_T eventcb){
+//            m_bytesDone = 0;
+//            
+//            m_buffer = std::make_shared<AsyncStreamBuffer>(length);
+//            m_startOffset = 0;
+//            m_bufferOwner = true;
+//            m_readLength = length;
+//            m_eventCallback = eventcb;
+//        }
         
         ~AnsyncStreamReader() {
             DLog("AnsyncReadConsumer::~AnsyncReadConsumer\n");
@@ -217,12 +222,12 @@ namespace videocore {
         ~AnsyncStreamWriter() {
             DLog("AnsyncStreamWriter::~AnsyncStreamWriter\n");
         }
+        
         ssize_t writeToStream(IStreamSession *stream) {
             size_t bytesToWrite = m_buffer->size() - m_bytesDone;
             assert(bytesToWrite > 0);
             ssize_t result = stream->write(&(*m_buffer)[m_bytesDone], bytesToWrite);
             if (result > 0) {
-                dumpBuffer("StreamWriter", &(*m_buffer)[m_bytesDone], result);
                 m_bytesDone += result;
             }
             return result;
@@ -307,15 +312,20 @@ namespace videocore {
     }
     
     void AnsyncStreamSession::readLength(size_t length, SSAnsyncReadCallBack_T readcb){
-        // 不能在相同的队列里发起请求，否则死锁呢。
+        auto orgbuf = std::make_shared<AsyncStreamBuffer>(length);
+        readMoreLength(length, orgbuf, 0, readcb);
+    }
+    
+    void AnsyncStreamSession::readMoreLength(size_t length, AsyncStreamBufferSP orgbuf, size_t offset, SSAnsyncReadCallBack_T readcb){
         assert(!m_socketJob.thisThreadInQueue());
         
         m_socketJob.enqueue([=]{
             DLog("Want to read length:%zd\n", length);
-            auto reader = std::make_shared<AnsyncStreamReader>(length, readcb);
+            auto reader = std::make_shared<AnsyncStreamReader>(length, orgbuf, offset, readcb);
             m_readerQueue.push(reader);
             doReadData();
         });
+
     }
 
 #pragma mark -
