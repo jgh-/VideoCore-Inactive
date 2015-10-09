@@ -26,9 +26,8 @@ namespace videocore {
                         ...)  __attribute__ ((format (printf, 8, 9)));
         static void dumpBuffer(const char *desc, uint8_t *buf, size_t size);
     };
-        
-#define DD_DEBUG NO
-    
+
+    // Define DLOG_LEVEL_DEF to control the output log message
 #define DLOG_MACRO(isAsynchronous, lvl, flg, ctx, fnct, frmt, ...) \
 videocore::Logger::log(isAsynchronous, lvl, flg, ctx, __FILE__, fnct, __LINE__, frmt, ##__VA_ARGS__);
     
@@ -49,13 +48,14 @@ DLOG_MAYBE( NO, lvl, flg, ctx, frmt, ##__VA_ARGS__)
 #define ASYNC_LOG_MAYBE(lvl, flg, ctx, frmt, ...) \
 DLOG_MAYBE(YES, lvl, flg, ctx, frmt, ##__VA_ARGS__)
 
-
+// FLAG value
 #define DLOG_FLAG_ERROR    (1 << 0)
 #define DLOG_FLAG_WARN     (1 << 1)
 #define DLOG_FLAG_INFO     (1 << 2)
 #define DLOG_FLAG_DEBUG    (1 << 3)
 #define DLOG_FLAG_VERBOSE  (1 << 4)
 
+// LAVEL value
 #define DLOG_LEVEL_OFF     0
 #define DLOG_LEVEL_ERROR   (DLOG_FLAG_ERROR)
 #define DLOG_LEVEL_WARN    (DLOG_FLAG_ERROR | DLOG_FLAG_WARN)
@@ -63,6 +63,7 @@ DLOG_MAYBE(YES, lvl, flg, ctx, frmt, ##__VA_ARGS__)
 #define DLOG_LEVEL_DEBUG   (DLOG_FLAG_ERROR | DLOG_FLAG_WARN | DLOG_FLAG_INFO | DLOG_FLAG_DEBUG)
 #define DLOG_LEVEL_VERBOSE (DLOG_FLAG_ERROR | DLOG_FLAG_WARN | DLOG_FLAG_INFO | DLOG_FLAG_DEBUG | DLOG_FLAG_VERBOSE)
 
+// Can log value
 #define DLOG_ERROR    (DLOG_LEVEL_DEF & DLOG_FLAG_ERROR)
 #define DLOG_WARN     (DLOG_LEVEL_DEF & DLOG_FLAG_WARN)
 #define DLOG_INFO     (DLOG_LEVEL_DEF & DLOG_FLAG_INFO)
@@ -71,12 +72,14 @@ DLOG_MAYBE(YES, lvl, flg, ctx, frmt, ##__VA_ARGS__)
 
 #define DLOG_ASYNC_ENABLED 1
 
+// Can async log value
 #define DLOG_ASYNC_ERROR    (0 && DLOG_ASYNC_ENABLED)
 #define DLOG_ASYNC_WARN     (1 && DLOG_ASYNC_ENABLED)
 #define DLOG_ASYNC_INFO     (1 && DLOG_ASYNC_ENABLED)
 #define DLOG_ASYNC_DEBUG    (1 && DLOG_ASYNC_ENABLED)
 #define DLOG_ASYNC_VERBOSE  (1 && DLOG_ASYNC_ENABLED)
 
+// Log macros
 #define DLogError(frmt, ...)   DLOG_MAYBE(DLOG_ASYNC_ERROR,   DLOG_LEVEL_DEF, DLOG_FLAG_ERROR,   0, frmt, ##__VA_ARGS__)
 #define DLogWarn(frmt, ...)    DLOG_MAYBE(DLOG_ASYNC_WARN,    DLOG_LEVEL_DEF, DLOG_FLAG_WARN,    0, frmt, ##__VA_ARGS__)
 #define DLogInfo(frmt, ...)    DLOG_MAYBE(DLOG_ASYNC_INFO,    DLOG_LEVEL_DEF, DLOG_FLAG_INFO,    0, frmt, ##__VA_ARGS__)

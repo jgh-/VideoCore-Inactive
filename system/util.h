@@ -32,10 +32,4 @@
 #define DLog(...) {}
 #endif
 
-#ifndef DLOG_LEVEL_DEF
-#define DLOG_LEVEL_DEF DLOG_LEVEL_DEBUG
-#endif
-
-#include <videocore/system/Logger.hpp>
-
 #endif

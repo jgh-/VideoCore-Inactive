@@ -12,6 +12,7 @@
 
 namespace videocore {
 
+    // 简单的实现，直接输出日志就好
     void Logger::log(bool synchronous, int level, int flag, int ctx, const char *file, const char *function, int line, const char *format, ...)
     {
         va_list args;

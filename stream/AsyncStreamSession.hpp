@@ -28,7 +28,7 @@ namespace videocore {
         kAsyncStreamStateDisconnecting  = 4,
         kAsyncStreamStateDisconnected   = 5,
         kAsyncStreamStateError          = 6,
-    } AnsyncStreamState_T;
+    } AsyncStreamState_T;
 
 #pragma mark -
 #pragma mark PreallocBuffer
@@ -74,13 +74,13 @@ namespace videocore {
     typedef std::function<void()> SSAnsyncWriteCallBack_T;
 
     
-    class AnsyncStreamReader;
-    class AnsyncStreamWriter;
+    class AsyncStreamReader;
+    class AsyncStreamWriter;
     
-    class AnsyncStreamSession {
+    class AsyncStreamSession {
     public:
-        AnsyncStreamSession(IStreamSession *stream);
-        ~AnsyncStreamSession();
+        AsyncStreamSession(IStreamSession *stream);
+        ~AsyncStreamSession();
         void connect(const std::string &host, int port, SSConnectionStatus_T statuscb);
         void disconnect();
         void write(uint8_t *buffer, size_t length, SSAnsyncWriteCallBack_T writecb=nullptr);
@@ -88,13 +88,13 @@ namespace videocore {
         void readMoreLength(size_t length, AsyncStreamBufferSP orgbuf, size_t offset, SSAnsyncReadCallBack_T readcb);
         
     private:
-        void setState(AnsyncStreamState_T state);
-        std::shared_ptr<AnsyncStreamReader> getCurrentReader();
+        void setState(AsyncStreamState_T state);
+        std::shared_ptr<AsyncStreamReader> getCurrentReader();
         void doReadData();
         bool innnerReadData();
         void finishCurrentReader();
         
-        std::shared_ptr<AnsyncStreamWriter> getCurrentWriter();
+        std::shared_ptr<AsyncStreamWriter> getCurrentWriter();
 
         void doWriteData();
         void innerWriteData();
@@ -104,10 +104,10 @@ namespace videocore {
         std::unique_ptr<IStreamSession> m_stream;
         JobQueue m_eventTriggerJob;
         JobQueue m_socketJob;
-        std::queue<std::shared_ptr<AnsyncStreamReader>> m_readerQueue;
-        std::queue<std::shared_ptr<AnsyncStreamWriter>> m_writerQueue;
+        std::queue<std::shared_ptr<AsyncStreamReader>> m_readerQueue;
+        std::queue<std::shared_ptr<AsyncStreamWriter>> m_writerQueue;
         SSConnectionStatus_T m_connectionStatusCB;
-        AnsyncStreamState_T m_state;
+        AsyncStreamState_T m_state;
         PreallocBuffer m_inputBuffer;
         bool m_doReadingData;
     };
