@@ -28,6 +28,8 @@
 #include <videocore/stream/Apple/StreamSession.h>
 #endif
 
+#include <videocore/system/Logger.hpp>
+
 #include <boost/tokenizer.hpp>
 #include <stdlib.h>
 #include <algorithm>
@@ -35,29 +37,6 @@
 
 namespace videocore
 {
-    void test() {
-        RingBuffer buf(30);
-        for (int i=0; i<buf.total(); i++) {
-            uint8_t cc = 'a' + i;
-            buf.put(&cc, 1);
-        }
-        uint8_t p[1024] = {0};
-        memset(p, 0, sizeof(p));
-        buf.get(p, 20);
-        DLog("p1:%s\n", p);
-        for (int i=0; i<20; i++) {
-            uint8_t cc = 'A' + i;
-            buf.put(&cc, 1);
-        }
-        memset(p, 0, sizeof(p));
-        buf.get(p, 30);
-        DLog("p2:%s\n", p);
-        
-        buf.unget(30);
-        memset(p, 0, sizeof(p));
-        buf.get(p, 20);
-        DLog("p3:%s\n", p);
-    }
     static const size_t kMaxSendbufferSize = 10 * 1024 * 1024; // 10 MB
     
     RTMPSession::RTMPSession(std::string uri, RTMPSessionStateCallback callback)
@@ -106,7 +85,6 @@ namespace videocore
         m_playPath = pp.str();
         m_playPath.pop_back();
         int port = (m_uri.port > 0) ? m_uri.port : 1935;
-        test();
         DLog("Connecting:%s:%d, stream name:%s\n", m_uri.host.c_str(), port, m_playPath.c_str());
         m_streamSession->connect(m_uri.host, port, [&](IStreamSession& session, StreamStatus_T status) {
             streamStatusChanged(status);
@@ -797,22 +775,35 @@ namespace videocore
     }
     
     // reassemble the chunked package, and return the chunk count
-    int RTMPSession::reassembleBuffer(uint8_t *buf, long size) {
-        long sepPos = m_inChunkSize;
-        long remainSize = size;
-        int chunkCount = 0;
-        while (remainSize > (long)m_inChunkSize) {
-            remainSize -= m_inChunkSize;
-            if (remainSize <= m_inChunkSize) {
-                // last chunk
-                memmove(buf+sepPos-chunkCount, buf+sepPos+1, remainSize-1-chunkCount);
-            }
-            else {
-                memmove(buf+sepPos-chunkCount, buf+sepPos+1, m_inChunkSize);
-                sepPos += (m_inChunkSize+1);
-            }
-            chunkCount++;
+    // |------128------|C3|------128-------|C3|----<128-------|
+    //                  ^  ^
+    //                  ^  beginNextChunk
+    //                  endLastChunk
+    int RTMPSession::reassembleBuffer(uint8_t *buf, int msgSize, int packageSize) {
+        if (msgSize <=m_inChunkSize) {
+            return 0;
         }
+        DLog("reassemble message size:%d, package size：%d\n", msgSize, packageSize);
+        Logger::dumpBuffer("before", buf, packageSize, ",", INT_MAX);
+
+        int chunkCount = 0;
+        int remainSize = msgSize;
+        int endLastChunk = (int)m_inChunkSize;    // end of last processed chunk
+        int beginNextChunk = (int)m_inChunkSize +1; // begin of the next chunk
+        remainSize -= (int)m_inChunkSize;
+        while (remainSize > m_inChunkSize) {
+            memmove(buf+endLastChunk, buf+beginNextChunk, m_inChunkSize);
+            chunkCount++;
+            endLastChunk += (int)m_inChunkSize;
+            beginNextChunk += (int)m_inChunkSize +1;
+            remainSize -= (int)m_inChunkSize;
+        }
+        if(remainSize > 0) {
+            memmove(buf+endLastChunk, buf+beginNextChunk, remainSize);
+            chunkCount ++;
+        }
+        Logger::dumpBuffer("reassemble", buf, packageSize, ",", INT_MAX);
+
         return chunkCount;
     }
     bool
@@ -853,7 +844,7 @@ namespace videocore
                     // chunk process
                     int chunkCount = 0;
                     if (chunk.msg_length.data >= m_inChunkSize) {
-                        chunkCount = reassembleBuffer(p, ret);
+                        chunkCount = reassembleBuffer(p, chunk.msg_length.data, ret);
                     }
                     bool success = handleMessage(p, chunk.msg_type_id);
                     
@@ -878,7 +869,7 @@ namespace videocore
                     
                     int chunkCount = 0;
                     if (chunk.msg_length.data >= m_inChunkSize) {
-                        reassembleBuffer(p, ret);
+                        reassembleBuffer(p, chunk.msg_length.data, ret);
                     }
                     
                     bool success = handleMessage(p, chunk.msg_type_id);

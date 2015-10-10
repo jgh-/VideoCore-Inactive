@@ -33,6 +33,7 @@
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+
 #define SCB(x) ((NSStreamCallback*)(x))
 #define NSIS(x) ((NSInputStream*)(x))
 #define NSOS(x) ((NSOutputStream*)(x))
@@ -53,7 +54,11 @@
 namespace videocore {
     namespace Apple {
         
-        StreamSession::StreamSession() : m_status(0), m_runLoop(nullptr), m_outputStream(nullptr), m_inputStream(nullptr)
+        StreamSession::StreamSession()
+        : m_status(0)
+        , m_runLoop(nullptr)
+        , m_outputStream(nullptr)
+        , m_inputStream(nullptr)
         {
             m_streamCallback = [[NSStreamCallback alloc] init];
             SCB(m_streamCallback).session = this;
@@ -68,7 +73,6 @@ namespace videocore {
         void
         StreamSession::connect(const std::string& host, int port, StreamSessionCallback_T callback)
         {
-            DLog("StreamSession::connect\n");
             m_callback = callback;
             if(m_status > 0) {
                 disconnect();
@@ -78,7 +82,11 @@ namespace videocore {
                 CFReadStreamRef readStream;
                 CFWriteStreamRef writeStream;
 
-                CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (CFStringRef)[NSString stringWithUTF8String:host.c_str()], port, &readStream, &writeStream);
+                CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault,
+                                                   (CFStringRef)[NSString stringWithUTF8String:host.c_str()],
+                                                   port,
+                                                   &readStream,
+                                                   &writeStream);
             
                 m_inputStream = (NSInputStream*)readStream;
                 m_outputStream = (NSOutputStream*)writeStream;
@@ -102,8 +110,6 @@ namespace videocore {
         void
         StreamSession::disconnect()
         {
-            DLog("StreamSession::disconnect\n");
-
             if(m_outputStream) {
                 //if(m_runLoop) {
                 //    [NSOS(m_outputStream) removeFromRunLoop:NSRL(m_runLoop) forMode:NSDefaultRunLoopMode];
@@ -131,21 +137,21 @@ namespace videocore {
         ssize_t
         StreamSession::write(uint8_t *buffer, size_t size)
         {
-//            DLog("StreamSession write: %zd byte%s\n", size, size > 1 ? "s":"");
             NSInteger ret = 0;
           
             if( NSOS(m_outputStream).hasSpaceAvailable ) {
                 ret = [NSOS(m_outputStream) write:buffer maxLength:size];
             }
             else {
-                DLog("DEBUG: Stream no space available\n");
+                ret  = ret;
+//                NSLog(@"DEBUG: Stream no space available\n");
             }
             if(ret >= 0 && ret < size && (m_status & kStreamStatusWriteBufferHasSpace)) {
                 // Remove the Has Space Available flag
                 m_status ^= kStreamStatusWriteBufferHasSpace;
             }
             else if (ret < 0) {
-                DLog("ERROR! [%ld] buffer: %p [ 0x%02x ], size: %zu\n", (long)NSOS(m_outputStream).streamError.code, buffer, buffer[0], size);
+                NSLog(@"ERROR! [%ld] buffer: %p [ 0x%02x ], size: %zu", (long)NSOS(m_outputStream).streamError.code, buffer, buffer[0], size);
             }
 
             return ret;
@@ -162,7 +168,7 @@ namespace videocore {
                 m_status ^= kStreamStatusReadBufferHasBytes;
             }
             else if (NSIS(m_inputStream).hasBytesAvailable != YES) {
-                DLog("No more data in stream, clear read status\n");
+                NSLog(@"No more data in stream, clear read status");
                 m_status ^= kStreamStatusReadBufferHasBytes;
             }
             return ret;
@@ -181,17 +187,12 @@ namespace videocore {
         void
         StreamSession::nsStreamCallback(void* stream, unsigned event)
         {
-            DLog("DEBUG:nsStreamCallback event(%d) input stream status:%ld, output stream status:%ld\n",
-                 event,
-                 NSIS(m_inputStream).streamStatus,
-                 NSOS(m_outputStream).streamStatus);
-            
             if(event & NSStreamEventOpenCompleted) {
-                // 判定两个流都已经connected的情况下才发送kStreamStatusConnected事件
-                if(NSIS(m_inputStream).streamStatus >= 2 &&
-                   NSOS(m_outputStream).streamStatus >=2 &&
-                   NSIS(m_inputStream).streamStatus < 5 &&
-                   NSOS(m_outputStream).streamStatus < 5)
+                // Only set connected event when input and output stream both connected
+                if(NSIS(m_inputStream).streamStatus >= NSStreamStatusOpen &&
+                   NSOS(m_outputStream).streamStatus >= NSStreamStatusOpen &&
+                   NSIS(m_inputStream).streamStatus < NSStreamStatusAtEnd &&
+                   NSOS(m_outputStream).streamStatus < NSStreamStatusAtEnd)
                 {
                     setStatus(kStreamStatusConnected, true);
                 }
@@ -208,8 +209,11 @@ namespace videocore {
             }
             if(event & NSStreamEventErrorOccurred) {
                 setStatus(kStreamStatusErrorEncountered, true);
-                if(stream) {
-                    [[NSNotificationCenter defaultCenter] postNotificationName:@"com.videocore.stream.error" object:((NSStream*)stream).streamError];
+                if (NSIS(m_inputStream).streamError) {
+                    NSLog(@"Input stream error:%@", NSIS(m_inputStream).streamError);
+                }
+                if (NSOS(m_outputStream).streamError) {
+                    NSLog(@"Output stream error:%@", NSIS(m_outputStream).streamError);
                 }
             }
         }

@@ -24,7 +24,7 @@ namespace videocore {
                         int line,
                         const char* frmt,
                         ...)  __attribute__ ((format (printf, 8, 9)));
-        static void dumpBuffer(const char *desc, uint8_t *buf, size_t size);
+        static void dumpBuffer(const char *desc, uint8_t *buf, size_t size, const char *sep=" ", size_t breaklen = 16);
     };
 
     // Define DLOG_LEVEL_DEF to control the output log message

@@ -149,7 +149,7 @@ namespace videocore {
     }
     
 #pragma mark -
-#pragma mark AnsyncStreamReader
+#pragma mark AsyncStreamReader
     /**
      *  Reader object
      *  Reader object represent a read request for specail length or other (TODO)
@@ -160,7 +160,7 @@ namespace videocore {
     public:
         /**
          *  Ctor read specail length
-         *  Read is asynchronous, when the
+         *  Read is asynchronous, when the the data read enough, it is trigger the event callback
          */
         AsyncStreamReader(size_t length, AsyncStreamBufferSP buf, size_t offset, SSAnsyncReadCallBack_T eventcb){
             m_bytesDone = 0;
@@ -181,10 +181,14 @@ namespace videocore {
         }
         
         AsyncStreamReader() {
-            DLog("AnsyncReadConsumer::~AnsyncReadConsumer\n");
+            DLogVerbose("AsyncReadConsumer::~AsyncReadConsumer\n");
         }
         
-        // 从缓冲区复制数据过来，此方法会改变参数的读取状态
+        /**
+         *  Read data from pre-allocated buffer
+         *
+         *  @param abuff When the buffer was read, it will change it's status.
+         */
         void readFromBuffer(PreallocBuffer &abuff) {
             size_t availableBytes = abuff.availableBytes();
             size_t bytesToCopy = readLengthIfAvailable(availableBytes);
@@ -194,8 +198,12 @@ namespace videocore {
             
             m_bytesDone += bytesToCopy;
         }
-        
-        // 直接从流读取数据
+
+        /**
+         *  Read from stream
+         *
+         *  @return Result of stream read method.
+         */
         ssize_t readFromStream(IStreamSession *stream) {
             size_t bytesToRead = readLengthRemains();
             resizeForRead(bytesToRead);
@@ -212,22 +220,20 @@ namespace videocore {
         
         void triggerEvent() {
             if (m_eventCallback) {
+                // TODO: check the diference owned buffer or not?
                 m_eventCallback(*m_buffer);
             }
         }
         
     private:
-        // 如果可以从SOCKET读取bytesAvailable，需要多少自己就能满足次消费
         size_t readLengthIfAvailable(size_t bytesAvailable) {
             return std::min(bytesAvailable, readLengthRemains());
         }
         
-        // 要需要读取多少才合适
         size_t readLengthRemains() {
             return m_readLength - m_bytesDone;
         }
         
-        // 调整合适的缓冲区大小以便可以直接写入
         void resizeForRead(size_t bytesToRead) {
             size_t buffSize = m_buffer->size();
             size_t buffUsed = m_startOffset + m_bytesDone;
@@ -237,7 +243,6 @@ namespace videocore {
             if (bytesToRead > buffSpace)
             {
                 size_t buffInc = bytesToRead - buffSpace;
-                DLog("DEBUG: resize for read");
                 m_buffer->resize(buffInc);
             }
         }
@@ -301,34 +306,35 @@ namespace videocore {
     AsyncStreamSession::~AsyncStreamSession(){
         m_socketJob.mark_exiting();
         m_socketJob.enqueue_sync([=]{});
+        DLogVerbose("AsyncStreamSession::~AsyncStreamSession\n");
     }
     
     void AsyncStreamSession::connect(const std::string& host, int port, SSConnectionStatus_T statuscb) {
         m_connectionStatusCB = statuscb;
         m_state = kAsyncStreamStateConnecting;
         m_stream->connect(host, port, [=](IStreamSession& session, StreamStatus_T status){
-            // 检查自己的Connected状态，避免重复
             m_socketJob.enqueue([=]{
+                // make sure set connected status only one time
                 if (status & kStreamStatusConnected && m_state < kAsyncStreamStateConnected) {
-                    DLog("AnsyncStreamSession connected\n");
+                    DLogDebug("AnsyncStreamSession connected\n");
                     setState(kAsyncStreamStateConnected);
                     doWriteData();
                     doReadData();
                 }
                 if (status & kStreamStatusWriteBufferHasSpace) {
-                    DLog("AnsyncStreamSession Write ready\n");
+                    DLogDebug("AnsyncStreamSession Write ready\n");
                     doWriteData();
                 }
                 if (status & kStreamStatusReadBufferHasBytes) {
-                    DLog("AnsyncStreamSession Read ready\n");
+                    DLogDebug("AnsyncStreamSession Read ready\n");
                     doReadData();
                 }
                 if(status & kStreamStatusErrorEncountered) {
-                    DLog("AnsyncStreamSession Error!\n");
+                    DLogDebug("AnsyncStreamSession Error!\n");
                     setState(kAsyncStreamStateError);
                 }
                 if (status & kStreamStatusEndStream) {
-                    DLog("AnsyncStreamSession end.\n")
+                    DLogDebug("AnsyncStreamSession end.\n");
                     setState(kAsyncStreamStateDisconnected);
                 }
             });
@@ -336,30 +342,31 @@ namespace videocore {
     }
     
     void AsyncStreamSession::disconnect(){
+        DLogDebug("Disconnecting\n");
         setState(kAsyncStreamStateDisconnecting);
         m_stream->disconnect();
     }
     
     void AsyncStreamSession::write(uint8_t *buffer, size_t length, SSAnsyncWriteCallBack_T writecb){
-        auto bufsp = std::make_shared<AsyncStreamBuffer>(buffer, buffer+length);
-        // 因为Job是异步处理过程，需要自己小心处理引用计数
+        // make a reference for the lamdba function
+        auto bufref = std::make_shared<AsyncStreamBuffer>(buffer, buffer+length);
         m_socketJob.enqueue([=]{
-            auto writer = std::make_shared<AsyncStreamWriter>(bufsp, writecb);
+            auto writer = std::make_shared<AsyncStreamWriter>(bufref, writecb);
             m_writerQueue.push(writer);
-            DLog("Queue write request:%ld\n", length);
+            DLogVerbose("Queue write request length:%zd\n", length);
             doWriteData();
         });
     }
     
     void AsyncStreamSession::readLength(size_t length, SSAnsyncReadCallBack_T readcb){
-        readMoreLength(length, nullptr, 0, readcb);
+        this->readLength(length, nullptr, 0, readcb);
     }
     
-    void AsyncStreamSession::readMoreLength(size_t length, AsyncStreamBufferSP orgbuf, size_t offset, SSAnsyncReadCallBack_T readcb){
+    void AsyncStreamSession::readLength(size_t length, AsyncStreamBufferSP orgbuf, size_t offset, SSAnsyncReadCallBack_T readcb){
         assert(!m_socketJob.thisThreadInQueue());
         
         m_socketJob.enqueue([=]{
-            DLog("Want to read length:%zd\n", length);
+            DLogVerbose("Queue read request length:%zd\n", length);
             auto reader = std::make_shared<AsyncStreamReader>(length, orgbuf, offset, readcb);
             m_readerQueue.push(reader);
             doReadData();
@@ -392,14 +399,14 @@ namespace videocore {
     void AsyncStreamSession::doReadData(){
         assert(m_socketJob.thisThreadInQueue());
         
+        // Just in case logical error
         if (m_doReadingData) {
-            DLog("DEBUG, Already reading\n");
+            DLogError("Already reading\n");
             return ;
         }
-        // 防止某些情况的递归重入
-        // FIXME: 梳理调用逻辑，避免递归调用。一个可能的地方是
         m_doReadingData = true;
-        DLog("Do read data\n");
+        
+        DLogVerbose("Do read data\n");
         while (innnerReadData()) {
             ;
         }
@@ -413,10 +420,10 @@ namespace videocore {
         if (currentReader) {
             // 从已读buffer中读取
             if (m_inputBuffer.availableBytes() > 0) {
-                DLog("Read from prebuffer\n");
+                DLogVerbose("Read from prebuffer\n");
                 currentReader->readFromBuffer(m_inputBuffer);
             }else {
-                DLog("No data in prebuffer\n");
+                DLogVerbose("No data in prebuffer\n");
             }
             if (currentReader->done()) {
                 finishCurrentReader();
@@ -424,17 +431,17 @@ namespace videocore {
             }
             if (m_stream->status() & kStreamStatusReadBufferHasBytes) {
                 // 从SOCKET读取
-                DLog("Reading from stream\n");
+                DLogVerbose("Reading from stream\n");
                 ssize_t result = currentReader->readFromStream(m_stream.get());
                 if (result > 0) {
-                    DLog("Read %ld bytes from stream\n", result);
+                    DLogVerbose("Read %ld bytes from stream\n", result);
                 }
                 else {
-                    DLog("ERROR! Read from stream error:%ld\n", result);
+                    DLogVerbose("ERROR! Read from stream error:%ld\n", result);
                 }
             }
             else {
-                DLog("No data in current stream\n");
+                DLogVerbose("No data in current stream\n");
             }
             if (currentReader->done()) {
                 finishCurrentReader();
@@ -442,22 +449,22 @@ namespace videocore {
             }
         }
         else {
-            DLog("No reader currently\n");
+            DLogVerbose("No reader currently\n");
             if (m_stream->status() & kStreamStatusReadBufferHasBytes) {
                 // read the SOCKET into pre buffer ?
                 size_t availibleSize = m_inputBuffer.availableSpace();
-                DLog("Try reading from stream\n");
+                DLogVerbose("Try reading from stream\n");
                 ssize_t result = m_stream->read(m_inputBuffer.writeBuffer(), availibleSize);
                 if (result > 0) {
                     m_inputBuffer.didWrite(result);
-                    DLog("Read %ld bytes into prebuffer\n", result);
+                    DLogVerbose("Read %ld bytes into prebuffer\n", result);
                 }
                 else {
-                    DLog("ERROR! read from stream error:%ld\n", result);
+                    DLogVerbose("ERROR! read from stream error:%ld\n", result);
                 }
             }
             else {
-                DLog("No data in current stream\n");
+                DLogVerbose("No data in current stream\n");
             }
         }
         return false;
@@ -470,9 +477,8 @@ namespace videocore {
         assert(currentReader);
         
         if (currentReader) {
-            DLog("Reader done\n");
+            DLogVerbose("Reader done\n");
             m_readerQueue.pop();
-            // trigger event in other queue?
             m_eventTriggerJob.enqueue([=]{
                 currentReader->triggerEvent();
             });
@@ -491,7 +497,8 @@ namespace videocore {
     }
     void AsyncStreamSession::doWriteData(){
         assert(m_socketJob.thisThreadInQueue());
-        DLog("Do write data\n");
+        
+        DLogVerbose("Do write data\n");
         while (m_stream->status() & kStreamStatusWriteBufferHasSpace && m_writerQueue.size() > 0) {
             innerWriteData();
         }
@@ -502,18 +509,21 @@ namespace videocore {
         if (m_stream->status() & kStreamStatusWriteBufferHasSpace) {
             auto writer = getCurrentWriter();
             if (writer) {
-                DLog("Writing data to stream\n");
+                DLogVerbose("Writing data to stream\n");
                 ssize_t result = writer->writeToStream(m_stream.get());
                 if (result <= 0) {
-                    DLog("ERROR! Write to stream error:%ld\n", result);
+                    DLogError("ERROR! Write to stream error:%ld\n", result);
                 }
                 else {
-                    DLog("Wrote %ld bytes to stream\n", result);
+                    DLogVerbose("Wrote %ld bytes to stream\n", result);
                 }
                 if (writer->done()) {
                     finishCurrentWriter();
                 }
             }            
+        }
+        else {
+            DLogVerbose("Stream can't write now\n");
         }
     }
     
@@ -522,9 +532,10 @@ namespace videocore {
         
         auto currentWriter = getCurrentWriter();
         assert(currentWriter);
+        
         if (currentWriter) {
             m_writerQueue.pop();
-            DLog("Writer done\n");
+            DLogVerbose("Writer done\n");
             m_eventTriggerJob.enqueue([=]{
                 currentWriter->triggerEvent();
             });

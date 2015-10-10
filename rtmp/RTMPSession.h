@@ -27,6 +27,7 @@
 
 #include <iostream>
 #include <videocore/stream/IStreamSession.hpp>
+#include <videocore/stream/AsyncStreamSession.hpp>
 #include <videocore/stream/TCPThroughputAdaptation.h>
 
 #include <UriParser/UriParser.hpp>
@@ -114,7 +115,7 @@ namespace videocore
         void sendSetBufferTime(int milliseconds);
         
         void increaseBuffer(int64_t size);
-        int reassembleBuffer(uint8_t *p, long size);
+        int reassembleBuffer(uint8_t *p, int msgSize, int packageSize);
 
         bool parseCurrentData();
         void handleInvoke(uint8_t* p);
@@ -147,6 +148,7 @@ namespace videocore
         std::map<int, uint64_t>             m_previousChunkData;
         std::unique_ptr<RingBuffer>         m_streamInBuffer;
         std::unique_ptr<IStreamSession>     m_streamSession;
+        std::unique_ptr<AsyncStreamSession> m_asyncStream;
         std::vector<uint8_t> m_outBuffer;
         http::url                       m_uri;
         

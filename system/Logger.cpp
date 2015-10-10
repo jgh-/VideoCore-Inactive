@@ -22,13 +22,13 @@ namespace videocore {
         va_end(args);
     }
     
-    void dumpBuffer(const char *desc, uint8_t *buf, size_t size) {
+    void Logger::dumpBuffer(const char *desc, uint8_t *buf, size_t size, const char *sep, size_t breaklen) {
         char hexBuf[size * 4 + 1];
         int j = 0;
         for (size_t i=0; i<size; i++) {
-            sprintf(&hexBuf[j], "%02x ", buf[i]);
+            sprintf(&hexBuf[j], "%02x%s", buf[i], sep ? sep : "");
             j += 3;
-            if (i % 16 == 15) {
+            if (i % breaklen == breaklen-1) {
                 sprintf(&hexBuf[j], "\n");
                 j++;
             }

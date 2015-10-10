@@ -109,6 +109,10 @@ namespace videocore { namespace iOS {
                 bThis->m_component = AudioComponentFindNext(NULL, &acd);
                 
                 AudioComponentInstanceNew(bThis->m_component, &bThis->m_audioUnit);
+                if(!bThis->m_audioUnit) {
+                    DLog("AudioComponentInstanceNew failed");
+                    return ;
+                }
                 
                 if(excludeAudioUnit) {
                     excludeAudioUnit(bThis->m_audioUnit);

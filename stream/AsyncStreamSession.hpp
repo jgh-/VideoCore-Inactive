@@ -85,7 +85,7 @@ namespace videocore {
         void disconnect();
         void write(uint8_t *buffer, size_t length, SSAnsyncWriteCallBack_T writecb=nullptr);
         void readLength(size_t length, SSAnsyncReadCallBack_T readcb);
-        void readMoreLength(size_t length, AsyncStreamBufferSP orgbuf, size_t offset, SSAnsyncReadCallBack_T readcb);
+        void readLength(size_t length, AsyncStreamBufferSP orgbuf, size_t offset, SSAnsyncReadCallBack_T readcb);
         
     private:
         void setState(AsyncStreamState_T state);

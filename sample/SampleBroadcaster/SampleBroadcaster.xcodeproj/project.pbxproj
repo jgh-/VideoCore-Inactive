@@ -37,6 +37,7 @@
 		D03DDF271BC667A00044EC58 /* README.txt in Resources */ = {isa = PBXBuildFile; fileRef = D03DDF171BC667A00044EC58 /* README.txt */; settings = {ASSET_TAGS = (); }; };
 		D03DDF281BC667A00044EC58 /* JCChatClient.mm in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF191BC667A00044EC58 /* JCChatClient.mm */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
 		D03DDF291BC667A00044EC58 /* JCChatFrame.m in Sources */ = {isa = PBXBuildFile; fileRef = D03DDF1C1BC667A00044EC58 /* JCChatFrame.m */; settings = {ASSET_TAGS = (); COMPILER_FLAGS = "-fobjc-arc"; }; };
+		D04745301BC7A1230035F57D /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = D047452F1BC7A1220035F57D /* Settings.bundle */; settings = {ASSET_TAGS = (); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -91,6 +92,7 @@
 		D03DDF1A1BC667A00044EC58 /* JCChatConsts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JCChatConsts.h; sourceTree = "<group>"; };
 		D03DDF1B1BC667A00044EC58 /* JCChatFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JCChatFrame.h; sourceTree = "<group>"; };
 		D03DDF1C1BC667A00044EC58 /* JCChatFrame.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JCChatFrame.m; sourceTree = "<group>"; };
+		D047452F1BC7A1220035F57D /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		D811EF3F24704EBFB916513B /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA5713A4139B758B1B834C67 /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -120,6 +122,7 @@
 		7265D5D3191994B80042DC3B = {
 			isa = PBXGroup;
 			children = (
+				D047452F1BC7A1220035F57D /* Settings.bundle */,
 				7265D5E5191994B80042DC3B /* SampleBroadcaster */,
 				7265D5DE191994B80042DC3B /* Frameworks */,
 				7265D5DD191994B80042DC3B /* Products */,
@@ -309,6 +312,7 @@
 			files = (
 				7265D5FB191994B80042DC3B /* Images.xcassets in Resources */,
 				7265D5F3191994B80042DC3B /* Main_iPhone.storyboard in Resources */,
+				D04745301BC7A1230035F57D /* Settings.bundle in Resources */,
 				D03DDF271BC667A00044EC58 /* README.txt in Resources */,
 				7265D5EA191994B80042DC3B /* InfoPlist.strings in Resources */,
 			);

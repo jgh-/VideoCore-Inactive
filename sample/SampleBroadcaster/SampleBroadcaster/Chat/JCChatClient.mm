@@ -17,7 +17,7 @@
 #import "DDLog.h"
 #import "DDTTYLogger.h"
 
-#include <videocore/stream/AnsyncStreamSession.hpp>
+#include <videocore/stream/AsyncStreamSession.hpp>
 #include <videocore/stream/Apple/StreamSession.h>
 
 
@@ -43,7 +43,7 @@ NS_ENUM(long, JCSocketTag) {
 #ifdef USE_CocoaAsyncSocket
     GCDAsyncSocket *_socket;
 #else
-    videocore::AnsyncStreamSession *m_anyncStream;
+    videocore::AsyncStreamSession*m_anyncStream;
 #endif
     
     dispatch_queue_t _delegateQueue;
@@ -92,7 +92,7 @@ static __strong NSData *CRLFCRLF;   // HTTP消息分隔符
 #ifdef USE_CocoaAsyncSocket
     _socket = [[GCDAsyncSocket alloc] initWithDelegate:self delegateQueue:_delegateQueue];
 #else
-    m_anyncStream = new videocore::AnsyncStreamSession(new videocore::Apple::StreamSession);
+    m_anyncStream = new videocore::AsyncStreamSession(new videocore::Apple::StreamSession);
 #endif
 }
 
@@ -161,13 +161,21 @@ static __strong NSData *CRLFCRLF;   // HTTP消息分隔符
 #else
     // test only
     size_t length = 129;
+//    videocore::AsyncStreamBufferSP
+    auto buffer = std::make_shared<videocore::AsyncStreamBuffer>(129);
     for(int i=0; i<length; i++) {
-        
-        m_anyncStream->readLength(129, [=](videocore::AsyncStreamBuffer &buf){
-            NSLog(@"Shake response length:%ld", buf.size());
-            NSData *data = [NSData dataWithBytes:&buf[0] length:buf.size()];
-            [self checkShakeResponse:data];
-        });
+        if (i != length-1) {
+            m_anyncStream->readLength(1, buffer, i, [i](videocore::AsyncStreamBuffer &buf){
+                NSLog(@"Shake response partial:%d", i);
+            });
+        }
+        else {
+            m_anyncStream->readLength(1, buffer, i, [=](videocore::AsyncStreamBuffer &buf){
+                NSLog(@"Shake response length:%ld", buf.size());
+                NSData *data = [NSData dataWithBytes:&buf[0] length:buf.size()];
+                [self checkShakeResponse:data];
+            });
+        }
     }
 #endif
 }
