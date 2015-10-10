@@ -80,6 +80,7 @@ namespace videocore
         RTMPSession(std::string uri, RTMPSessionStateCallback callback);
         ~RTMPSession();
         
+        void connectServer();
     public:
         
         // Requires RTMPMetadata_t
@@ -144,6 +145,7 @@ namespace videocore
         TCPThroughputAdaptation m_throughputSession;
         
         uint64_t            m_previousTs;
+        RTMPChunk_0         m_previousChunk;
         
         std::deque<BufStruct> m_streamOutQueue;
         

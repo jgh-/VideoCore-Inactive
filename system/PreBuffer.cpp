@@ -8,6 +8,9 @@
 
 #include "PreBuffer.hpp"
 
+#include <videocore/system/util.h>
+
+
 #include <cstdlib>
 #include <cassert>
 
@@ -138,4 +141,9 @@ namespace videocore {
         m_readPointer  = m_preBuffer;
         m_writePointer = m_preBuffer;
     }
+    
+    void PreallocBuffer::dumpInfo(){
+        DLog("PreallocBuffer begin:%p, writer:%p(%zd), reader:%p(%zd)\n", m_preBuffer, m_writePointer, availableSpace(), m_readPointer, availableBytes());
+    }
+
 }

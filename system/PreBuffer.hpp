@@ -35,6 +35,8 @@ namespace videocore {
         
         void reset();
         
+        void dumpInfo();
+        
     private:
         uint8_t *m_preBuffer;
         size_t m_preBufferSize;
