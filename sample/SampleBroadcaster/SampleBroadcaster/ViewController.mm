@@ -44,7 +44,7 @@
     [[NSUserDefaults standardUserDefaults] setValue:@"name_preference" forKey:@"test"];
 
 
-    _session = [[VCSimpleSession alloc] initWithVideoSize:rect.size frameRate:30 bitrate:1000000 useInterfaceOrientation:NO];
+    _session = [[VCSimpleSession alloc] initWithVideoSize:rect.size frameRate:30 bitrate:1000000 useInterfaceOrientation:YES];
 //    _session.orientationLocked = YES;
     [self.previewView addSubview:_session.previewView];
     _session.previewView.frame = self.previewView.bounds;
@@ -72,8 +72,7 @@
         case VCSessionStatePreviewStarted:
         case VCSessionStateEnded:
         case VCSessionStateError:
-//            [_session startRtmpSessionWithURL:@"rtmp://192.168.50.19/myapp" andStreamKey:@"iosstream?abc=xxx"];
-            [_session startRtmpSessionWithURL:@"rtmp://pushvideo.jclive.cn/testonly" andStreamKey:@"iosstream"];
+            [_session startRtmpSessionWithURL:@"rtmp://192.168.50.19/myapp" andStreamKey:@"iosstream?abc=xxx"];
             break;
         default:
             [_session endRtmpSession];
