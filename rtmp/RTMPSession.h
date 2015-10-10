@@ -43,6 +43,7 @@
 
 #include <videocore/rtmp/RTMPTypes.h>
 #include <videocore/system/Buffer.hpp>
+#include <videocore/system/PreBuffer.hpp>
 #include <videocore/transforms/IOutputSession.hpp>
 
 namespace videocore
@@ -115,7 +116,8 @@ namespace videocore
         void sendSetBufferTime(int milliseconds);
         
         void increaseBuffer(int64_t size);
-        int reassembleBuffer(uint8_t *p, int msgSize, int packageSize);
+        int  reassembleBuffer(uint8_t *p, int msgSize, int packageSize);
+        int  tryReadOneMessage(uint8_t *msg, int msgsize, int from_offset);
 
         bool parseCurrentData();
         void handleInvoke(uint8_t* p);
@@ -146,9 +148,9 @@ namespace videocore
         std::deque<BufStruct> m_streamOutQueue;
         
         std::map<int, uint64_t>             m_previousChunkData;
-        std::unique_ptr<RingBuffer>         m_streamInBuffer;
+//        std::unique_ptr<RingBuffer>         m_streamInBuffer;
+        std::unique_ptr<PreallocBuffer>     m_streamInBuffer;
         std::unique_ptr<IStreamSession>     m_streamSession;
-        std::unique_ptr<AsyncStreamSession> m_asyncStream;
         std::vector<uint8_t> m_outBuffer;
         http::url                       m_uri;
         

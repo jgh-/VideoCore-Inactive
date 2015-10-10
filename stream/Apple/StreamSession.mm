@@ -142,10 +142,6 @@ namespace videocore {
             if( NSOS(m_outputStream).hasSpaceAvailable ) {
                 ret = [NSOS(m_outputStream) write:buffer maxLength:size];
             }
-            else {
-                ret  = ret;
-//                NSLog(@"DEBUG: Stream no space available\n");
-            }
             if(ret >= 0 && ret < size && (m_status & kStreamStatusWriteBufferHasSpace)) {
                 // Remove the Has Space Available flag
                 m_status ^= kStreamStatusWriteBufferHasSpace;
