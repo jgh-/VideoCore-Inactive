@@ -344,7 +344,8 @@ namespace videocore {
             
             return size;
         }
-        // 回退读指针
+        // undo some reading
+        // TODO: do more test!
         size_t unget(size_t length) {
             if (length + m_size > m_total) {
                 length = m_total - m_size;
