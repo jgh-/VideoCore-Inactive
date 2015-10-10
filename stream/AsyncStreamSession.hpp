@@ -17,6 +17,7 @@
 
 #include <videocore/system/util.h>
 #include <videocore/system/JobQueue.hpp>
+#include <videocore/system/PreBuffer.hpp>
 #include <videocore/stream/IStreamSession.hpp>
 
 namespace videocore {
@@ -29,39 +30,6 @@ namespace videocore {
         kAsyncStreamStateDisconnected   = 5,
         kAsyncStreamStateError          = 6,
     } AsyncStreamState_T;
-
-#pragma mark -
-#pragma mark PreallocBuffer
-    class PreallocBuffer {
-    public:
-        PreallocBuffer(size_t capBytes);
-        ~PreallocBuffer();
-        
-        void ensureCapacityForWrite(size_t capBytes);
-        
-        size_t availableBytes();    // for read
-        uint8_t *readBuffer();
-        
-        void getReadBuffer(uint8_t **bufferPtr, size_t *availableBytesPtr);
-        
-        void didRead(size_t bytesRead);
-        
-        size_t availableSpace();   // for write
-        uint8_t *writeBuffer();
-        
-        void getWriteBuffer(uint8_t **bufferPtr, size_t *availableSpacePtr);
-        
-        void didWrite(size_t bytesWritten);
-        
-        void reset();
-        
-    private:
-        uint8_t *m_preBuffer;
-        size_t m_preBufferSize;
-        
-        uint8_t *m_readPointer;
-        uint8_t *m_writePointer;
-    };
     
     typedef std::vector<uint8_t> AsyncStreamBuffer;
     typedef std::shared_ptr<AsyncStreamBuffer> AsyncStreamBufferSP;
