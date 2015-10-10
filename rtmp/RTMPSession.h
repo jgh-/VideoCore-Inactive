@@ -114,7 +114,7 @@ namespace videocore
         void sendSetBufferTime(int milliseconds);
         
         void increaseBuffer(int64_t size);
-        int reassembleBuffer(uint8_t *p, long size);
+        int reassembleBuffer(uint8_t *buf, int msgSize, int packageSize);
 
         bool parseCurrentData();
         void handleInvoke(uint8_t* p);
