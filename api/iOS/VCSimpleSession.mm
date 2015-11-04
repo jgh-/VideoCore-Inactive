@@ -291,10 +291,10 @@ namespace videocore { namespace simpleApi {
 }
 - (void) setAudioChannelCount:(int)channelCount
 {
-    _audioChannelCount = MIN(2, MAX(channelCount,2)); // We can only support a channel count of 2 with AAC
+    _audioChannelCount = MAX(1, MIN(channelCount, 2));
 
     if(m_audioMixer) {
-        m_audioMixer->setChannelCount(channelCount);
+        m_audioMixer->setChannelCount(_audioChannelCount);
     }
 }
 - (int) audioChannelCount
