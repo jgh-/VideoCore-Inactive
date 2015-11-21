@@ -49,7 +49,6 @@ namespace videocore { namespace Apple {
                            double frameDuration)
     : GenericAudioMixer(outChannelCount, outFrequencyInHz, outBitsPerChannel, frameDuration)
     {
-        DLog("Apple::AudioMixer");
     }
     AudioMixer::~AudioMixer()
     {

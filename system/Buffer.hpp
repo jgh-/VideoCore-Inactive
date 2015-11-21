@@ -344,9 +344,28 @@ namespace videocore {
             
             return size;
         }
+        // undo some reading
+        // TODO: do more test!
+        size_t unget(size_t length) {
+            if (length + m_size > m_total) {
+                length = m_total - m_size;
+            }
+            m_size += length;
+            if (m_read >= length) {
+                m_read -= length;
+            }
+            else {
+                length -= m_read;
+                m_read = m_total - length;
+            }
+            return length;
+        }
+
         size_t read(uint8_t** buf, size_t size) {
             return read(buf, size, true);
         }
+        
+        // FIXME: full of BUGs here
         size_t read(uint8_t** buf, size_t size, bool advance) {
             m_mutex.lock();
             if(size>m_size) size = m_size;

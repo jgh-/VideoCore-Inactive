@@ -43,7 +43,7 @@ namespace videocore
         virtual const int32_t type() const = 0;
         union {
             double pts;
-            double timestampDelta __attribute__((deprecated));
+            double timestampDelta;// __attribute__((deprecated));
         };
         double dts;
     };

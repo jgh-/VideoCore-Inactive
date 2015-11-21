@@ -26,8 +26,9 @@
 #import "ViewController.h"
 #import "VCSimpleSession.h"
 
+@interface ViewController () <VCSessionDelegate> {
 
-@interface ViewController () <VCSessionDelegate>
+}
 @property (nonatomic, retain) VCSimpleSession* session;
 @end
 
@@ -38,14 +39,20 @@
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
     
-    _session = [[VCSimpleSession alloc] initWithVideoSize:CGSizeMake(1280, 720) frameRate:30 bitrate:1000000 useInterfaceOrientation:NO];
-    
+    CGRect rect = [[UIScreen mainScreen] bounds];
+    NSLog(@"Screen rect:%@", NSStringFromCGRect(rect));
+    [[NSUserDefaults standardUserDefaults] setValue:@"name_preference" forKey:@"test"];
+
+
+    _session = [[VCSimpleSession alloc] initWithVideoSize:rect.size frameRate:30 bitrate:1000000 useInterfaceOrientation:YES];
+//    _session.orientationLocked = YES;
     [self.previewView addSubview:_session.previewView];
     _session.previewView.frame = self.previewView.bounds;
     _session.delegate = self;
 }
 
 - (void)didReceiveMemoryWarning
+
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
@@ -60,13 +67,12 @@
 }
 
 - (IBAction)btnConnectTouch:(id)sender {
-    
     switch(_session.rtmpSessionState) {
         case VCSessionStateNone:
         case VCSessionStatePreviewStarted:
         case VCSessionStateEnded:
         case VCSessionStateError:
-            [_session startRtmpSessionWithURL:@"rtmp://192.168.1.151/live" andStreamKey:@"myStream"];
+            [_session startRtmpSessionWithURL:@"rtmp://192.168.50.19/myapp" andStreamKey:@"iosstream?abc=xxx"];
             break;
         default:
             [_session endRtmpSession];
