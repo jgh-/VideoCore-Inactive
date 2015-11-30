@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1A7B35651942542400AB5FD6 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A7B35641942542400AB5FD6 /* GLKit.framework */; };
-		1A7B35671942564600AB5FD6 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A7B35661942564600AB5FD6 /* libPods.a */; };
+		6F614C4C0DC4B51E132F6628 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D811EF3F24704EBFB916513B /* libPods.a */; };
 		7265D5E0191994B80042DC3B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D5DF191994B80042DC3B /* Foundation.framework */; };
 		7265D5E2191994B80042DC3B /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D5E1191994B80042DC3B /* CoreGraphics.framework */; };
 		7265D5E4191994B80042DC3B /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D5E3191994B80042DC3B /* UIKit.framework */; };
@@ -24,11 +24,58 @@
 		7265D66B1919978E0042DC3B /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D66A1919978E0042DC3B /* CoreMedia.framework */; };
 		7265D66D191997930042DC3B /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D66C191997930042DC3B /* CoreVideo.framework */; };
 		7265D66F191997970042DC3B /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7265D66E191997970042DC3B /* OpenGLES.framework */; };
+		E804065F1C0B6AC0007A8C35 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E80406541C0B6A9A007A8C35 /* libPods.a */; };
+		E80406601C0B6AC0007A8C35 /* libUriParser-cpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E80406561C0B6A9A007A8C35 /* libUriParser-cpp.a */; };
+		E80406611C0B6AC0007A8C35 /* libVideoCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E80406581C0B6A9A007A8C35 /* libVideoCore.a */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E80406531C0B6A9A007A8C35 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E804064D1C0B6A9A007A8C35 /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 2D0B02FEFD13E275DCDA0A3FA4A91128;
+			remoteInfo = Pods;
+		};
+		E80406551C0B6A9A007A8C35 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E804064D1C0B6A9A007A8C35 /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 3ABC171208B669CAAC83360EC099312B;
+			remoteInfo = "UriParser-cpp";
+		};
+		E80406571C0B6A9A007A8C35 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E804064D1C0B6A9A007A8C35 /* Pods.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C776C7A3542DE0824B02E9B374516A98;
+			remoteInfo = VideoCore;
+		};
+		E80406591C0B6AA7007A8C35 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E804064D1C0B6A9A007A8C35 /* Pods.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 3F9F12C8E3E76B4D733D743B811D4356;
+			remoteInfo = Pods;
+		};
+		E804065B1C0B6AA7007A8C35 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E804064D1C0B6A9A007A8C35 /* Pods.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 065E820B76BD075F05D7A93F1708BBFB;
+			remoteInfo = "UriParser-cpp";
+		};
+		E804065D1C0B6AA7007A8C35 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E804064D1C0B6A9A007A8C35 /* Pods.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F112B488AE08212B62435D436F6675E1;
+			remoteInfo = VideoCore;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		1A7B35641942542400AB5FD6 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
-		1A7B35661942564600AB5FD6 /* libPods.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libPods.a; path = "Pods/build/Debug-iphoneos/libPods.a"; sourceTree = "<group>"; };
 		7265D5DC191994B80042DC3B /* SampleBroadcaster.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SampleBroadcaster.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7265D5DF191994B80042DC3B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		7265D5E1191994B80042DC3B /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -53,6 +100,9 @@
 		AC034311A4E2CCE0CCDA6C72 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
 		D811EF3F24704EBFB916513B /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA5713A4139B758B1B834C67 /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
+		E80406491C0B69FD007A8C35 /* libUriParser-cpp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libUriParser-cpp.a"; path = "Pods/../build/Debug-iphoneos/libUriParser-cpp.a"; sourceTree = "<group>"; };
+		E804064A1C0B69FD007A8C35 /* libVideoCore.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libVideoCore.a; path = "Pods/../build/Debug-iphoneos/libVideoCore.a"; sourceTree = "<group>"; };
+		E804064D1C0B6A9A007A8C35 /* Pods.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Pods.xcodeproj; path = Pods/Pods.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,7 +111,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A7B35651942542400AB5FD6 /* GLKit.framework in Frameworks */,
-				1A7B35671942564600AB5FD6 /* libPods.a in Frameworks */,
 				7265D66F191997970042DC3B /* OpenGLES.framework in Frameworks */,
 				7265D66D191997930042DC3B /* CoreVideo.framework in Frameworks */,
 				7265D66B1919978E0042DC3B /* CoreMedia.framework in Frameworks */,
@@ -71,6 +120,10 @@
 				7265D5E2191994B80042DC3B /* CoreGraphics.framework in Frameworks */,
 				7265D5E4191994B80042DC3B /* UIKit.framework in Frameworks */,
 				7265D5E0191994B80042DC3B /* Foundation.framework in Frameworks */,
+				E804065F1C0B6AC0007A8C35 /* libPods.a in Frameworks */,
+				E80406601C0B6AC0007A8C35 /* libUriParser-cpp.a in Frameworks */,
+				E80406611C0B6AC0007A8C35 /* libVideoCore.a in Frameworks */,
+				6F614C4C0DC4B51E132F6628 /* libPods.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -80,6 +133,7 @@
 		7265D5D3191994B80042DC3B = {
 			isa = PBXGroup;
 			children = (
+				E804064D1C0B6A9A007A8C35 /* Pods.xcodeproj */,
 				7265D5E5191994B80042DC3B /* SampleBroadcaster */,
 				7265D5DE191994B80042DC3B /* Frameworks */,
 				7265D5DD191994B80042DC3B /* Products */,
@@ -98,7 +152,8 @@
 		7265D5DE191994B80042DC3B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				1A7B35661942564600AB5FD6 /* libPods.a */,
+				E80406491C0B69FD007A8C35 /* libUriParser-cpp.a */,
+				E804064A1C0B69FD007A8C35 /* libVideoCore.a */,
 				1A7B35641942542400AB5FD6 /* GLKit.framework */,
 				7265D66E191997970042DC3B /* OpenGLES.framework */,
 				7265D66C191997930042DC3B /* CoreVideo.framework */,
@@ -149,6 +204,16 @@
 			name = Pods;
 			sourceTree = "<group>";
 		};
+		E804064E1C0B6A9A007A8C35 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E80406541C0B6A9A007A8C35 /* libPods.a */,
+				E80406561C0B6A9A007A8C35 /* libUriParser-cpp.a */,
+				E80406581C0B6A9A007A8C35 /* libVideoCore.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -165,6 +230,9 @@
 			buildRules = (
 			);
 			dependencies = (
+				E804065A1C0B6AA7007A8C35 /* PBXTargetDependency */,
+				E804065C1C0B6AA7007A8C35 /* PBXTargetDependency */,
+				E804065E1C0B6AA7007A8C35 /* PBXTargetDependency */,
 			);
 			name = SampleBroadcaster;
 			productName = SampleBroadcaster;
@@ -179,11 +247,6 @@
 			attributes = {
 				LastUpgradeCheck = 0700;
 				ORGANIZATIONNAME = videocore;
-				TargetAttributes = {
-					7265D5DB191994B80042DC3B = {
-						DevelopmentTeam = 263A46GSYZ;
-					};
-				};
 			};
 			buildConfigurationList = 7265D5D7191994B80042DC3B /* Build configuration list for PBXProject "SampleBroadcaster" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -196,12 +259,42 @@
 			mainGroup = 7265D5D3191994B80042DC3B;
 			productRefGroup = 7265D5DD191994B80042DC3B /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = E804064E1C0B6A9A007A8C35 /* Products */;
+					ProjectRef = E804064D1C0B6A9A007A8C35 /* Pods.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				7265D5DB191994B80042DC3B /* SampleBroadcaster */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		E80406541C0B6A9A007A8C35 /* libPods.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libPods.a;
+			remoteRef = E80406531C0B6A9A007A8C35 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		E80406561C0B6A9A007A8C35 /* libUriParser-cpp.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "libUriParser-cpp.a";
+			remoteRef = E80406551C0B6A9A007A8C35 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		E80406581C0B6A9A007A8C35 /* libVideoCore.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libVideoCore.a;
+			remoteRef = E80406571C0B6A9A007A8C35 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		7265D5DA191994B80042DC3B /* Resources */ = {
@@ -262,6 +355,24 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		E804065A1C0B6AA7007A8C35 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Pods;
+			targetProxy = E80406591C0B6AA7007A8C35 /* PBXContainerItemProxy */;
+		};
+		E804065C1C0B6AA7007A8C35 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "UriParser-cpp";
+			targetProxy = E804065B1C0B6AA7007A8C35 /* PBXContainerItemProxy */;
+		};
+		E804065E1C0B6AA7007A8C35 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = VideoCore;
+			targetProxy = E804065D1C0B6AA7007A8C35 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXVariantGroup section */
 		7265D5E8191994B80042DC3B /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
@@ -321,7 +432,7 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -360,7 +471,7 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
@@ -415,7 +526,7 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = "videocore.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "802ea4ec-e810-451f-9144-bc91bd34dd7b";
+				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = 1;
 				WRAPPER_EXTENSION = app;
 			};
@@ -469,7 +580,7 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = "videocore.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "802ea4ec-e810-451f-9144-bc91bd34dd7b";
+				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = 1;
 				WRAPPER_EXTENSION = app;
 			};

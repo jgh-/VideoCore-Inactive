@@ -232,7 +232,7 @@ namespace videocore {
     }
     
     void AsyncStreamSession::readLength(size_t length, AsyncStreamBufferSP orgbuf, size_t offset, SSAnsyncReadCallBack_T readcb){
-        assert(!m_socketJob.thisThreadInQueue());
+        //assert(!m_socketJob.thisThreadInQueue());
         
         m_socketJob.enqueue([=]{
             DLogVerbose("Queue read request length:%zd\n", length);
@@ -246,7 +246,7 @@ namespace videocore {
 #pragma mark -
 #pragma mark - Private
     void AsyncStreamSession::setState(AsyncStreamState_T state) {
-        assert(m_socketJob.thisThreadInQueue());
+       // assert(m_socketJob.thisThreadInQueue());
 
         m_state = state;
         m_eventTriggerJob.enqueue([=]{
@@ -257,7 +257,7 @@ namespace videocore {
 #pragma mark -
 #pragma mark - Reading
     std::shared_ptr<AsyncStreamReader> AsyncStreamSession::getCurrentReader() {
-        assert(m_socketJob.thisThreadInQueue());
+       // assert(m_socketJob.thisThreadInQueue());
 
         if (m_readerQueue.size() > 0) {
             return m_readerQueue.front();
@@ -266,7 +266,7 @@ namespace videocore {
     }
     
     void AsyncStreamSession::doReadData(){
-        assert(m_socketJob.thisThreadInQueue());
+       // assert(m_socketJob.thisThreadInQueue());
         
         // Just in case logical error
         if (m_doReadingData) {
@@ -283,7 +283,7 @@ namespace videocore {
     }
     
     bool AsyncStreamSession::innnerReadData(){
-        assert(m_socketJob.thisThreadInQueue());
+       // assert(m_socketJob.thisThreadInQueue());
 
         auto currentReader = getCurrentReader();
         if (currentReader) {
@@ -340,7 +340,7 @@ namespace videocore {
     }
     
     void AsyncStreamSession::finishCurrentReader(){
-        assert(m_socketJob.thisThreadInQueue());
+       // assert(m_socketJob.thisThreadInQueue());
 
         auto currentReader = getCurrentReader();
         assert(currentReader);
@@ -358,14 +358,14 @@ namespace videocore {
 #pragma mark -
 #pragma mark - Writing
     std::shared_ptr<AsyncStreamWriter> AsyncStreamSession::getCurrentWriter() {
-        assert(m_socketJob.thisThreadInQueue());
+       // assert(m_socketJob.thisThreadInQueue());
         if (m_writerQueue.size() > 0) {
             return m_writerQueue.front();
         }
         return nullptr;
     }
     void AsyncStreamSession::doWriteData(){
-        assert(m_socketJob.thisThreadInQueue());
+       // assert(m_socketJob.thisThreadInQueue());
         
         DLogVerbose("Do write data\n");
         while (m_stream->status() & kStreamStatusWriteBufferHasSpace && m_writerQueue.size() > 0) {
@@ -373,7 +373,7 @@ namespace videocore {
         }
     }
     void AsyncStreamSession::innerWriteData(){
-        assert(m_socketJob.thisThreadInQueue());
+       // assert(m_socketJob.thisThreadInQueue());
         
         if (m_stream->status() & kStreamStatusWriteBufferHasSpace) {
             auto writer = getCurrentWriter();
@@ -397,7 +397,7 @@ namespace videocore {
     }
     
     void AsyncStreamSession::finishCurrentWriter() {
-        assert(m_socketJob.thisThreadInQueue());
+       // assert(m_socketJob.thisThreadInQueue());
         
         auto currentWriter = getCurrentWriter();
         assert(currentWriter);
