@@ -27,7 +27,6 @@
 
 #include <iostream>
 #include <videocore/stream/IStreamSession.hpp>
-#include <videocore/stream/AsyncStreamSession.hpp>
 #include <videocore/stream/TCPThroughputAdaptation.h>
 
 #include <UriParser/UriParser.hpp>
