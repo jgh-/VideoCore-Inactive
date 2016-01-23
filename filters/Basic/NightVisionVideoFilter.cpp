@@ -61,12 +61,12 @@ namespace videocore { namespace filters {
                precision mediump float;
                varying vec2      vCoord;
                uniform sampler2D uTex0;
-               const vec3 NV = vec3(0.6, 1.0, 0.6);
+               const vec3 SEPIA = vec3(1.2, 1.0, 0.8);
                void main(void) {
                    vec4 color = texture2D(uTex0, vCoord);
-                   float gray = dot(color.rgb, vec3(0.3, 0.59, 0.3));
-                   vec3 nightVisionaColor = vec3(gray) * NV;
-                   color.rgb = mix(color.rgb, nightVisionColor, 0.75);
+                   float gray = dot(color.rgb, vec3(0.3, 0.59, 0.11));
+                   vec3 sepiaColor = vec3(gray) * SEPIA;
+                   color.rgb = mix(color.rgb, sepiaColor, 0.75);
                    gl_FragColor = color;
                }
         )
