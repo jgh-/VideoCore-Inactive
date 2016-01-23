@@ -1,5 +1,5 @@
 
-#include <videocore/filters/Basic/NightVisionVideoFilter.h>
+#include <videocore/filters/Basic/SepiaVideoFilter.h>
 
 #include <TargetConditionals.h>
 
@@ -15,28 +15,28 @@
 
 namespace videocore { namespace filters {
  
-    bool NightVisionVideoFilter::s_registered = NightVisionVideoFilter::registerFilter();
+    bool SepiaVideoFilter::s_registered = SepiaVideoFilter::registerFilter();
     
     bool
-    NightVisionVideoFilter::registerFilter()
+    SepiaVideoFilter::registerFilter()
     {
-        FilterFactory::_register("com.videocore.filters.nightVision", []() { return new NightVisionVideoFilter(); });
+        FilterFactory::_register("com.videocore.filters.sepia", []() { return new SepiaVideoFilter(); });
         return true;
     }
     
-    NightVisionVideoFilter::SepiaVideoFilter()
+    SepiaVideoFilter::SepiaVideoFilter()
     : IVideoFilter(), m_initialized(false), m_bound(false)
     {
         
     }
-    NightVisionVideoFilter::~NightVisionVideoFilter()
+    SepiaVideoFilter::~SepiaVideoFilter()
     {
         glDeleteProgram(m_program);
         glDeleteVertexArrays(1, &m_vao);
     }
     
     const char * const
-    NightVisionVideoFilter::vertexKernel() const
+    SepiaVideoFilter::vertexKernel() const
     {
         
         KERNEL(GL_ES2_3, m_language,
@@ -54,7 +54,7 @@ namespace videocore { namespace filters {
     }
     
     const char * const
-    NightVisionVideoFilter::pixelKernel() const
+    SepiaVideoFilter::pixelKernel() const
     {
         
          KERNEL(GL_ES2_3, m_language,
@@ -74,7 +74,7 @@ namespace videocore { namespace filters {
         return nullptr;
     }
     void
-    NightVisionVideoFilter::initialize()
+    SepiaVideoFilter::initialize()
     {
         switch(m_language) {
             case GL_ES2_3:
@@ -99,7 +99,7 @@ namespace videocore { namespace filters {
         }
     }
     void
-    NightVisionVideoFilter::bind()
+    SepiaVideoFilter::bind()
     {
         switch(m_language) {
             case GL_ES2_3:
@@ -118,7 +118,7 @@ namespace videocore { namespace filters {
         }
     }
     void
-    NightVisionVideoFilter::unbind()
+    SepiaVideoFilter::unbind()
     {
         m_bound = false;
     }

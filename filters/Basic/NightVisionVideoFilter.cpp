@@ -1,5 +1,5 @@
 
-#include <videocore/filters/Basic/SepiaVideoFilter.h>
+#include <videocore/filters/Basic/NightVisionVideoFilter.h>
 
 #include <TargetConditionals.h>
 
@@ -15,28 +15,28 @@
 
 namespace videocore { namespace filters {
  
-    bool SepiaVideoFilter::s_registered = SepiaVideoFilter::registerFilter();
+    bool NightVisionVideoFilter::s_registered = NightVisionVideoFilter::registerFilter();
     
     bool
-    SepiaVideoFilter::registerFilter()
+    NightVisionVideoFilter::registerFilter()
     {
-        FilterFactory::_register("com.videocore.filters.sepia", []() { return new SepiaVideoFilter(); });
+        FilterFactory::_register("com.videocore.filters.nightVision", []() { return new NightVisionVideoFilter(); });
         return true;
     }
     
-    SepiaVideoFilter::SepiaVideoFilter()
+    NightVisionVideoFilter::NightVisionVideoFilter()
     : IVideoFilter(), m_initialized(false), m_bound(false)
     {
         
     }
-    SepiaVideoFilter::~SepiaVideoFilter()
+    NightVisionVideoFilter::~NightVisionVideoFilter()
     {
         glDeleteProgram(m_program);
         glDeleteVertexArrays(1, &m_vao);
     }
     
     const char * const
-    SepiaVideoFilter::vertexKernel() const
+    NightVisionVideoFilter::vertexKernel() const
     {
         
         KERNEL(GL_ES2_3, m_language,
@@ -54,7 +54,7 @@ namespace videocore { namespace filters {
     }
     
     const char * const
-    SepiaVideoFilter::pixelKernel() const
+    NightVisionVideoFilter::pixelKernel() const
     {
         
          KERNEL(GL_ES2_3, m_language,
@@ -65,8 +65,8 @@ namespace videocore { namespace filters {
                void main(void) {
                    vec4 color = texture2D(uTex0, vCoord);
                    float gray = dot(color.rgb, vec3(0.3, 0.59, 0.11));
-                   vec3 sepiaColor = vec3(gray) * NV;
-                   color.rgb = mix(color.rgb, sepiaColor, 0.75);
+                   vec3 nightVisionaColor = vec3(gray) * NV;
+                   color.rgb = mix(color.rgb, nightVisionColor, 0.75);
                    gl_FragColor = color;
                }
         )
@@ -74,7 +74,7 @@ namespace videocore { namespace filters {
         return nullptr;
     }
     void
-    SepiaVideoFilter::initialize()
+    NightVisionVideoFilter::initialize()
     {
         switch(m_language) {
             case GL_ES2_3:
@@ -99,7 +99,7 @@ namespace videocore { namespace filters {
         }
     }
     void
-    SepiaVideoFilter::bind()
+    NightVisionVideoFilter::bind()
     {
         switch(m_language) {
             case GL_ES2_3:
@@ -118,7 +118,7 @@ namespace videocore { namespace filters {
         }
     }
     void
-    SepiaVideoFilter::unbind()
+    NightVisionVideoFilter::unbind()
     {
         m_bound = false;
     }
