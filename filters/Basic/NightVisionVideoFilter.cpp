@@ -57,19 +57,18 @@ namespace videocore { namespace filters {
     NightVisionVideoFilter::pixelKernel() const
     {
         
-         KERNEL(GL_ES2_3, m_language,
+        KERNEL(GL_ES2_3, m_language,
                precision mediump float;
                varying vec2      vCoord;
                uniform sampler2D uTex0;
-               const vec3 SEPIA = vec3(1.2, 1.0, 0.8);
+               const vec3 SEPIA = vec3(0.6, 1.6, 0.6);
                void main(void) {
                    vec4 color = texture2D(uTex0, vCoord);
                    float gray = dot(color.rgb, vec3(0.3, 0.59, 0.11));
                    vec3 sepiaColor = vec3(gray) * SEPIA;
                    color.rgb = mix(color.rgb, sepiaColor, 0.75);
                    gl_FragColor = color;
-               }
-        )
+               }        )
         
         return nullptr;
     }
