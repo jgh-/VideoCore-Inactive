@@ -689,6 +689,9 @@ namespace videocore { namespace simpleApi {
             case VCFilterGlow:
                 filterName = @"com.videocore.filters.glow";
                 break;
+            case VCFilterNightVision:
+                filterName = @"com.videocore.filters.nightVision";
+                break;
             default:
                 break;
         }
