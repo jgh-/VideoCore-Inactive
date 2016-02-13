@@ -143,7 +143,7 @@ videocore::Apple::StreamSession : videocore::IStreamSession
 * 0.1.2 
 	* Fixes a serious bug in the GenericAudioMixer that was causing 100% cpu usage and audio lag.
 * 0.1.1 
- 	* Fixes Cocoapods namespace conflicts for UriParser-cpp
+ 	* Fixes CocoaPods namespace conflicts for UriParser-cpp
 * 0.1.0 
 	* Initial CocoaPods version
 
