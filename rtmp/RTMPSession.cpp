@@ -602,8 +602,6 @@ namespace videocore
             put_byte(enc, 0);
             put_byte(enc, kAMFObjectEnd);
         }
-        put_be16(enc, 0);
-        put_byte(enc, kAMFObjectEnd);
         put_named_double(enc, "audiodatarate", 131152. / 1024.);
         put_named_double(enc, "audiosamplerate", m_audioSampleRate);
         put_named_double(enc, "audiosamplesize", 16);
