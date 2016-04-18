@@ -818,9 +818,10 @@ namespace videocore { namespace simpleApi {
                                                                         self.fps,
                                                                         self.bitrate);
         }
-        m_audioMixer->setOutput(m_aacEncoder);
-        m_videoSplit->setOutput(m_h264Encoder);
-
+        if (m_aacEncoder != nullptr && m_h264Encoder != nullptr) {
+            m_audioMixer->setOutput(m_aacEncoder);
+            m_videoSplit->setOutput(m_h264Encoder);
+        }
     }
     {
         m_aacSplit = std::make_shared<videocore::Split>();
