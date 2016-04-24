@@ -130,6 +130,7 @@ namespace videocore { namespace simpleApi {
     float  _videoZoomFactor;
     int    _audioChannelCount;
     float  _audioSampleRate;
+    float  _audioBitRate;
     float  _micGain;
 
     VCCameraState _cameraState;
@@ -328,6 +329,18 @@ namespace videocore { namespace simpleApi {
         m_audioMixer->setSourceGain(m_micSource, micGain);
         _micGain = micGain;
     }
+}
+- (void)
+setAudioBitRate:(float)bitRate
+{
+  if(m_audioMixer) {
+    m_audioMixer->setBitsPerChannel(bitRate);
+  }
+}
+- (float)
+audioBitRate
+{
+  return _audioBitRate;
 }
 - (float) micGain
 {

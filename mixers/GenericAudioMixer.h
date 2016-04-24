@@ -112,6 +112,9 @@ namespace videocore {
 
         /*! IAudioMixer::setFrequencyInHz */
         void setFrequencyInHz(float frequencyInHz);
+        
+        /*! IAudioMixer::setBitsPerChannel */
+        void setBitsPerChannel(float bitRate);
 
         /*! IAudioMixer::setMinimumBufferDuration */
         virtual void setMinimumBufferDuration(const double duration) ;

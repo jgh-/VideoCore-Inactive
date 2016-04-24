@@ -82,7 +82,14 @@ namespace videocore {
          *  \param frequencyInHz  The audio sample frequency in Hz.
          */
         virtual void setFrequencyInHz(float frequencyInHz) = 0;
-
+        
+        /*!
+         *  Set the bits ber channel count.
+         *
+         *  \param frequencyInHz  The audio bit rate.
+         */
+        virtual void setBitsPerChannel(float bitRate) = 0;
+        
         /*!
          *  Set the amount of time to buffer before emitting mixed samples.
          *
