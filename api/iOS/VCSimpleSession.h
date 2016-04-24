@@ -141,6 +141,8 @@ typedef NS_ENUM(NSInteger, VCFilter) {
 
 - (void) endRtmpSession;
 
+- (void) setAudioBitRate:(float)bitRate;
+
 - (void) getCameraPreviewLayer: (AVCaptureVideoPreviewLayer**) previewLayer;
 
 /*!

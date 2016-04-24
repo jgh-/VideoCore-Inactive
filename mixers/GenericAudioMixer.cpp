@@ -396,7 +396,11 @@ namespace videocore {
     {
         m_outFrequencyInHz = frequencyInHz;
     }
-
+    void
+    GenericAudioMixer::setBitsPerChannel(float bitRate)
+    {
+      m_outBitsPerChannel = bitRate;
+    }
     void
     GenericAudioMixer::mixThread()
     {
