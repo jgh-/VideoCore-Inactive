@@ -1,0 +1,19 @@
+//
+//  VideoCore.pch
+//  VideoCore
+//
+//  Created by human on 4/13/16.
+//
+//
+
+#ifndef VideoCore_pch
+#define VideoCore_pch
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+
+#ifdef __OBJC__
+#import <UIKit/UIKit.h>
+#endif
+
+#endif /* VideoCore_pch */
