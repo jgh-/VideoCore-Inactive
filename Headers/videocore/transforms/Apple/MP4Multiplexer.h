@@ -47,12 +47,9 @@ namespace videocore { namespace Apple {
         MP4Multiplexer();
         ~MP4Multiplexer();
         
-        void finishRecord();
-        
         void setSessionParameters(IMetadata & parameters) ;
         void pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
         void setEpoch(const std::chrono::steady_clock::time_point epoch) { m_epoch = epoch; };
-        void setBandwidthCallback(BandwidthCallback callback) {};
         
     private:
         void pushVideoBuffer(const uint8_t* const data, size_t size, IMetadata& metadata);
@@ -60,8 +57,6 @@ namespace videocore { namespace Apple {
         void createAVCC();
         
     private:
-        bool m_isRunning;
-        
         void*       m_assetWriter;
         void*       m_videoInput;
         void*       m_audioInput;

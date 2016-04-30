@@ -33,7 +33,6 @@
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-
 #define SCB(x) ((NSStreamCallback*)(x))
 #define NSIS(x) ((NSInputStream*)(x))
 #define NSOS(x) ((NSOutputStream*)(x))
@@ -54,11 +53,7 @@
 namespace videocore {
     namespace Apple {
         
-        StreamSession::StreamSession()
-        : m_status(0)
-        , m_runLoop(nullptr)
-        , m_outputStream(nullptr)
-        , m_inputStream(nullptr)
+        StreamSession::StreamSession() : m_status(0), m_runLoop(nullptr), m_outputStream(nullptr), m_inputStream(nullptr)
         {
             m_streamCallback = [[NSStreamCallback alloc] init];
             SCB(m_streamCallback).session = this;
@@ -71,7 +66,7 @@ namespace videocore {
         }
         
         void
-        StreamSession::connect(const std::string& host, int port, StreamSessionCallback_T callback)
+        StreamSession::connect(std::string host, int port, StreamSessionCallback_t callback)
         {
             m_callback = callback;
             if(m_status > 0) {
@@ -82,11 +77,7 @@ namespace videocore {
                 CFReadStreamRef readStream;
                 CFWriteStreamRef writeStream;
 
-                CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault,
-                                                   (CFStringRef)[NSString stringWithUTF8String:host.c_str()],
-                                                   port,
-                                                   &readStream,
-                                                   &writeStream);
+                CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (CFStringRef)[NSString stringWithUTF8String:host.c_str()], port, &readStream, &writeStream);
             
                 m_inputStream = (NSInputStream*)readStream;
                 m_outputStream = (NSOutputStream*)writeStream;
@@ -102,7 +93,6 @@ namespace videocore {
                 else {
                     nsStreamCallback(nullptr, NSStreamEventErrorOccurred);
                 }
-                dispatch_release(queue);
             }
 
         }
@@ -111,17 +101,11 @@ namespace videocore {
         StreamSession::disconnect()
         {
             if(m_outputStream) {
-                //if(m_runLoop) {
-                //    [NSOS(m_outputStream) removeFromRunLoop:NSRL(m_runLoop) forMode:NSDefaultRunLoopMode];
-                //}
                 [NSOS(m_outputStream) close];
                 [NSOS(m_outputStream) release];
                 m_outputStream = nullptr;
             }
             if(m_inputStream) {
-                //if(m_runLoop) {
-                //    [NSOS(m_inputStream) removeFromRunLoop:NSRL(m_runLoop) forMode:NSDefaultRunLoopMode];
-                //}
                 [NSIS(m_inputStream) close];
                 [NSIS(m_inputStream) release];
                 m_inputStream = nullptr;
@@ -133,8 +117,19 @@ namespace videocore {
                 m_runLoop = nullptr;
             }
         }
-
-        ssize_t
+        int
+        StreamSession::unsent()
+        {
+            return 0;
+        }
+        int
+        StreamSession::unread()
+        {
+            int unread = 0;
+            
+            return unread;
+        }
+        size_t
         StreamSession::write(uint8_t *buffer, size_t size)
         {
             NSInteger ret = 0;
@@ -147,31 +142,27 @@ namespace videocore {
                 m_status ^= kStreamStatusWriteBufferHasSpace;
             }
             else if (ret < 0) {
-                NSLog(@"ERROR! [%ld] buffer: %p [ 0x%02x ], size: %zu", (long)NSOS(m_outputStream).streamError.code, buffer, buffer[0], size);
+                DLog("ERROR! [%ld] buffer: %p [ 0x%02x ], size: %zu\n", (long)NSOS(m_outputStream).streamError.code, buffer, buffer[0], size);
             }
 
             return ret;
         }
         
-        ssize_t
+        size_t
         StreamSession::read(uint8_t *buffer, size_t size)
         {
-            NSInteger ret = 0;
+            size_t ret = 0;
             
             ret = [NSIS(m_inputStream) read:buffer maxLength:size];
             
             if((ret < size) && (m_status & kStreamStatusReadBufferHasBytes)) {
                 m_status ^= kStreamStatusReadBufferHasBytes;
             }
-            else if (NSIS(m_inputStream).hasBytesAvailable != YES) {
-                NSLog(@"No more data in stream, clear read status");
-                m_status ^= kStreamStatusReadBufferHasBytes;
-            }
             return ret;
         }
-
+        
         void
-        StreamSession::setStatus(StreamStatus_T status, bool clear)
+        StreamSession::setStatus(StreamStatus_t status, bool clear)
         {
             if(clear) {
                 m_status = status;
@@ -184,15 +175,13 @@ namespace videocore {
         StreamSession::nsStreamCallback(void* stream, unsigned event)
         {
             if(event & NSStreamEventOpenCompleted) {
-                // Only set connected event when input and output stream both connected
-                if(NSIS(m_inputStream).streamStatus >= NSStreamStatusOpen &&
-                   NSOS(m_outputStream).streamStatus >= NSStreamStatusOpen &&
-                   NSIS(m_inputStream).streamStatus < NSStreamStatusAtEnd &&
-                   NSOS(m_outputStream).streamStatus < NSStreamStatusAtEnd)
-                {
+                
+                if(NSIS(m_inputStream).streamStatus > 0 &&
+                   NSOS(m_outputStream).streamStatus > 0 &&
+                   NSIS(m_inputStream).streamStatus < 5 &&
+                   NSOS(m_outputStream).streamStatus < 5) {
                     setStatus(kStreamStatusConnected, true);
-                }
-                else return;
+                } else return;
             }
             if(event & NSStreamEventHasBytesAvailable) {
                 setStatus(kStreamStatusReadBufferHasBytes);
@@ -205,11 +194,11 @@ namespace videocore {
             }
             if(event & NSStreamEventErrorOccurred) {
                 setStatus(kStreamStatusErrorEncountered, true);
-                if (NSIS(m_inputStream).streamError) {
-                    NSLog(@"Input stream error:%@", NSIS(m_inputStream).streamError);
+                if (m_inputStream && NSIS(m_inputStream).streamError) {
+                    NSLog(@"%s :: Input stream error: %@", __PRETTY_FUNCTION__, NSIS(m_inputStream).streamError);
                 }
-                if (NSOS(m_outputStream).streamError) {
-                    NSLog(@"Output stream error:%@", NSIS(m_outputStream).streamError);
+                if (m_outputStream && NSIS(m_outputStream).streamError) {
+                    NSLog(@"%s :: Output stream error: %@", __PRETTY_FUNCTION__, NSIS(m_outputStream).streamError);
                 }
             }
         }

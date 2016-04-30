@@ -40,6 +40,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
 
@@ -205,9 +206,7 @@ namespace videocore { namespace iOS {
     m_mixing(false),
     m_pixelBufferPool(pool),
     m_paused(false),
-    m_glJobQueue("com.videocore.composite"),
-    m_catchingUp(false),
-    m_epoch(std::chrono::steady_clock::now())
+    m_glJobQueue("com.videocore.composite")
     {
         PERF_GL_sync({
             
@@ -216,6 +215,7 @@ namespace videocore { namespace iOS {
         });
         m_zRange.first = INT_MAX;
         m_zRange.second = INT_MIN;
+        m_mixThread = std::thread([this](){ this->mixThread(); });
         
         m_callbackSession = [[GLESObjCCallback alloc] init];
         [(GLESObjCCallback*)m_callbackSession setMixer:this];
@@ -249,19 +249,11 @@ namespace videocore { namespace iOS {
             
             [(id)m_glesCtx release];
         });
-        
-        if(m_mixThread.joinable()) {
-            m_mixThread.join();
-        }
         m_glJobQueue.mark_exiting();
         m_glJobQueue.enqueue_sync([](){});
-
+        m_mixThread.join();
         
         [(id)m_callbackSession release];
-    }
-    void
-    GLESVideoMixer::start() {
-        m_mixThread = std::thread([this](){ this->mixThread(); });
     }
     void
     GLESVideoMixer::setupGLES(std::function<void(void*)> excludeContext)
@@ -310,8 +302,8 @@ namespace videocore { namespace iOS {
                 CVPixelBufferCreate(kCFAllocatorDefault, m_frameW, m_frameH, kCVPixelFormatType_32BGRA, (CFDictionaryRef)pixelBufferOptions, &m_pixelBuffer[1]);
             }
             else {
-                CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, m_pixelBufferPool, &m_pixelBuffer[0]);
-                CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, m_pixelBufferPool, &m_pixelBuffer[1]);
+                CVReturn ret = CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, m_pixelBufferPool, &m_pixelBuffer[0]);
+                ret = CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, m_pixelBufferPool, &m_pixelBuffer[1]);
             }
             
         }
@@ -437,17 +429,17 @@ namespace videocore { namespace iOS {
         
         const auto h = hash(source);
         
+        //CVPixelBufferRef inPixelBuffer = (CVPixelBufferRef)data;
         
         auto inPixelBuffer = *(Apple::PixelBufferRef*)data ;
-
-        m_sourceBuffers[h].setBuffer(inPixelBuffer, this->m_textureCache, m_glJobQueue, m_glesCtx);
-        m_sourceBuffers[h].setBlends(md.getData<kVideoMetadataBlends>());
         
+        m_sourceBuffers[h].setBuffer(inPixelBuffer, this->m_textureCache, m_glJobQueue, m_glesCtx);
         auto it = std::find(this->m_layerMap[zIndex].begin(), this->m_layerMap[zIndex].end(), h);
         if(it == this->m_layerMap[zIndex].end()) {
             this->m_layerMap[zIndex].push_back(h);
         }
         this->m_sourceMats[h] = mat;
+        
     }
     void
     GLESVideoMixer::setOutput(std::shared_ptr<IOutput> output)
@@ -467,8 +459,6 @@ namespace videocore { namespace iOS {
     GLESVideoMixer::mixThread()
     {
         const auto us = std::chrono::microseconds(static_cast<long long>(m_bufferDuration * 1000000.));
-        const auto us_25 = std::chrono::microseconds(static_cast<long long>(m_bufferDuration * 250000.));
-        m_us25 = us_25;
         
         pthread_setname_np("com.videocore.compositeloop");
         
@@ -476,22 +466,16 @@ namespace videocore { namespace iOS {
         
         bool locked[2] = {false};
         
-        m_nextMixTime = m_epoch;
+        m_nextMixTime = std::chrono::steady_clock::now();
         
         while(!m_exiting.load())
         {
             std::unique_lock<std::mutex> l(m_mutex);
             const auto now = std::chrono::steady_clock::now();
             
-            if(now >= (m_nextMixTime)) {
+            if(now >= m_nextMixTime) {
                 
-                auto currentTime = m_nextMixTime;
-                if(!m_shouldSync) {
-                    m_nextMixTime += us;
-                } else {
-                    m_nextMixTime = m_syncPoint > m_nextMixTime ? m_syncPoint + us : m_nextMixTime + us;
-                }
-                
+                m_nextMixTime += us;
                 
                 if(m_mixing.load() || m_paused.load()) {
                     continue;
@@ -502,13 +486,21 @@ namespace videocore { namespace iOS {
                 m_mixing = true;
                 PERF_GL_async({
                     glPushGroupMarkerEXT(0, "Videocore.Mix");
+                    //CVPixelBufferLockBaseAddress(this->m_pixelBuffer[current_fb], 0);
+                    
                     glBindFramebuffer(GL_FRAMEBUFFER, this->m_fbo[current_fb]);
                     
-                    IVideoFilter* currentFilter = nil;
                     glClear(GL_COLOR_BUFFER_BIT);
+                    glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
+                    glBindVertexArrayOES(this->m_vao);
+                    glUseProgram(this->m_prog);
+                    
+                    IVideoFilter* currentFilter = nil;
+                    
                     for ( int i = m_zRange.first ; i <= m_zRange.second ; ++i) {
                         
                         for ( auto it = this->m_layerMap[i].begin() ; it != this->m_layerMap[i].end() ; ++ it) {
+                           // CVPixelBufferLockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly); // Lock, read-only.
                             CVOpenGLESTextureRef texture = NULL;
                             auto filterit = m_sourceFilters.find(*it);
                             if(filterit == m_sourceFilters.end()) {
@@ -531,11 +523,13 @@ namespace videocore { namespace iOS {
                             
                             texture = iTex->second.currentTexture();
                             
+                            //DLog("Composing %p", iTex->second.currentBuffer()->cvBuffer());
+                            
                             // TODO: Add blending.
-                            if(iTex->second.blends()) {
-                                glEnable(GL_BLEND);
-                                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                            }
+                            /*if(this->m_sourceProperties[*it].blends) {
+                             glEnable(GL_BLEND);
+                             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                             }*/
                             if(texture && currentFilter) {
                                 currentFilter->incomingMatrix(this->m_sourceMats[*it]);
                                 currentFilter->bind();
@@ -544,27 +538,32 @@ namespace videocore { namespace iOS {
                             } else {
                                 DLog("Null texture!");
                             }
-                            if(iTex->second.blends()) {
-                                glDisable(GL_BLEND);
-                            }
+                            //if ( iTex->second.currentBuffer() ) {
+                            //    iTex->second.currentBuffer()->setState(kVCPixelBufferStateAvailable);
+                            // }
+                            //GL_ERRORS(__LINE__);
+                           // CVPixelBufferUnlockBaseAddress(this->m_sourceBuffers[*it], kCVPixelBufferLock_ReadOnly);
+                            /*if(this->m_sourceProperties[*it].blends) {
+                             glDisable(GL_BLEND);
+                             }*/
                         }
                     }
                     glFlush();
                     glPopGroupMarkerEXT();
                     
+                   // if(locked[!current_fb])
+                   //     CVPixelBufferUnlockBaseAddress(this->m_pixelBuffer[!current_fb], 0);
                     
                     auto lout = this->m_output.lock();
                     if(lout) {
                         
-                        MetaData<'vide'> md(std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_epoch).count());
+                        MetaData<'vide'> md(std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count());
                         lout->pushBuffer((uint8_t*)this->m_pixelBuffer[!current_fb], sizeof(this->m_pixelBuffer[!current_fb]), md);
                     }
                     this->m_mixing = false;
-        
                 });
                 current_fb = !current_fb;
             }
-            
             m_mixThreadCond.wait_until(l, m_nextMixTime);
                 
         }
@@ -580,14 +579,6 @@ namespace videocore { namespace iOS {
     GLESVideoMixer::setSourceFilter(std::weak_ptr<ISource> source, IVideoFilter *filter) {
         auto h = hash(source);
         m_sourceFilters[h] = filter;
-    }
-    void
-    GLESVideoMixer::sync() {
-        m_syncPoint = std::chrono::steady_clock::now();
-        m_shouldSync = true;
-        //if(m_syncPoint >= (m_nextMixTime)) {
-        //    m_mixThreadCond.notify_all();
-        //}
     }
 }
 }

@@ -31,9 +31,6 @@
 #include <videocore/sources/ISource.hpp>
 #include <videocore/transforms/IOutput.hpp>
 
-#import <Foundation/Foundation.h>
-
-@class InterruptionHandler;
 
 namespace videocore { namespace iOS {
 
@@ -41,7 +38,6 @@ namespace videocore { namespace iOS {
      *  Capture audio from the device's microphone.
      *
      */
-
     class MicSource : public ISource, public std::enable_shared_from_this<MicSource>
     {
     public:
@@ -71,9 +67,6 @@ namespace videocore { namespace iOS {
         /*! Used by the Audio Unit as a callback method */
         void inputCallback(uint8_t* data, size_t data_size, int inNumberFrames);
 
-        void interruptionBegan();
-        void interruptionEnded();
-        
         /*!
          *  \return a reference to the source's Audio Unit
          */
@@ -81,8 +74,6 @@ namespace videocore { namespace iOS {
 
     private:
 
-        InterruptionHandler*   m_interruptionHandler;
-        
         AudioComponentInstance m_audioUnit;
         AudioComponent         m_component;
 
@@ -95,12 +86,4 @@ namespace videocore { namespace iOS {
 
 }
 }
-@interface InterruptionHandler : NSObject
-{
-    @public
-    videocore::iOS::MicSource* _source;
-}
-- (void) handleInterruption: (NSNotification*) notification;
-@end
-
 #endif /* defined(__videocore__MicSource__) */

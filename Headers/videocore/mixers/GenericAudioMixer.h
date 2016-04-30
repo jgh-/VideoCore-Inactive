@@ -55,7 +55,6 @@ namespace videocore {
         MixWindow* prev;
         
         uint8_t*   buffer;
-        int64_t pts;
 
     };
     /*!
@@ -123,8 +122,6 @@ namespace videocore {
             m_nextMixTime = epoch;
         };
 
-        void start();
-        
     protected:
 
         /*!
@@ -178,8 +175,6 @@ namespace videocore {
         int m_bytesPerSample;
 
         std::atomic<bool> m_exiting;
-        
-        bool m_catchingUp;
 
     };
 }

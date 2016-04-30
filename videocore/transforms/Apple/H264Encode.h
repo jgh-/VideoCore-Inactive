@@ -30,7 +30,7 @@ namespace videocore { namespace Apple {
     class H264Encode : public IEncoder
     {
     public:
-        H264Encode( int frame_w, int frame_h, int fps, int bitrate, bool useBaseline = true, int ctsOffset = 0 );
+        H264Encode( int frame_w, int frame_h, int fps, int bitrate, bool useBaseline = true );
         ~H264Encode();
         
         CVPixelBufferPoolRef pixelBufferPool();
@@ -69,9 +69,7 @@ namespace videocore { namespace Apple {
         int                    m_fps;
         int                    m_bitrate;
         
-        int                    m_ctsOffset;
-
-        bool                   m_baseline;
+        
         bool                   m_forceKeyframe;
     };
 }

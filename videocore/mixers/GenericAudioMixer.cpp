@@ -70,7 +70,7 @@ static inline int16_t b24_to_b16(void* v) {
 extern std::string g_tmpFolder;
 
 static const int kMixWindowCount = 10;
-//static const int kWindowBufferCount = 0;
+static const int kWindowBufferCount = 0;
 
 static const float kE = 2.7182818284590f;
 
@@ -103,9 +103,7 @@ namespace videocore {
     m_outBitsPerChannel(16),
     m_exiting(false),
     m_mixQueue("com.videocore.audiomix", kJobQueuePriorityHigh),
-    m_outgoingWindow(nullptr),
-    m_catchingUp(false),
-    m_epoch(std::chrono::steady_clock::now())
+    m_outgoingWindow(nullptr)
     {
         m_bytesPerSample = outChannelCount * outBitsPerChannel / 8;
 
@@ -123,25 +121,18 @@ namespace videocore {
         m_currentWindow = m_windows[0].get();
         m_currentWindow->start = std::chrono::steady_clock::now();
 
-
+        m_mixThread = std::thread([this]() {
+            pthread_setname_np("com.videocore.audiomixer");
+            this->mixThread();
+        });
     }
     GenericAudioMixer::~GenericAudioMixer()
     {
         m_exiting = true;
         m_mixThreadCond.notify_all();
-        if(m_mixThread.joinable()) {
-            m_mixThread.join();
-        }
+        m_mixThread.join();
         m_mixQueue.mark_exiting();
         m_mixQueue.enqueue_sync([]() {});
-    }
-    void
-    GenericAudioMixer::start()
-    {
-        m_mixThread = std::thread([this]() {
-            pthread_setname_np("com.videocore.audiomixer");
-            this->mixThread();
-        });
     }
     void
     GenericAudioMixer::setMinimumBufferDuration(const double duration)
@@ -297,6 +288,7 @@ namespace videocore {
             intBuffer = (uint8_t*) malloc(inNumberFrames * 4);
 
             deinterleaveDefloat((float*)buffer, (short*)intBuffer,(int) inNumberFrames, inChannelCount);
+            size = inNumberFrames * 4;
             pInBuffer = intBuffer;
             
         }
@@ -402,9 +394,9 @@ namespace videocore {
     {
         const auto us = std::chrono::microseconds(static_cast<long long>(m_frameDuration * 1000000.)) ;
 
-        const auto start = m_epoch;
+        const auto start = std::chrono::steady_clock::now();
         
-        m_nextMixTime = start;
+        m_nextMixTime = start + us;
         m_currentWindow->start = start;
         m_currentWindow->next->start = start + us;
         
@@ -416,15 +408,13 @@ namespace videocore {
             if( now >= m_currentWindow->next->start ) {
                 
                 auto currentTime = m_nextMixTime;
-                
+                m_nextMixTime += us;
                 
                 MixWindow* currentWindow = m_currentWindow;
                 MixWindow* nextWindow = currentWindow->next;
                 
                 nextWindow->start = currentWindow->start + us;
                 nextWindow->next->start = nextWindow->start + us;
-                
-                m_nextMixTime = currentWindow->start;
                 
                 AudioBufferMetadata md ( std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_epoch).count() );
                 std::shared_ptr<videocore::ISource> blank;

@@ -122,8 +122,6 @@ namespace videocore {
             m_nextMixTime = epoch;
         };
 
-        void start();
-        
     protected:
 
         /*!
@@ -177,8 +175,6 @@ namespace videocore {
         int m_bytesPerSample;
 
         std::atomic<bool> m_exiting;
-        
-        bool m_catchingUp;
 
     };
 }

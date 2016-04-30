@@ -45,13 +45,13 @@ namespace videocore { namespace Apple {
     PixelBuffer::lock(bool readonly)
     {
         m_locked = true;
-        //CVPixelBufferLockBaseAddress( (CVPixelBufferRef)cvBuffer(), readonly ? kCVPixelBufferLock_ReadOnly : 0 );
+        CVPixelBufferLockBaseAddress( (CVPixelBufferRef)cvBuffer(), readonly ? kCVPixelBufferLock_ReadOnly : 0 );
     }
     void
     PixelBuffer::unlock(bool readonly)
     {
         m_locked = false;
-        //CVPixelBufferUnlockBaseAddress( (CVPixelBufferRef)cvBuffer(), readonly ? kCVPixelBufferLock_ReadOnly : 0 );
+        CVPixelBufferUnlockBaseAddress( (CVPixelBufferRef)cvBuffer(), readonly ? kCVPixelBufferLock_ReadOnly : 0 );
     }
     
 }
