@@ -169,6 +169,7 @@ namespace videocore {
                                   IMetadata& metadata)
     {
         AudioBufferMetadata & inMeta = static_cast<AudioBufferMetadata&>(metadata);
+        int64_t pts = inMeta.pts;
         
         if(inMeta.size() >= 5) {
             const auto inSource = inMeta.getData<kAudioMetadataSource>() ;
@@ -220,6 +221,7 @@ namespace videocore {
                         startOffset = 0;
                     }
                     
+                    window->pts = pts;
                     auto sampleDuration = double(ret->size()) / double(m_bytesPerSample * m_outFrequencyInHz);
 
                     const float mult = m_inGain[hash] * g;
@@ -423,7 +425,10 @@ namespace videocore {
                 auto out = m_output.lock();
                 
                 if(out && m_outgoingWindow) {
-                    out->pushBuffer(m_outgoingWindow->buffer, m_outgoingWindow->size, md);
+                    md.pts = m_outgoingWindow->pts;
+                    if (md.pts > 0) {
+                        out->pushBuffer(m_outgoingWindow->buffer, m_outgoingWindow->size, md);
+                    }
                     m_outgoingWindow->clear();
                 }
                 m_outgoingWindow = currentWindow;

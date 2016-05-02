@@ -34,25 +34,25 @@ namespace videocore
 {
     struct IMetadata
     {
-        IMetadata(double pts, double dts) : pts(pts), dts(dts) {};
-        IMetadata(double ts) : pts(ts), dts(ts) {};
-        IMetadata() : pts(0.), dts(0.) {};
+        IMetadata(int64_t pts, int64_t dts) : pts(pts), dts(dts) {};
+        IMetadata(int64_t ts) : pts(ts), dts(ts) {};
+        IMetadata() : pts(0), dts(0) {};
         
         virtual ~IMetadata() {};
         
         virtual const int32_t type() const = 0;
         union {
-            double pts;
-            double timestampDelta __attribute__((deprecated));
+            int64_t pts;
+            int64_t timestampDelta __attribute__((deprecated));
         };
-        double dts;
+        int64_t dts;
     };
     
     template <int32_t MetaDataType, typename... Types>
     struct MetaData : public IMetadata
     {
-        MetaData<Types...>(double pts, double dts) : IMetadata(pts, dts) {};
-        MetaData<Types...>(double ts) : IMetadata(ts) {};
+        MetaData<Types...>(int64_t pts, int64_t dts) : IMetadata(pts, dts) {};
+        MetaData<Types...>(int64_t ts) : IMetadata(ts) {};
         MetaData<Types...>() : IMetadata() {};
         
         virtual const int32_t type() const { return MetaDataType; };

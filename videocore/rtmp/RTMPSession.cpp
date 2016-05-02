@@ -140,8 +140,29 @@ namespace videocore
                 size_t tosend = std::min(len, m_outChunkSize);
                 uint8_t* p;
                 buf->read(&p, buf->size());
-                uint64_t ts = inMetadata.getData<kRTMPMetadataTimestamp>() ;
+                uint64_t ts = inMetadata.getData<kRTMPMetadataTimestamp>();
                 const int streamId = inMetadata.getData<kRTMPMetadataMsgStreamId>();
+//                static int64_t streamId1 = -1;
+//                static int64_t stream0Pts = -1;
+//                static int64_t stream1Pts = -1;
+//                if (streamId1 == -1) {
+//                    streamId1 = streamId;
+//                }
+//                if (streamId == streamId1) {
+//                    if (stream0Pts == -1) {
+//                        DLog("\n*** Stream1 pts: 0\n");
+//                    } else {
+//                        DLog("\n*** Stream1 pts: %lli\n", (int64_t)(((int64_t)ts - stream0Pts)/1000.0));
+//                    }
+//                    stream0Pts = ts;
+//                } else {
+//                    if (stream1Pts == -1) {
+//                        DLog("\n*** Stream2 pts: 0\n");
+//                    } else {
+//                        DLog("\n*** Stream2 pts: %lli\n", (int64_t)((ts - stream1Pts)/1000.0));
+//                    }
+//                    stream1Pts = ts;
+//                }
                 
 #ifndef RTMP_CHUNK_TYPE_0_ONLY
                 auto it = m_previousChunkData.find(streamId);

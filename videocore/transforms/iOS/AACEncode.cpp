@@ -24,6 +24,7 @@
  */
 #include <videocore/transforms/iOS/AACEncode.h>
 #include <sstream>
+#include <videocore/mixers/IAudioMixer.hpp>
 
 namespace videocore { namespace iOS {
     
@@ -227,6 +228,17 @@ namespace videocore { namespace iOS {
     void
     AACEncode::pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata)
     {
+        AudioBufferMetadata & inMeta = static_cast<AudioBufferMetadata&>(metadata);
+        const auto inFrequncyInHz = inMeta.getData<kAudioMetadataFrequencyInHz>();
+        auto inBitsPerChannel = inMeta.getData<kAudioMetadataBitsPerChannel>();
+        const auto inChannelCount = inMeta.getData<kAudioMetadataChannelCount>();
+        const auto inFlags = inMeta.getData<kAudioMetadataFlags>();
+        const auto inBytesPerFrame = inMeta.getData<kAudioMetadataBytesPerFrame>();
+        const auto inNumberFrames = inMeta.getData<kAudioMetadataNumberFrames>();
+        const auto inUsesOSStruct = inMeta.getData<kAudioMetadataUsesOSStruct>();
+        const auto inLoops = inMeta.getData<kAudioMetadataLoops>();
+        const auto inSource = inMeta.getData<kAudioMetadataSource>();
+        
         const size_t sampleCount = size / m_bytesPerSample;
         const size_t aac_packet_count = sampleCount / kSamplesPerFrame;
         const size_t required_bytes = aac_packet_count * m_outputPacketMaxSize;

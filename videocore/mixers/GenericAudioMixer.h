@@ -55,7 +55,7 @@ namespace videocore {
         MixWindow* prev;
         
         uint8_t*   buffer;
-
+        int64_t pts;
     };
     /*!
      *  Basic, cross-platform mixer that uses a very simple nearest neighbour resampling method

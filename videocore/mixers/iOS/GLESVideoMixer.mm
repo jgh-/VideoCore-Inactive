@@ -433,6 +433,7 @@ namespace videocore { namespace iOS {
         
         auto inPixelBuffer = *(Apple::PixelBufferRef*)data ;
         
+        m_pts = metadata.pts;
         m_sourceBuffers[h].setBuffer(inPixelBuffer, this->m_textureCache, m_glJobQueue, m_glesCtx);
         auto it = std::find(this->m_layerMap[zIndex].begin(), this->m_layerMap[zIndex].end(), h);
         if(it == this->m_layerMap[zIndex].end()) {
@@ -558,6 +559,11 @@ namespace videocore { namespace iOS {
                     if(lout) {
                         
                         MetaData<'vide'> md(std::chrono::duration_cast<std::chrono::milliseconds>(m_nextMixTime - m_epoch).count());
+                        md.pts = m_pts;
+                        md.dts = m_pts;
+                        //NSLog(@"VideoMixer M_PTS: %lli", m_pts);
+                        //NSLog(@"VideoMixer PTS: %lli", md.pts);
+                        //NSLog(@"VideoMixer DTS: %lli", md.dts);
                         lout->pushBuffer((uint8_t*)this->m_pixelBuffer[!current_fb], sizeof(this->m_pixelBuffer[!current_fb]), md);
                     }
                     this->m_mixing = false;

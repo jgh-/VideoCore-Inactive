@@ -191,6 +191,8 @@ namespace videocore { namespace iOS {
         std::atomic<bool> m_exiting;
         std::atomic<bool> m_mixing;
         std::atomic<bool> m_paused;
+        
+        int64_t m_pts;
     };
     
 }

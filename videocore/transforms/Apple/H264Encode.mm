@@ -121,10 +121,16 @@ namespace videocore { namespace Apple {
             m_encodeMutex.lock();
             VTCompressionSessionRef session = (VTCompressionSessionRef)m_compressionSession;
             
-            CMTime pts = CMTimeMake(metadata.timestampDelta, 1000.); // timestamp is in ms.
+            //CMTime pts = CMTimeMake(metadata.timestampDelta, 1000.); // timestamp is in ms.
+            CMTime pts = CMTimeMake((double)metadata.pts / 1000.0, 1000);
             CMTime dur = CMTimeMake(1, m_fps);
             VTEncodeInfoFlags flags;
+            //DLog("\nVideo PTS: %lli\n", pts.value);
+            static int64_t lastPts = 0;
+            DLog("\n*** Video pts delta: %llims\n", (pts.value-lastPts));
+            lastPts = pts.value;
             
+            //NSLog(@"DTS: %lli", metadata.dts);
             
             CFMutableDictionaryRef frameProps = NULL;
             
@@ -217,6 +223,14 @@ namespace videocore { namespace Apple {
             CFRelease(ref);
         }
         
+//        if(err == noErr) {
+//            const int32_t v = 2; // 2-second kfi
+//            
+//            CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
+//            err = VTSessionSetProperty(session, kVTCompressionPropertyKey_MaxKeyFrameIntervalDuration, ref);
+//            CFRelease(ref);
+//        }
+        
         if(err == noErr) {
             const int v = m_fps;
             CFNumberRef ref = CFNumberCreate(NULL, kCFNumberSInt32Type, &v);
@@ -265,6 +279,8 @@ namespace videocore { namespace Apple {
     void
     H264Encode::compressionSessionOutput(const uint8_t *data, size_t size, uint64_t pts, uint64_t dts)
     {
+    //NSLog(@"Encode PTS: %llu", pts);
+    //NSLog(@"Encode DTS: %llu", dts);
 #if VERSION_OK
         auto l = m_output.lock();
         if(l && data && size > 0) {

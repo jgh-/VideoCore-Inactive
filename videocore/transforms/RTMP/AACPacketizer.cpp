@@ -52,12 +52,17 @@ namespace videocore { namespace rtmp {
         const int flags_size = 2;
 
 
-        int ts = metadata.timestampDelta + m_ctsOffset ;
-
+        //int ts = metadata.timestampDelta + m_ctsOffset;
+        static int64_t lastTS = 0;
+        int64_t ts = (int64_t)((double)metadata.pts / 1000.0f);
+        DLog("\n*** Audio pts delta: %llims\n", (ts-lastTS));
+        lastTS = ts;
+        
         auto output = m_output.lock();
 
         RTMPMetadata_t outMeta(ts);
-
+        //DLog("\nAudio PTS: %lli\n", outMeta.pts);
+        
         if(inSize == 2 && !m_asc[0] && !m_asc[1]) {
             m_asc[0] = inBuffer[0];
             m_asc[1] = inBuffer[1];
@@ -80,7 +85,7 @@ namespace videocore { namespace rtmp {
                 put_buff(outBuffer, inBuffer, inSize);
             }
 
-            outMeta.setData(ts, static_cast<int>(outBuffer.size()), RTMP_PT_AUDIO, kAudioChannelStreamId, false);
+            outMeta.setData((int32_t)ts, static_cast<int>(outBuffer.size()), RTMP_PT_AUDIO, kAudioChannelStreamId, false);
 
             output->pushBuffer(&outBuffer[0], outBuffer.size(), outMeta);
         }
