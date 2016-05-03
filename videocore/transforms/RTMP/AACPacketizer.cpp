@@ -55,7 +55,7 @@ namespace videocore { namespace rtmp {
         //int ts = metadata.timestampDelta + m_ctsOffset;
         static int64_t lastTS = 0;
         int64_t ts = (int64_t)((double)metadata.pts / 1000.0f);
-        DLog("\n*** Audio pts delta: %llims\n", (ts-lastTS));
+        //DLog("\n*** Audio pts delta: %llims\n", (ts-lastTS));
         lastTS = ts;
         
         auto output = m_output.lock();

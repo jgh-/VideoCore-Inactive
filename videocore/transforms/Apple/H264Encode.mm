@@ -127,7 +127,7 @@ namespace videocore { namespace Apple {
             VTEncodeInfoFlags flags;
             //DLog("\nVideo PTS: %lli\n", pts.value);
             static int64_t lastPts = 0;
-            DLog("\n*** Video pts delta: %llims\n", (pts.value-lastPts));
+            //DLog("\n*** Video pts delta: %llims\n", (pts.value-lastPts));
             lastPts = pts.value;
             
             //NSLog(@"DTS: %lli", metadata.dts);
