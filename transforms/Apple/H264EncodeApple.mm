@@ -34,7 +34,7 @@
 #endif
 
 #include <stdio.h>
-#include <videocore/transforms/Apple/H264Encode.h>
+#include <videocore/transforms/Apple/H264EncodeApple.h>
 #include <videocore/mixers/IVideoMixer.hpp>
 
 #if VERSION_OK==1
@@ -88,29 +88,29 @@ namespace videocore { namespace Apple {
             ppsSize += 4;
             memcpy(&pps_buf[0], &ppsSize, 4);
             
-            ((H264Encode*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)sps_buf.get(),spsSize, pts.value, dts.value);
-            ((H264Encode*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)pps_buf.get(),ppsSize, pts.value, dts.value);
+            ((H264EncodeApple*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)sps_buf.get(),spsSize, pts.value, dts.value);
+            ((H264EncodeApple*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)pps_buf.get(),ppsSize, pts.value, dts.value);
         }
         
         char* bufferData;
         size_t size;
         CMBlockBufferGetDataPointer(block, 0, NULL, &size, &bufferData);
         
-        ((H264Encode*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)bufferData,size, pts.value, dts.value);
+        ((H264EncodeApple*)outputCallbackRefCon)->compressionSessionOutput((uint8_t*)bufferData,size, pts.value, dts.value);
         
     }
 #endif
-    H264Encode::H264Encode( int frame_w, int frame_h, int fps, int bitrate, bool useBaseline, int ctsOffset)
+    H264EncodeApple::H264EncodeApple( int frame_w, int frame_h, int fps, int bitrate, bool useBaseline, int ctsOffset)
     : m_frameW(frame_w), m_frameH(frame_h), m_fps(fps), m_bitrate(bitrate), m_forceKeyframe(false), m_ctsOffset(ctsOffset)
     {
         setupCompressionSession( useBaseline );
     }
-    H264Encode::~H264Encode()
+    H264EncodeApple::~H264EncodeApple()
     {
         teardownCompressionSession();
     }
     void
-    H264Encode::pushBuffer(const uint8_t *const data, size_t size, videocore::IMetadata &metadata)
+    H264EncodeApple::pushBuffer(const uint8_t *const data, size_t size, videocore::IMetadata &metadata)
     {
 #if VERSION_OK
         if(m_compressionSession) {
@@ -145,7 +145,7 @@ namespace videocore { namespace Apple {
 #endif
     }
     void
-    H264Encode::setupCompressionSession( bool useBaseline )
+    H264EncodeApple::setupCompressionSession( bool useBaseline )
     {
         m_baseline = useBaseline;
         
@@ -264,7 +264,7 @@ namespace videocore { namespace Apple {
         
     }
     void
-    H264Encode::teardownCompressionSession()
+    H264EncodeApple::teardownCompressionSession()
     {
 #if VERSION_OK
         if(m_compressionSession) {
@@ -274,7 +274,7 @@ namespace videocore { namespace Apple {
 #endif
     }
     void
-    H264Encode::compressionSessionOutput(const uint8_t *data, size_t size, uint64_t pts, uint64_t dts)
+    H264EncodeApple::compressionSessionOutput(const uint8_t *data, size_t size, uint64_t pts, uint64_t dts)
     {
 #if VERSION_OK
         auto l = m_output.lock();
@@ -286,12 +286,12 @@ namespace videocore { namespace Apple {
         
     }
     void
-    H264Encode::requestKeyframe()
+    H264EncodeApple::requestKeyframe()
     {
         m_forceKeyframe = true;
     }
     void
-    H264Encode::setBitrate(int bitrate)
+    H264EncodeApple::setBitrate(int bitrate)
     {
 #if VERSION_OK
         if(bitrate == m_bitrate) {
@@ -347,7 +347,7 @@ namespace videocore { namespace Apple {
     }
     
     CVPixelBufferPoolRef
-    H264Encode::pixelBufferPool() {
+    H264EncodeApple::pixelBufferPool() {
         if(m_compressionSession) {
             return VTCompressionSessionGetPixelBufferPool((VTCompressionSessionRef)m_compressionSession);
         }

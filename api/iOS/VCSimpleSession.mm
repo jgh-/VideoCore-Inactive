@@ -36,7 +36,7 @@
 #ifdef __APPLE__
 #   include <videocore/mixers/Apple/AudioMixer.h>
 #   include <videocore/transforms/Apple/MP4Multiplexer.h>
-#   include <videocore/transforms/Apple/H264Encode.h>
+#   include <videocore/transforms/Apple/H264EncodeApple.h>
 #   include <videocore/sources/Apple/PixelBufferSource.h>
 #   ifdef TARGET_OS_IPHONE
 #       include <videocore/sources/iOS/CameraSource.h>
@@ -814,7 +814,7 @@ namespace videocore { namespace simpleApi {
         m_aacEncoder = std::make_shared<videocore::iOS::AACEncode>(self.audioSampleRate, self.audioChannelCount, 96000);
         if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
             // If >= iOS 8.0 use the VideoToolbox encoder that does not write to disk.
-            m_h264Encoder = std::make_shared<videocore::Apple::H264Encode>(self.videoSize.width,
+            m_h264Encoder = std::make_shared<videocore::Apple::H264EncodeApple>(self.videoSize.width,
                                                                            self.videoSize.height,
                                                                            self.fps,
                                                                            self.bitrate,
