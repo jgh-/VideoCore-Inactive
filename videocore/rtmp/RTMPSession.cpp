@@ -875,12 +875,12 @@ namespace videocore
     }
     
     std::string RTMPSession::parseStatusCode(uint8_t *p) {
-        uint8_t *start = p;
+        //uint8_t *start = p;
         std::map<std::string, std::string> props;
         
         // skip over the packet id
-        double num = get_double(p+1); // num
-        p += sizeof(num) + 1;
+        get_double(p+1); // num
+        p += sizeof(double) + 1;
         
         // keep reading until we find an AMF Object
         bool foundObject = false;
@@ -915,9 +915,14 @@ namespace videocore
                 p += amfPrimitiveObjectSize(p);
                 props[propName] = "";
             }
+            // Fix large AMF object may break to multiple packets
+            // that crash us.
+            if (strcmp(propName, "code") == 0) {
+                break;
+            }
         } while (get_be24(p) != AMF_DATA_TYPE_OBJECT_END);
         
-        p = start;
+        //p = start;
         return props["code"];
     }
     
