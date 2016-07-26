@@ -1,8 +1,11 @@
-platform :ios, '6.0'
+#platform :ios, '6.0'
+platform :ios, '8.0'
 
 source 'https://github.com/CocoaPods/Specs.git'
 
 # See: http://guides.cocoapods.org/making/making-a-cocoapod.html#release
 # Once the pod has been released, use a version number here instead of a path.
-#pod 'VideoCore', '~>0.3.2'
-pod 'VideoCore', path: '../..'
+target "SampleBroadcaster" do
+	pod 'VideoCore', '~>0.3.2'
+end
+#pod 'VideoCore', path: '../..'
