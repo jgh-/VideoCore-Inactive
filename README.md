@@ -6,7 +6,6 @@ VideoCore is a project inteded to be an audio and video manipulation and streami
 
 ###Table of Contents
 * [Setup](#setup)
-* [Projects Using VideoCore](#projects-using-videocore)
 * [Architecture Overview](#architecture-overview)
 * [Version History](#version-history)
 
