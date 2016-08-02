@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		63320F011D50B4BE00D45372 /* Logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63320EFD1D50B4BE00D45372 /* Logger.cpp */; };
+		63320F021D50B4BE00D45372 /* Logger.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 63320EFE1D50B4BE00D45372 /* Logger.hpp */; };
+		63320F031D50B4BE00D45372 /* PreBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63320EFF1D50B4BE00D45372 /* PreBuffer.cpp */; };
+		63320F041D50B4BE00D45372 /* PreBuffer.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 63320F001D50B4BE00D45372 /* PreBuffer.hpp */; };
 		6550CB051CBE5525000EB1E5 /* VideoCore-prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6550CB041CBE5525000EB1E5 /* VideoCore-prefix.pch */; };
 		6550CB081CBE56B7000EB1E5 /* VideoCore.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6550CB071CBE56B7000EB1E5 /* VideoCore.pch */; };
 		657DD3B51CBE446C00FE0D71 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 657DD3B41CBE446C00FE0D71 /* AudioToolbox.framework */; };
@@ -91,6 +95,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		63320EFD1D50B4BE00D45372 /* Logger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Logger.cpp; sourceTree = "<group>"; };
+		63320EFE1D50B4BE00D45372 /* Logger.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Logger.hpp; sourceTree = "<group>"; };
+		63320EFF1D50B4BE00D45372 /* PreBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PreBuffer.cpp; sourceTree = "<group>"; };
+		63320F001D50B4BE00D45372 /* PreBuffer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = PreBuffer.hpp; sourceTree = "<group>"; };
 		6550CB041CBE5525000EB1E5 /* VideoCore-prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "VideoCore-prefix.pch"; path = "/Users/human/Dev/VideoCore/VideoCore/VideoCore-prefix.pch"; sourceTree = "<absolute>"; };
 		6550CB071CBE56B7000EB1E5 /* VideoCore.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoCore.pch; sourceTree = "<group>"; };
 		657D992D1CBE3C4900FE0D71 /* libVideoCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libVideoCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -384,6 +392,10 @@
 		65DE0D8E1CD4B4C200C2BC9B /* system */ = {
 			isa = PBXGroup;
 			children = (
+				63320EFD1D50B4BE00D45372 /* Logger.cpp */,
+				63320EFE1D50B4BE00D45372 /* Logger.hpp */,
+				63320EFF1D50B4BE00D45372 /* PreBuffer.cpp */,
+				63320F001D50B4BE00D45372 /* PreBuffer.hpp */,
 				65DE0D8F1CD4B4C200C2BC9B /* Buffer.hpp */,
 				65DE0D901CD4B4C200C2BC9B /* h264 */,
 				65DE0D931CD4B4C200C2BC9B /* JobQueue.hpp */,
@@ -487,6 +499,7 @@
 				65DE0DE81CD4B4C200C2BC9B /* MP4Multiplexer.h in Headers */,
 				65DE0DD21CD4B4C200C2BC9B /* GLESUtil.h in Headers */,
 				65DE0DCF1CD4B4C200C2BC9B /* PixelBufferSource.h in Headers */,
+				63320F041D50B4BE00D45372 /* PreBuffer.hpp in Headers */,
 				65DE0DDF1CD4B4C200C2BC9B /* JobQueue.hpp in Headers */,
 				65DE0DC91CD4B4C200C2BC9B /* IVideoMixer.hpp in Headers */,
 				65DE0DE11CD4B4C200C2BC9B /* PixelBuffer.h in Headers */,
@@ -527,6 +540,7 @@
 				65DE0DC61CD4B4C200C2BC9B /* IMixer.hpp in Headers */,
 				65DE0DDC1CD4B4C200C2BC9B /* Buffer.hpp in Headers */,
 				65DE0DBE1CD4B4C200C2BC9B /* FilterFactory.h in Headers */,
+				63320F021D50B4BE00D45372 /* Logger.hpp in Headers */,
 				65DE0DED1CD4B4C200C2BC9B /* IMetaData.hpp in Headers */,
 				65DE0DEC1CD4B4C200C2BC9B /* IEncoder.hpp in Headers */,
 			);
@@ -590,6 +604,7 @@
 				65DE0DC11CD4B4C200C2BC9B /* AudioMixer.cpp in Sources */,
 				65DE0DC81CD4B4C200C2BC9B /* GLESVideoMixer.mm in Sources */,
 				65DE0DBD1CD4B4C200C2BC9B /* FilterFactory.cpp in Sources */,
+				63320F031D50B4BE00D45372 /* PreBuffer.cpp in Sources */,
 				65DE0DF11CD4B4C200C2BC9B /* H264Encode.mm in Sources */,
 				65DE0DCE1CD4B4C200C2BC9B /* PixelBufferSource.cpp in Sources */,
 				65DE0DC31CD4B4C200C2BC9B /* GenericAudioMixer.cpp in Sources */,
@@ -606,6 +621,7 @@
 				65DE0DD11CD4B4C200C2BC9B /* CameraSource.mm in Sources */,
 				65DE0DCA1CD4B4C200C2BC9B /* README.md in Sources */,
 				65DE0DF71CD4B4C200C2BC9B /* AACPacketizer.cpp in Sources */,
+				63320F011D50B4BE00D45372 /* Logger.cpp in Sources */,
 				65DE0DBA1CD4B4C200C2BC9B /* VCSimpleSession.mm in Sources */,
 				65DE0DF91CD4B4C200C2BC9B /* H264Packetizer.cpp in Sources */,
 				65DE0DE01CD4B4C200C2BC9B /* PixelBuffer.cpp in Sources */,
