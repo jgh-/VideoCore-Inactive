@@ -82,8 +82,8 @@ DLOG_MAYBE(YES, lvl, flg, ctx, frmt, ##__VA_ARGS__)
 // Log macros
 #define DLogError(frmt, ...)   DLOG_MAYBE(DLOG_ASYNC_ERROR,   DLOG_LEVEL_DEF, DLOG_FLAG_ERROR,   0, frmt, ##__VA_ARGS__)
 #define DLogWarn(frmt, ...)    DLOG_MAYBE(DLOG_ASYNC_WARN,    DLOG_LEVEL_DEF, DLOG_FLAG_WARN,    0, frmt, ##__VA_ARGS__)
-#define DLogInfo(frmt, ...)    DLOG_MAYBE(DLOG_ASYNC_INFO,    DLOG_LEVEL_DEF, DLOG_FLAG_INFO,    0, frmt, ##__VA_ARGS__)
-#define DLogDebug(frmt, ...)   DLOG_MAYBE(DLOG_ASYNC_DEBUG,   DLOG_LEVEL_DEF, DLOG_FLAG_DEBUG,   0, frmt, ##__VA_ARGS__)
-#define DLogVerbose(frmt, ...) DLOG_MAYBE(DLOG_ASYNC_VERBOSE, DLOG_LEVEL_DEF, DLOG_FLAG_VERBOSE, 0, frmt, ##__VA_ARGS__)
+#define DLogInfo(frmt, ...)    //DLOG_MAYBE(DLOG_ASYNC_INFO,    DLOG_LEVEL_DEF, DLOG_FLAG_INFO,    0, frmt, ##__VA_ARGS__)
+#define DLogDebug(frmt, ...)   //DLOG_MAYBE(DLOG_ASYNC_DEBUG,   DLOG_LEVEL_DEF, DLOG_FLAG_DEBUG,   0, frmt, ##__VA_ARGS__)
+#define DLogVerbose(frmt, ...) //DLOG_MAYBE(DLOG_ASYNC_VERBOSE, DLOG_LEVEL_DEF, DLOG_FLAG_VERBOSE, 0, frmt, ##__VA_ARGS__)
 
 #endif /* Loggeer_hpp */
