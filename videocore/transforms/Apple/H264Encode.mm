@@ -146,7 +146,9 @@ namespace videocore { namespace Apple {
             VTCompressionSessionEncodeFrame(session, (CVPixelBufferRef)data, pts, dur, frameProps, NULL, &flags);
             
             if(m_forceKeyframe) {
-                CFRelease(frameProps);
+                if (frameProps) {
+                    CFRelease(frameProps);
+                }
                 m_forceKeyframe = false;
             }
             
