@@ -72,7 +72,6 @@ namespace videocore
         // http::ParseHttpUrl is destructive to the parameter passed in.
         std::string uri_cpy(uri);
         m_uri = http::ParseHttpUrl(uri_cpy);
-        boost::tokenizer<boost::char_separator<char> > tokens(m_uri.path, sep );
         
         
         int tokenCount = 0;
