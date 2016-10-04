@@ -60,12 +60,10 @@ namespace videocore {
             StreamSessionCallback_T     m_callback;
             StreamStatus_T              m_status;
           
-            int m_outSocket;
-            
+            int m_outSocket;            
+            dispatch_queue_t m_serialQueue;
         };
     }
 }
-
-
 
 #endif /* defined(__videocore__StreamSession__) */
