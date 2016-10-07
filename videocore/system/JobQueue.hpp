@@ -105,7 +105,9 @@ namespace videocore {
             m_thread.join();
 #else
             dispatch_sync(m_queue, ^{});
+    #if !OS_OBJECT_USE_OBJC_RETAIN_RELEASE
             dispatch_release(m_queue);
+    #endif
 #endif
         }
         void mark_exiting() {

@@ -105,7 +105,9 @@ namespace videocore
         m_networkQueue.mark_exiting();
         m_networkQueue.enqueue_sync([]() {});
 #ifdef __APPLE__
+    #if !OS_OBJECT_USE_OBJC_RETAIN_RELEASE
         dispatch_release(m_networkWaitSemaphore);
+    #endif
 #endif
     }
     void

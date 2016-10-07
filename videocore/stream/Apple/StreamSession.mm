@@ -70,7 +70,7 @@ namespace videocore {
             disconnect();
             [SCB(m_streamCallback) release];
             if (m_serialQueue) {
-#if __IPHONE_OS_VERSION_MIN_REQUIRED < 60000
+#if !OS_OBJECT_USE_OBJC_RETAIN_RELEASE
                 dispatch_release(m_serialQueue);
 #endif
                 m_serialQueue = nil;
@@ -244,7 +244,7 @@ namespace videocore {
             dispatch_async(queue, ^{
                 [NSRL(m_runLoop) run];
             });
-#if __IPHONE_OS_VERSION_MIN_REQUIRED < 60000
+#if !OS_OBJECT_USE_OBJC_RETAIN_RELEASE
             dispatch_release(queue);
 #endif
         }
