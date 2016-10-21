@@ -224,7 +224,7 @@ namespace videocore
             std::shared_ptr<Buffer> buf = std::make_shared<Buffer>(size);
             buf->put(data, size);
             
-            m_throughputSession.addBufferSizeSample(m_bufferSize);
+            m_throughputSession.addBufferSizeSample((size_t)m_bufferSize);
             
             increaseBuffer(size);
             if(isKeyframe) {

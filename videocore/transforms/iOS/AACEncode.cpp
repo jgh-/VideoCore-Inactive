@@ -68,7 +68,7 @@ namespace videocore { namespace iOS {
     
     static const int kSamplesPerFrame = 1024;
     
-    static char *FormatError(char *str, OSStatus error)
+    __unused static char *FormatError(char *str, OSStatus error)
     {
         // see if it appears to be a 4-char-code
         *(UInt32 *)(str + 1) = CFSwapInt32HostToBig(error);
@@ -228,17 +228,6 @@ namespace videocore { namespace iOS {
     void
     AACEncode::pushBuffer(const uint8_t* const data, size_t size, IMetadata& metadata)
     {
-        AudioBufferMetadata & inMeta = static_cast<AudioBufferMetadata&>(metadata);
-        const auto inFrequncyInHz = inMeta.getData<kAudioMetadataFrequencyInHz>();
-        auto inBitsPerChannel = inMeta.getData<kAudioMetadataBitsPerChannel>();
-        const auto inChannelCount = inMeta.getData<kAudioMetadataChannelCount>();
-        const auto inFlags = inMeta.getData<kAudioMetadataFlags>();
-        const auto inBytesPerFrame = inMeta.getData<kAudioMetadataBytesPerFrame>();
-        const auto inNumberFrames = inMeta.getData<kAudioMetadataNumberFrames>();
-        const auto inUsesOSStruct = inMeta.getData<kAudioMetadataUsesOSStruct>();
-        const auto inLoops = inMeta.getData<kAudioMetadataLoops>();
-        const auto inSource = inMeta.getData<kAudioMetadataSource>();
-        
         const size_t sampleCount = size / m_bytesPerSample;
         const size_t aac_packet_count = sampleCount / kSamplesPerFrame;
         const size_t required_bytes = aac_packet_count * m_outputPacketMaxSize;

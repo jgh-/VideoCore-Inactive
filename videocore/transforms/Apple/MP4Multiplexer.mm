@@ -130,7 +130,7 @@ namespace videocore { namespace Apple {
             CMBlockBufferRef buffer;
             CMBlockBufferCreateWithMemoryBlock(kCFAllocatorDefault, (void*)data, size, kCFAllocatorDefault, NULL, 0, size, kCMBlockBufferAssureMemoryNowFlag, &buffer);
             
-            CMSampleTimingInfo videoSampleTimingInformation = {CMTimeMake(metadata.timestampDelta, 1000.)};
+            CMSampleTimingInfo videoSampleTimingInformation = {CMTimeMake(metadata.pts, 1000.)};
             CMSampleBufferCreate(kCFAllocatorDefault, buffer, true, NULL, NULL, (CMFormatDescriptionRef)m_videoFormat, 1, 1, &videoSampleTimingInformation, 1, &size, &sample);
             CMSampleBufferMakeDataReady(sample);
             
@@ -166,7 +166,7 @@ namespace videocore { namespace Apple {
             
         } else {
             
-            CMSampleTimingInfo audioSampleTimingInformation = {CMTimeMake(metadata.timestampDelta, 1000.)};
+            CMSampleTimingInfo audioSampleTimingInformation = {CMTimeMake(metadata.pts, 1000.)};
             
             CMSampleBufferRef sample;
             CMBlockBufferRef buffer;

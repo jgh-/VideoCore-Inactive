@@ -144,15 +144,17 @@ namespace videocore { namespace iOS {
                     
                     output.videoSettings = @{(NSString*)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA) };
                     
-                    if(!SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
-                        AVCaptureConnection* conn = [output connectionWithMediaType:AVMediaTypeVideo];
-                        if([conn isVideoMinFrameDurationSupported]) {
-                            [conn setVideoMinFrameDuration:CMTimeMake(1, fps)];
-                        }
-                        if([conn isVideoMaxFrameDurationSupported]) {
-                            [conn setVideoMaxFrameDuration:CMTimeMake(1, fps)];
-                        }
-                    }
+                    // TODO: Changed implementation
+//                    if(!SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")) {
+//                        AVCaptureConnection* conn = [output connectionWithMediaType:AVMediaTypeVideo];
+//                        if([conn isVideoMinFrameDurationSupported]) {
+//                            [conn setVideoMinFrameDuration:CMTimeMake(1, fps)];
+//                        }
+//                        if([conn isVideoMaxFrameDurationSupported]) {
+//                            [conn setVideoMaxFrameDuration:CMTimeMake(1, fps)];
+//                        }
+//                    }
+                    
                     if(!bThis->m_callbackSession) {
                         bThis->m_callbackSession = [[sbCallback alloc] init];
                         [((sbCallback*)bThis->m_callbackSession) setSource:shared_from_this()];

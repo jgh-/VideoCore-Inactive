@@ -75,13 +75,10 @@ namespace videocore { namespace iOS {
                 remove(writer_cstr);
             }
             
-            BOOL autoLvlOK = &AVVideoProfileLevelH264MainAutoLevel != NULL;
-            
-            
             NSDictionary* settings = @{AVVideoCodecKey: AVVideoCodecH264,
                                        AVVideoCompressionPropertiesKey: @{AVVideoAverageBitRateKey: @(m_bitrate),
                                                                           AVVideoMaxKeyFrameIntervalKey: @(m_fps*2),
-                                                                          AVVideoProfileLevelKey: (autoLvlOK ? AVVideoProfileLevelH264BaselineAutoLevel : AVVideoProfileLevelH264Main32),
+                                                                          AVVideoProfileLevelKey: AVVideoProfileLevelH264BaselineAutoLevel,
                                                                           },
                                        AVVideoWidthKey: @(m_frameW),
                                        AVVideoHeightKey: @(m_frameH)

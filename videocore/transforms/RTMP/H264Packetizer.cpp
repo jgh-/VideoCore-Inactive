@@ -46,8 +46,8 @@ namespace videocore { namespace rtmp {
         uint8_t nal_type = inBuffer[4] & 0x1F;
         int flags = 0;
         const int flags_size = 5;
-        int dts = inMetadata.dts ;
-        int pts = inMetadata.pts + m_ctsOffset; // correct for pts < dts which some players (ffmpeg) don't like
+        int dts = (int)inMetadata.dts ;
+        int pts = (int)inMetadata.pts + m_ctsOffset; // correct for pts < dts which some players (ffmpeg) don't like
         
         dts = dts > 0 ? dts : pts - m_ctsOffset ;
         

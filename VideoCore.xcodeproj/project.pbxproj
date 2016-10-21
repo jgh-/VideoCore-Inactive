@@ -22,10 +22,6 @@
 		657DD3C11CBE449700FE0D71 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 657DD3C01CBE449700FE0D71 /* Foundation.framework */; };
 		657DD3C31CBE449E00FE0D71 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 657DD3C21CBE449E00FE0D71 /* OpenGLES.framework */; };
 		657DD3C51CBE44A400FE0D71 /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 657DD3C41CBE44A400FE0D71 /* VideoToolbox.framework */; };
-		65DE0DB71CD4B4C200C2BC9B /* VCPreviewView.h in Headers */ = {isa = PBXBuildFile; fileRef = 65DE0D5E1CD4B4C200C2BC9B /* VCPreviewView.h */; };
-		65DE0DB81CD4B4C200C2BC9B /* VCPreviewView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 65DE0D5F1CD4B4C200C2BC9B /* VCPreviewView.mm */; };
-		65DE0DB91CD4B4C200C2BC9B /* VCSimpleSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 65DE0D601CD4B4C200C2BC9B /* VCSimpleSession.h */; };
-		65DE0DBA1CD4B4C200C2BC9B /* VCSimpleSession.mm in Sources */ = {isa = PBXBuildFile; fileRef = 65DE0D611CD4B4C200C2BC9B /* VCSimpleSession.mm */; };
 		65DE0DBB1CD4B4C200C2BC9B /* BasicVideoFilterBGRA.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 65DE0D641CD4B4C200C2BC9B /* BasicVideoFilterBGRA.cpp */; };
 		65DE0DBC1CD4B4C200C2BC9B /* BasicVideoFilterBGRA.h in Headers */ = {isa = PBXBuildFile; fileRef = 65DE0D651CD4B4C200C2BC9B /* BasicVideoFilterBGRA.h */; };
 		65DE0DBD1CD4B4C200C2BC9B /* FilterFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 65DE0D661CD4B4C200C2BC9B /* FilterFactory.cpp */; };
@@ -41,7 +37,6 @@
 		65DE0DC71CD4B4C200C2BC9B /* GLESVideoMixer.h in Headers */ = {isa = PBXBuildFile; fileRef = 65DE0D731CD4B4C200C2BC9B /* GLESVideoMixer.h */; };
 		65DE0DC81CD4B4C200C2BC9B /* GLESVideoMixer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 65DE0D741CD4B4C200C2BC9B /* GLESVideoMixer.mm */; };
 		65DE0DC91CD4B4C200C2BC9B /* IVideoMixer.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 65DE0D751CD4B4C200C2BC9B /* IVideoMixer.hpp */; };
-		65DE0DCA1CD4B4C200C2BC9B /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 65DE0D761CD4B4C200C2BC9B /* README.md */; };
 		65DE0DCB1CD4B4C200C2BC9B /* RTMPSession.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 65DE0D781CD4B4C200C2BC9B /* RTMPSession.cpp */; };
 		65DE0DCC1CD4B4C200C2BC9B /* RTMPSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 65DE0D791CD4B4C200C2BC9B /* RTMPSession.h */; };
 		65DE0DCD1CD4B4C200C2BC9B /* RTMPTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = 65DE0D7A1CD4B4C200C2BC9B /* RTMPTypes.h */; };
@@ -112,10 +107,6 @@
 		657DD3C01CBE449700FE0D71 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.2.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		657DD3C21CBE449E00FE0D71 /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.2.sdk/System/Library/Frameworks/OpenGLES.framework; sourceTree = DEVELOPER_DIR; };
 		657DD3C41CBE44A400FE0D71 /* VideoToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = VideoToolbox.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.2.sdk/System/Library/Frameworks/VideoToolbox.framework; sourceTree = DEVELOPER_DIR; };
-		65DE0D5E1CD4B4C200C2BC9B /* VCPreviewView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VCPreviewView.h; sourceTree = "<group>"; };
-		65DE0D5F1CD4B4C200C2BC9B /* VCPreviewView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VCPreviewView.mm; sourceTree = "<group>"; };
-		65DE0D601CD4B4C200C2BC9B /* VCSimpleSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VCSimpleSession.h; sourceTree = "<group>"; };
-		65DE0D611CD4B4C200C2BC9B /* VCSimpleSession.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VCSimpleSession.mm; sourceTree = "<group>"; };
 		65DE0D641CD4B4C200C2BC9B /* BasicVideoFilterBGRA.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BasicVideoFilterBGRA.cpp; sourceTree = "<group>"; };
 		65DE0D651CD4B4C200C2BC9B /* BasicVideoFilterBGRA.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BasicVideoFilterBGRA.h; sourceTree = "<group>"; };
 		65DE0D661CD4B4C200C2BC9B /* FilterFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FilterFactory.cpp; sourceTree = "<group>"; };
@@ -242,7 +233,6 @@
 		65DE0D5B1CD4B4C200C2BC9B /* videocore */ = {
 			isa = PBXGroup;
 			children = (
-				65DE0D5C1CD4B4C200C2BC9B /* api */,
 				65DE0D621CD4B4C200C2BC9B /* filters */,
 				65DE0D6A1CD4B4C200C2BC9B /* mixers */,
 				65DE0D761CD4B4C200C2BC9B /* README.md */,
@@ -253,25 +243,6 @@
 				65DE0D9C1CD4B4C200C2BC9B /* transforms */,
 			);
 			path = videocore;
-			sourceTree = "<group>";
-		};
-		65DE0D5C1CD4B4C200C2BC9B /* api */ = {
-			isa = PBXGroup;
-			children = (
-				65DE0D5D1CD4B4C200C2BC9B /* iOS */,
-			);
-			path = api;
-			sourceTree = "<group>";
-		};
-		65DE0D5D1CD4B4C200C2BC9B /* iOS */ = {
-			isa = PBXGroup;
-			children = (
-				65DE0D5E1CD4B4C200C2BC9B /* VCPreviewView.h */,
-				65DE0D5F1CD4B4C200C2BC9B /* VCPreviewView.mm */,
-				65DE0D601CD4B4C200C2BC9B /* VCSimpleSession.h */,
-				65DE0D611CD4B4C200C2BC9B /* VCSimpleSession.mm */,
-			);
-			path = iOS;
 			sourceTree = "<group>";
 		};
 		65DE0D621CD4B4C200C2BC9B /* filters */ = {
@@ -516,7 +487,6 @@
 				65DE0DD01CD4B4C200C2BC9B /* CameraSource.h in Headers */,
 				6550CB081CBE56B7000EB1E5 /* VideoCore.pch in Headers */,
 				65DE0DF01CD4B4C200C2BC9B /* H264Encode.h in Headers */,
-				65DE0DB71CD4B4C200C2BC9B /* VCPreviewView.h in Headers */,
 				65DE0DE41CD4B4C200C2BC9B /* IPixelBuffer.hpp in Headers */,
 				65DE0DEF1CD4B4C200C2BC9B /* AACEncode.h in Headers */,
 				65DE0DDE1CD4B4C200C2BC9B /* Golomb.h in Headers */,
@@ -531,7 +501,6 @@
 				65DE0DCD1CD4B4C200C2BC9B /* RTMPTypes.h in Headers */,
 				65DE0DC01CD4B4C200C2BC9B /* IVideoFilter.hpp in Headers */,
 				65DE0DE61CD4B4C200C2BC9B /* H264Encode.h in Headers */,
-				65DE0DB91CD4B4C200C2BC9B /* VCSimpleSession.h in Headers */,
 				65DE0DF41CD4B4C200C2BC9B /* ITransform.hpp in Headers */,
 				65DE0DE51CD4B4C200C2BC9B /* util.h in Headers */,
 				65DE0DF81CD4B4C200C2BC9B /* AACPacketizer.h in Headers */,
@@ -572,7 +541,7 @@
 		657D99251CBE3C4900FE0D71 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0720;
+				LastUpgradeCheck = 0800;
 				TargetAttributes = {
 					657D992C1CBE3C4900FE0D71 = {
 						CreatedOnToolsVersion = 7.2.1;
@@ -612,17 +581,14 @@
 				65DE0DD41CD4B4C200C2BC9B /* MicSource.mm in Sources */,
 				65DE0DFB1CD4B4C200C2BC9B /* Split.cpp in Sources */,
 				65DE0DD71CD4B4C200C2BC9B /* StreamSession.mm in Sources */,
-				65DE0DB81CD4B4C200C2BC9B /* VCPreviewView.mm in Sources */,
 				65DE0DEE1CD4B4C200C2BC9B /* AACEncode.cpp in Sources */,
 				65DE0DE71CD4B4C200C2BC9B /* H264Encode.mm in Sources */,
 				65DE0DE91CD4B4C200C2BC9B /* MP4Multiplexer.mm in Sources */,
 				65DE0DE21CD4B4C200C2BC9B /* GenericPixelBuffer.cpp in Sources */,
 				65DE0DEA1CD4B4C200C2BC9B /* AspectTransform.cpp in Sources */,
 				65DE0DD11CD4B4C200C2BC9B /* CameraSource.mm in Sources */,
-				65DE0DCA1CD4B4C200C2BC9B /* README.md in Sources */,
 				65DE0DF71CD4B4C200C2BC9B /* AACPacketizer.cpp in Sources */,
 				63320F011D50B4BE00D45372 /* Logger.cpp in Sources */,
-				65DE0DBA1CD4B4C200C2BC9B /* VCSimpleSession.mm in Sources */,
 				65DE0DF91CD4B4C200C2BC9B /* H264Packetizer.cpp in Sources */,
 				65DE0DE01CD4B4C200C2BC9B /* PixelBuffer.cpp in Sources */,
 				65DE0DDD1CD4B4C200C2BC9B /* Golomb.cpp in Sources */,
@@ -648,8 +614,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
@@ -692,8 +660,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
@@ -719,44 +689,54 @@
 		657D99391CBE3C4900FE0D71 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
 				CLANG_ENABLE_OBJC_ARC = NO;
 				CODE_SIGN_IDENTITY = "";
 				EXECUTABLE_PREFIX = lib;
 				GCC_ENABLE_CPP_EXCEPTIONS = YES;
 				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/VideoCore.pch";
+				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				HEADER_SEARCH_PATHS = (
 					"\"${SRCROOT}/Headers\"/**",
 					"\"${SRCROOT}/Headers/glm\"/**",
 					"\"${SRCROOT}/Headers/UriParser\"",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PUBLIC_HEADERS_FOLDER_PATH = "";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				VALID_ARCHS = "arm64 x86_64 armv7";
 			};
 			name = Debug;
 		};
 		657D993A1CBE3C4900FE0D71 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=iphoneos*]" = "$(ARCHS_STANDARD)";
+				"ARCHS[sdk=iphonesimulator*]" = x86_64;
 				CLANG_ENABLE_OBJC_ARC = NO;
 				CODE_SIGN_IDENTITY = "";
 				EXECUTABLE_PREFIX = lib;
 				GCC_ENABLE_CPP_EXCEPTIONS = YES;
 				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/VideoCore.pch";
+				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				HEADER_SEARCH_PATHS = (
 					"\"${SRCROOT}/Headers\"/**",
 					"\"${SRCROOT}/Headers/glm\"/**",
 					"\"${SRCROOT}/Headers/UriParser\"",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PUBLIC_HEADERS_FOLDER_PATH = "";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				VALID_ARCHS = "arm64 x86_64 armv7";
 			};
 			name = Release;
 		};
