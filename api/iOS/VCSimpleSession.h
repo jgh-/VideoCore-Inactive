@@ -90,6 +90,7 @@ typedef NS_ENUM(NSInteger, VCFilter) {
 @property (nonatomic, assign) int               fps;            // Change will not take place until the next RTMP Session
 @property (nonatomic, assign, readonly) BOOL    useInterfaceOrientation;
 @property (nonatomic, assign) VCCameraState cameraState;
+@property (nonatomic, assign) BOOL useMirroring;
 @property (nonatomic, assign) BOOL          orientationLocked;
 @property (nonatomic, assign) BOOL          torch;
 @property (nonatomic, assign) float         videoZoomFactor;
