@@ -32,7 +32,7 @@
 #define __videocore__Split__
 
 #include <iostream>
-#include <videocore/transforms/ITransform.hpp>
+#include <VideoCore/transforms/ITransform.hpp>
 #include <vector>
 
 namespace videocore {

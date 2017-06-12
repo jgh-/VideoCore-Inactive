@@ -26,7 +26,7 @@
 #define videocore_IOutput_hpp
 #include <chrono>
 #include <cstdlib>
-#include <videocore/transforms/IMetadata.hpp>
+#include <VideoCore/transforms/IMetadata.hpp>
 
 namespace videocore
 {
