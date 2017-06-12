@@ -1,10 +1,10 @@
-#include <videocore/filters/FilterFactory.h>
-#include <videocore/filters/Basic/BasicVideoFilterBGRA.h>
-#include <videocore/filters/Basic/GrayscaleVideoFilter.h>
-#include <videocore/filters/Basic/InvertColorsVideoFilter.h>
-#include <videocore/filters/Basic/SepiaVideoFilter.h>
-#include <videocore/filters/Basic/FisheyeVideoFilter.h>
-#include <videocore/filters/Basic/GlowVideoFilter.h>
+#include <VideoCore/filters/FilterFactory.h>
+#include <VideoCore/filters/Basic/BasicVideoFilterBGRA.h>
+#include <VideoCore/filters/Basic/GrayscaleVideoFilter.h>
+#include <VideoCore/filters/Basic/InvertColorsVideoFilter.h>
+#include <VideoCore/filters/Basic/SepiaVideoFilter.h>
+#include <VideoCore/filters/Basic/FisheyeVideoFilter.h>
+#include <VideoCore/filters/Basic/GlowVideoFilter.h>
 
 namespace videocore {
     std::map<std::string, InstantiateFilter>* FilterFactory::s_registration = nullptr ;

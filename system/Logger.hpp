@@ -9,7 +9,7 @@
 #ifndef Loggeer_hpp
 #define Loggeer_hpp
 
-#include <videocore/system/util.h>
+#include <VideoCore/system/util.h>
 #include <string>
 
 namespace videocore {

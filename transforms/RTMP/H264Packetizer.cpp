@@ -22,9 +22,9 @@
  THE SOFTWARE.
  
  */
-#include <videocore/transforms/RTMP/H264Packetizer.h>
-#include <videocore/rtmp/RTMPTypes.h>
-#include <videocore/rtmp/RTMPSession.h>
+#include <VideoCore/transforms/RTMP/H264Packetizer.h>
+#include <VideoCore/rtmp/RTMPTypes.h>
+#include <VideoCore/rtmp/RTMPSession.h>
 
 namespace videocore { namespace rtmp {
     

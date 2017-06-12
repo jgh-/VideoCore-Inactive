@@ -34,8 +34,8 @@
 #endif
 
 #include <stdio.h>
-#include <videocore/transforms/Apple/H264Encode.h>
-#include <videocore/mixers/IVideoMixer.hpp>
+#include <VideoCore/transforms/Apple/H264Encode.h>
+#include <VideoCore/mixers/IVideoMixer.hpp>
 
 #if VERSION_OK==1
 #include <VideoToolbox/VideoToolbox.h>

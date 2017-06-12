@@ -26,7 +26,7 @@
 #define __videocore__IThroughputAdaptation__
 
 #include <functional>
-#include <videocore/system/util.h>
+#include <VideoCore/system/util.h>
 
 namespace videocore {
     

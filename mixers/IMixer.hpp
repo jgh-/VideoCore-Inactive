@@ -25,7 +25,7 @@
 #ifndef videocore_IMixer_hpp
 #define videocore_IMixer_hpp
 
-#include <videocore/transforms/ITransform.hpp>
+#include <VideoCore/transforms/ITransform.hpp>
 
 namespace videocore
 {

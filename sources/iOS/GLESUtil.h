@@ -78,7 +78,7 @@ break;\
 #define GL_FRAMEBUFFER_STATUS(line)
 #endif
 
-#include <videocore/system/util.h>
+#include <VideoCore/system/util.h>
 
 static float s_vbo [] =
 {

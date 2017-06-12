@@ -24,7 +24,7 @@
  */
 #include "MicSource.h"
 #include <dlfcn.h>
-#include <videocore/mixers/IAudioMixer.hpp>
+#include <VideoCore/mixers/IAudioMixer.hpp>
 #import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
 

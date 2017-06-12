@@ -1,5 +1,5 @@
 
-#include <videocore/filters/Basic/GrayscaleVideoFilter.h>
+#include <VideoCore/filters/Basic/GrayscaleVideoFilter.h>
 
 #include <TargetConditionals.h>
 
@@ -8,8 +8,8 @@
 
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES3/gl.h>
-#include <videocore/sources/iOS/GLESUtil.h>
-#include <videocore/filters/FilterFactory.h>
+#include <VideoCore/sources/iOS/GLESUtil.h>
+#include <VideoCore/filters/FilterFactory.h>
 
 #endif
 

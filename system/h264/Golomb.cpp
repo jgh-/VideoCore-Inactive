@@ -22,7 +22,7 @@
  THE SOFTWARE.
  
  */
-#include <videocore/system/h264/Golomb.h>
+#include <VideoCore/system/h264/Golomb.h>
 
 namespace videocore { namespace h264 {
  

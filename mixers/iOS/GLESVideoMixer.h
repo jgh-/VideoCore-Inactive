@@ -28,9 +28,9 @@
 #define __videocore__GLESVideoMixer__
 
 #include <iostream>
-#include <videocore/mixers/IVideoMixer.hpp>
-#include <videocore/system/JobQueue.hpp>
-#include <videocore/system/pixelBuffer/Apple/PixelBuffer.h>
+#include <VideoCore/mixers/IVideoMixer.hpp>
+#include <VideoCore/system/JobQueue.hpp>
+#include <VideoCore/system/pixelBuffer/Apple/PixelBuffer.h>
 
 #include <map>
 #include <thread>

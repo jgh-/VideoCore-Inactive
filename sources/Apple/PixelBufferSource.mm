@@ -19,11 +19,11 @@
  USA
  
  */
-#include <videocore/sources/Apple/PixelBufferSource.h>
-#include <videocore/mixers/IVideoMixer.hpp>
+#include <VideoCore/sources/Apple/PixelBufferSource.h>
+#include <VideoCore/mixers/IVideoMixer.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <videocore/system/pixelBuffer/Apple/PixelBuffer.h>
+#include <VideoCore/system/pixelBuffer/Apple/PixelBuffer.h>
 
 #include <CoreVideo/CoreVideo.h>
 

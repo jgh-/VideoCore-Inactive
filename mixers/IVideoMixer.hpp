@@ -25,9 +25,9 @@
 #ifndef videocore_IVideoMixer_hpp
 #define videocore_IVideoMixer_hpp
 
-#include <videocore/mixers/IMixer.hpp>
-#include <videocore/filters/IVideoFilter.hpp>
-#include <videocore/filters/FilterFactory.h>
+#include <VideoCore/mixers/IMixer.hpp>
+#include <VideoCore/filters/IVideoFilter.hpp>
+#include <VideoCore/filters/FilterFactory.h>
 
 #include <glm/glm.hpp>
 

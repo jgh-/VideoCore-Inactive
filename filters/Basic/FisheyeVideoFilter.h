@@ -24,7 +24,7 @@
  */
 #ifndef videocore_FisheyeVideoFilter_h
 #define videocore_FisheyeVideoFilter_h
-#include <videocore/filters/IVideoFilter.hpp>
+#include <VideoCore/filters/IVideoFilter.hpp>
 
 namespace videocore {
     namespace filters {

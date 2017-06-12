@@ -22,8 +22,8 @@
  THE SOFTWARE.
  
  */
-#include <videocore/transforms/iOS/H264Encode.h>
-#include <videocore/system/h264/Golomb.h>
+#include <VideoCore/transforms/iOS/H264Encode.h>
+#include <VideoCore/system/h264/Golomb.h>
 
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>

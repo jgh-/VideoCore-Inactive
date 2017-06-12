@@ -25,7 +25,7 @@
 #ifndef videocore_GenericPixelBuffer_h
 #define videocore_GenericPixelBuffer_h
 
-#include <videocore/system/pixelBuffer/IPixelBuffer.hpp>
+#include <VideoCore/system/pixelBuffer/IPixelBuffer.hpp>
 
 #include <vector>
 #include <memory>

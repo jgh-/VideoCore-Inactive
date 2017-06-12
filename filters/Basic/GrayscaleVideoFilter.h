@@ -24,7 +24,7 @@
  */
 #ifndef videocore_GrayscaleVideoFilter_h
 #define videocore_GrayscaleVideoFilter_h
-#include <videocore/filters/IVideoFilter.hpp>
+#include <VideoCore/filters/IVideoFilter.hpp>
 
 namespace videocore {
     namespace filters {

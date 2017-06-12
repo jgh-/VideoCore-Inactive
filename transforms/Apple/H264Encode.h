@@ -19,8 +19,8 @@
  USA
  
  */
-#include <videocore/transforms/IEncoder.hpp>
-#include <videocore/system/Buffer.hpp>
+#include <VideoCore/transforms/IEncoder.hpp>
+#include <VideoCore/system/Buffer.hpp>
 #include <deque>
 
 #include <CoreVideo/CoreVideo.h>

@@ -22,7 +22,7 @@
  THE SOFTWARE.
 
  */
-#include <videocore/mixers/GenericAudioMixer.h>
+#include <VideoCore/mixers/GenericAudioMixer.h>
 #include <sstream>
 #include <vector>
 #include <stdint.h>
