@@ -31,7 +31,7 @@
 #ifndef videocore_IVideoFilter_hpp
 #define videocore_IVideoFilter_hpp
 
-#include <videocore/filters/IFilter.hpp>
+#include <VideoCore/filters/IFilter.hpp>
 #include <glm/glm.hpp>
 
 #define KERNEL(_language, _target, _kernelstr) if(_language == _target){ do { return # _kernelstr ; } while(0); }

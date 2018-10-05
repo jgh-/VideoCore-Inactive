@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name                = "VideoCore"
-  s.version             = "0.3.2"
+  s.version             = "0.3.3"
   s.summary             = "An audio and video manipulation and streaming pipeline with support for RTMP."
   s.description      = <<-DESC
                           This is a work-in-progress library with the
@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
 
   s.requires_arc        = false
 
-  s.header_dir          = 'videocore'
+  s.header_dir          = 'VideoCore'
   s.header_mappings_dir = '.'
 
   s.source_files        = [ 'mixers/**/*.h*', 'mixers/**/*.cpp', 'mixers/**/*.m*', 
@@ -32,10 +32,10 @@ Pod::Spec.new do |s|
   s.libraries           = 'c++'
 
   s.dependency          'boost', '~> 1.51.0'
-  s.dependency          'glm', '~> 0.9.4.6'
+  s.dependency          'glm', '~> 0.9'
   s.dependency          'UriParser-cpp', '~> 0.1.3'
 
-  s.xcconfig            = { "HEADER_SEARCH_PATHS" => "${PODS_ROOT}/boost" }
+  s.xcconfig            = { "HEADER_SEARCH_PATHS" => "${PODS_ROOT}/boost ${PODS_ROOT}/glm/**" }
 
   s.ios.deployment_target = '5.0'
 

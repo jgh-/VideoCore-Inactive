@@ -33,9 +33,9 @@
 #define __videocore__H264Encode__
 
 #include <iostream>
-#include <videocore/transforms/IEncoder.hpp>
-#include <videocore/system/JobQueue.hpp>
-#include <videocore/system/Buffer.hpp>
+#include <VideoCore/transforms/IEncoder.hpp>
+#include <VideoCore/system/JobQueue.hpp>
+#include <VideoCore/system/Buffer.hpp>
 #include <deque>
 
 namespace videocore { namespace iOS {

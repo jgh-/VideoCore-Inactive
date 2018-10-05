@@ -17,7 +17,7 @@ VideoCore is a project inteded to be an audio and video manipulation and streami
 Create a `Podfile` with the contents
 ``` ruby
 platform :ios, '6.0'
-pod 'VideoCore', '~> 0.2.0'
+pod 'VideoCore', '~> 0.3.0'
 ```
 Next, run `pod install` and open the `xcworkspace` file that is created.
 

@@ -28,8 +28,8 @@
 #include <iostream>
 #import <CoreAudio/CoreAudioTypes.h>
 #import <AudioToolbox/AudioToolbox.h>
-#include <videocore/sources/ISource.hpp>
-#include <videocore/transforms/IOutput.hpp>
+#include <VideoCore/sources/ISource.hpp>
+#include <VideoCore/transforms/IOutput.hpp>
 
 #import <Foundation/Foundation.h>
 

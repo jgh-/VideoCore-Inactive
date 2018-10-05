@@ -27,7 +27,7 @@
  *
  *
  */
-#include <videocore/transforms/Split.h>
+#include <VideoCore/transforms/Split.h>
 
 namespace videocore {
     Split::Split() {}

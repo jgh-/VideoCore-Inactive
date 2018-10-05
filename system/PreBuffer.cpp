@@ -8,7 +8,7 @@
 
 #include "PreBuffer.hpp"
 
-#include <videocore/system/util.h>
+#include <VideoCore/system/util.h>
 
 
 #include <cstdlib>

@@ -25,8 +25,8 @@
 #ifndef __videocore__TCPThroughputAdaptation__
 #define __videocore__TCPThroughputAdaptation__
 
-#include <videocore/stream/IThroughputAdaptation.h>
-#include <videocore/system/JobQueue.hpp>
+#include <VideoCore/stream/IThroughputAdaptation.h>
+#include <VideoCore/system/JobQueue.hpp>
 #include <vector>
 #include <deque>
 #include <thread>

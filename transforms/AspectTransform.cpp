@@ -23,9 +23,9 @@
  
  */
 
-#include <videocore/transforms/AspectTransform.h>
-#include <videocore/mixers/IVideoMixer.hpp>
-#include <videocore/system/pixelBuffer/IPixelBuffer.hpp>
+#include <VideoCore/transforms/AspectTransform.h>
+#include <VideoCore/mixers/IVideoMixer.hpp>
+#include <VideoCore/system/pixelBuffer/IPixelBuffer.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 

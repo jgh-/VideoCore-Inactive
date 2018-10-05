@@ -24,7 +24,7 @@
  */
 #import "VCPreviewView.h"
 
-#include <videocore/sources/iOS/GLESUtil.h>
+#include <VideoCore/sources/iOS/GLESUtil.h>
 
 #import <OpenGLES/EAGL.h>
 #import <OpenGLES/EAGLDrawable.h>

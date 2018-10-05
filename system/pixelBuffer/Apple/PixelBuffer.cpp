@@ -24,7 +24,7 @@
  
  */
 
-#include <videocore/system/pixelBuffer/Apple/PixelBuffer.h>
+#include <VideoCore/system/pixelBuffer/Apple/PixelBuffer.h>
 
 namespace videocore { namespace Apple {
  

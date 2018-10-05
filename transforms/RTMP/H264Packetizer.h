@@ -26,7 +26,7 @@
 #ifndef videocore_H264Packetizer_h
 #define videocore_H264Packetizer_h
 
-#include <videocore/transforms/ITransform.hpp>
+#include <VideoCore/transforms/ITransform.hpp>
 
 #include <vector>
 

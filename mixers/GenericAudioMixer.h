@@ -27,9 +27,9 @@
 #define __videocore__GenericAudioMixer__
 
 #include <iostream>
-#include <videocore/mixers/IAudioMixer.hpp>
-#include <videocore/system/Buffer.hpp>
-#include <videocore/system/JobQueue.hpp>
+#include <VideoCore/mixers/IAudioMixer.hpp>
+#include <VideoCore/system/Buffer.hpp>
+#include <VideoCore/system/JobQueue.hpp>
 
 #include <map>
 #include <thread>

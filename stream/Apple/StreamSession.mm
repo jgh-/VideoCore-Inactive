@@ -25,7 +25,7 @@
 #import <CoreFoundation/CoreFoundation.h>
 #import <Foundation/Foundation.h>
 #include <iostream>
-#include <videocore/stream/Apple/StreamSession.h>
+#include <VideoCore/stream/Apple/StreamSession.h>
 
 #include <sys/socket.h>
 #include <sys/types.h>

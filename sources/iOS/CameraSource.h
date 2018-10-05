@@ -26,8 +26,8 @@
 #define __videocore__CameraSource__
 
 #include <iostream>
-#include <videocore/sources/ISource.hpp>
-#include <videocore/transforms/IOutput.hpp>
+#include <VideoCore/sources/ISource.hpp>
+#include <VideoCore/transforms/IOutput.hpp>
 #include <CoreVideo/CoreVideo.h>
 #include <glm/glm.hpp>
 

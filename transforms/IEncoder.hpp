@@ -26,7 +26,7 @@
 #ifndef __videocore_IEncoder_h
 #define __videocore_IEncoder_h
 
-#include <videocore/transforms/ITransform.hpp>
+#include <VideoCore/transforms/ITransform.hpp>
 
 namespace videocore {
     

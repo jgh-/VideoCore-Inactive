@@ -26,7 +26,7 @@
 #define videocore_PixelBuffer_hpp
 
 #include <CoreVideo/CoreVideo.h>
-#include <videocore/system/pixelBuffer/IPixelBuffer.hpp>
+#include <VideoCore/system/pixelBuffer/IPixelBuffer.hpp>
 #include <memory>
 
 namespace videocore { namespace Apple {

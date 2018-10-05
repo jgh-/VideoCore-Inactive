@@ -28,7 +28,7 @@
 
 #include <iostream>
 #include <vector>
-#include <videocore/transforms/IOutputSession.hpp>
+#include <VideoCore/transforms/IOutputSession.hpp>
 
 namespace videocore { namespace Apple {
     

@@ -1,12 +1,12 @@
-#include <videocore/filters/Basic/BasicVideoFilterBGRAinYUVAout.h>
+#include <VideoCore/filters/Basic/BasicVideoFilterBGRAinYUVAout.h>
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #   ifdef TARGET_OS_IPHONE
 #   include <OpenGLES/ES2/gl.h>
 #   include <OpenGLES/ES3/gl.h>
-#   include <videocore/sources/iOS/GLESUtil.h>
-#   include <videocore/filters/FilterFactory.h>
+#   include <VideoCore/sources/iOS/GLESUtil.h>
+#   include <VideoCore/filters/FilterFactory.h>
 #   endif
 #endif
 

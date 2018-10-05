@@ -26,7 +26,7 @@
 #define __videocore__AspectTransform__
 
 #include <iostream>
-#include <videocore/transforms/ITransform.hpp>
+#include <VideoCore/transforms/ITransform.hpp>
 #include <glm/glm.hpp>
 
 namespace videocore {

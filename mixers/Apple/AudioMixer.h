@@ -27,7 +27,7 @@
 #define __videocore__AudioMixer__
 
 #include <iostream>
-#include <videocore/mixers/GenericAudioMixer.h>
+#include <VideoCore/mixers/GenericAudioMixer.h>
 #include <AudioToolbox/AudioToolbox.h>
 #include <unordered_map>
 

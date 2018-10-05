@@ -26,8 +26,8 @@
 #ifndef videocore_ISource_hpp
 #define videocore_ISource_hpp
 
-#include <videocore/transforms/IOutput.hpp>
-#include <videocore/filters/IFilter.hpp>
+#include <VideoCore/transforms/IOutput.hpp>
+#include <VideoCore/filters/IFilter.hpp>
 
 namespace videocore
 {

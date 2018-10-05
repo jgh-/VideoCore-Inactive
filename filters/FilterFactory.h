@@ -2,7 +2,7 @@
 
 #ifndef __videocore__FilterFactory__
 #define __videocore__FilterFactory__
-#include <videocore/filters/IFilter.hpp>
+#include <VideoCore/filters/IFilter.hpp>
 #include <map>
 #include <memory>
 #include <functional>

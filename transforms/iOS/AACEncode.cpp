@@ -22,7 +22,7 @@
  THE SOFTWARE.
  
  */
-#include <videocore/transforms/iOS/AACEncode.h>
+#include <VideoCore/transforms/iOS/AACEncode.h>
 #include <sstream>
 
 namespace videocore { namespace iOS {

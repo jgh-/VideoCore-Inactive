@@ -24,8 +24,8 @@
  */
 #import <AVFoundation/AVFoundation.h>
 
-#include <videocore/transforms/Apple/MP4Multiplexer.h>
-#include <videocore/mixers/IAudioMixer.hpp>
+#include <VideoCore/transforms/Apple/MP4Multiplexer.h>
+#include <VideoCore/mixers/IAudioMixer.hpp>
 
 namespace videocore { namespace Apple {
  

@@ -26,7 +26,7 @@
 #ifndef videocore_IOutputSession_hpp
 #define videocore_IOutputSession_hpp
 
-#include <videocore/transforms/IOutput.hpp>
+#include <VideoCore/transforms/IOutput.hpp>
 
 namespace videocore {
 

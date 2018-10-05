@@ -22,16 +22,16 @@
  THE SOFTWARE.
  
  */
-#include <videocore/rtmp/RTMPSession.h>
+#include <VideoCore/rtmp/RTMPSession.h>
 
 #ifdef __APPLE__
-#include <videocore/stream/Apple/StreamSession.h>
+#include <VideoCore/stream/Apple/StreamSession.h>
 #endif
 
 #ifndef DLOG_LEVEL_DEF
 #define DLOG_LEVEL_DEF DLOG_LEVEL_VERBOSE
 #endif
-#include <videocore/system/Logger.hpp>
+#include <VideoCore/system/Logger.hpp>
 
 #include <boost/tokenizer.hpp>
 #include <stdlib.h>

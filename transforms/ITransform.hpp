@@ -26,7 +26,7 @@
 #ifndef videocore_ITransform_hpp
 #define videocore_ITransform_hpp
 
-#include <videocore/transforms/IOutput.hpp>
+#include <VideoCore/transforms/IOutput.hpp>
 #include <chrono>
 
 namespace videocore {
